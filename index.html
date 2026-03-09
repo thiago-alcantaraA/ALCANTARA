@@ -23,99 +23,79 @@
             <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
                 <div class="bg-blue-50 w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-blue-600 font-bold text-xl">1</div>
                 <h3 class="text-xl font-bold mb-3 text-gray-800">중학교 1학년</h3>
-                <p class="text-gray-500 text-sm mb-6">1학년 자유학기제 및 교과 수업 자료입니다.</p>
-                <button onclick="toggleGrade(1, '중1')" class="text-blue-600 font-bold text-sm flex items-center hover:underline group">
-                    자료 보기 <i id="arrow-1" class="fa-solid fa-chevron-right ml-2 text-xs transition-transform"></i>
-                </button>
-                <div id="list-1" class="file-list-container space-y-2">
-                    <div id="files-1" class="space-y-2 mt-2"></div>
-                </div>
+                <button onclick="toggleGrade(1)" class="text-blue-600 font-bold text-sm flex items-center hover:underline">자료 보기 <i id="arrow-1" class="fa-solid fa-chevron-right ml-2 text-xs transition-transform"></i></button>
+                <div id="list-1" class="file-list-container"><div id="files-1" class="space-y-2 mt-2"></div></div>
             </div>
-
             <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
                 <div class="bg-green-50 w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-green-600 font-bold text-xl">2</div>
                 <h3 class="text-xl font-bold mb-3 text-gray-800">중학교 2학년</h3>
-                <p class="text-gray-500 text-sm mb-6">2학년 교과 과정 연계 인터랙티브 교구입니다.</p>
-                <button onclick="toggleGrade(2, '중2')" class="text-green-600 font-bold text-sm flex items-center hover:underline group">
-                    자료 보기 <i id="arrow-2" class="fa-solid fa-chevron-right ml-2 text-xs transition-transform"></i>
-                </button>
-                <div id="list-2" class="file-list-container space-y-2">
-                    <div id="files-2" class="space-y-2 mt-2"></div>
-                </div>
+                <button onclick="toggleGrade(2)" class="text-green-600 font-bold text-sm flex items-center hover:underline">자료 보기 <i id="arrow-2" class="fa-solid fa-chevron-right ml-2 text-xs transition-transform"></i></button>
+                <div id="list-2" class="file-list-container"><div id="files-2" class="space-y-2 mt-2"></div></div>
             </div>
-
             <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 ring-2 ring-purple-100">
                 <div class="bg-purple-50 w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-purple-600 font-bold text-xl">3</div>
                 <h3 class="text-xl font-bold mb-3 text-gray-800">중학교 3학년</h3>
-                <p class="text-gray-500 text-sm mb-6">제곱근, 피타고라스 등 3학년 핵심 도구입니다.</p>
-                <button onclick="toggleGrade(3, '중3')" class="text-purple-600 font-bold text-sm flex items-center hover:underline group">
-                    자료 보기 <i id="arrow-3" class="fa-solid fa-chevron-right ml-2 text-xs transition-transform"></i>
-                </button>
-                <div id="list-3" class="file-list-container space-y-2">
-                    <div id="files-3" class="space-y-2 mt-2"></div>
-                </div>
+                <button onclick="toggleGrade(3)" class="text-purple-600 font-bold text-sm flex items-center hover:underline">자료 보기 <i id="arrow-3" class="fa-solid fa-chevron-right ml-2 text-xs transition-transform"></i></button>
+                <div id="list-3" class="file-list-container"><div id="files-3" class="space-y-2 mt-2"></div></div>
             </div>
         </div>
 
         <h2 class="text-2xl font-bold text-gray-800 mb-8 px-2 flex items-center">
             <i class="fa-solid fa-dice text-orange-500 mr-3"></i>창의적 체험활동 (보드게임)
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <a href="요트 다이스 조별 게임.html" class="flex items-center p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group">
-                <div class="text-3xl mr-6">🎲</div>
-                <div>
-                    <h4 class="font-bold text-gray-800 group-hover:text-orange-500">요트 다이스 게임</h4>
-                    <p class="text-sm text-gray-500">주사위 확률 전략 게임</p>
-                </div>
-            </a>
-            <a href="코드네임 조별 게임.html" class="flex items-center p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group">
-                <div class="text-3xl mr-6">🕵️</div>
-                <div>
-                    <h4 class="font-bold text-gray-800 group-hover:text-orange-500">코드네임 게임</h4>
-                    <p class="text-sm text-gray-500">단어 연상 추리 조별 활동</p>
-                </div>
-            </a>
-        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="board-games">
+            </div>
     </div>
 
     <script>
         const repo = "thiago-alcantaraA/ALCANTARA";
+        let allFiles = [];
 
-        async function toggleGrade(num, folderName) {
+        async function init() {
+            try {
+                const res = await fetch(`https://api.github.com/repos/${repo}/git/trees/main?recursive=1`);
+                const data = await res.json();
+                allFiles = data.tree.filter(f => f.path.endsWith('.html') && f.path !== 'index.html');
+                renderBoardGames();
+            } catch (e) { console.error("데이터 로딩 실패"); }
+        }
+
+        function toggleGrade(num) {
             const list = document.getElementById(`list-${num}`);
             const arrow = document.getElementById(`arrow-${num}`);
             const container = document.getElementById(`files-${num}`);
-
-            // 닫혀있을 때 열면서 목록 로딩
+            
             if (!list.classList.contains('open')) {
-                container.innerHTML = '<p class="text-xs text-gray-400 py-2">불러오는 중...</p>';
+                const filtered = allFiles.filter(f => f.path.includes(`중${num}`));
+                container.innerHTML = filtered.length ? '' : '<p class="text-xs text-gray-400 py-2 italic">자료 준비 중</p>';
+                filtered.forEach(file => {
+                    const a = document.createElement('a');
+                    a.href = file.path;
+                    a.className = "block p-3 bg-gray-50 rounded-lg text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition truncate";
+                    a.innerText = file.path.split('/').pop().replace('.html', '');
+                    container.appendChild(a);
+                });
                 list.classList.add('open');
                 arrow.style.transform = "rotate(90deg)";
-
-                try {
-                    const res = await fetch(`https://api.github.com/repos/${repo}/contents/${folderName}`);
-                    const files = await res.json();
-                    container.innerHTML = '';
-
-                    if (!Array.isArray(files)) throw new Error();
-
-                    files.forEach(file => {
-                        if (file.name.endsWith('.html')) {
-                            const a = document.createElement('a');
-                            a.href = file.path;
-                            a.className = "block p-3 bg-gray-50 rounded-lg text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition truncate";
-                            a.innerText = file.name.replace('.html', '');
-                            container.appendChild(a);
-                        }
-                    });
-                } catch (e) {
-                    container.innerHTML = '<p class="text-xs text-gray-400 py-2 italic">해당 폴더에 파일이 없거나 생성되지 않았습니다.</p>';
-                }
             } else {
                 list.classList.remove('open');
                 arrow.style.transform = "rotate(0deg)";
             }
         }
+
+        function renderBoardGames() {
+            const bgContainer = document.getElementById('board-games');
+            const games = allFiles.filter(f => f.path.includes('게임') || f.path.includes('다이스') || f.path.includes('네임'));
+            games.forEach(file => {
+                const icon = file.path.includes('다이스') ? '🎲' : '🕵️';
+                bgContainer.innerHTML += `
+                    <a href="${file.path}" class="flex items-center p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group">
+                        <div class="text-3xl mr-6">${icon}</div>
+                        <div><h4 class="font-bold text-gray-800 group-hover:text-orange-500">${file.path.split('/').pop().replace('.html', '')}</h4></div>
+                    </a>`;
+            });
+        }
+        init();
     </script>
 </body>
 </html>
