@@ -9,62 +9,113 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8f9fa; }
-        .file-list-container { max-height: 1000px; margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem; }
+        .file-list-container { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; }
+        .file-list-container.open { max-height: 1000px; margin-top: 1.5rem; border-top: 1px solid #eee; padding-top: 1rem; }
     </style>
 </head>
 <body class="py-12 px-6">
-    <div class="max-w-5xl mx-auto text-center mb-12">
-        <h1 class="text-3xl font-bold text-gray-800 italic font-serif">Σ Thiago Math Portal</h1>
-    </div>
-
-    <div class="max-w-4xl mx-auto">
-        <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100">
-            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                <i class="fa-solid fa-folder-open text-purple-600 mr-3"></i> 전체 수학교구 목록
-            </h2>
-            <div id="all-files" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <p class="text-gray-400 text-sm">파일 목록을 불러오는 중...</p>
+    <div class="max-w-6xl mx-auto">
+        <h2 class="text-2xl font-bold text-gray-800 mb-8 px-2 flex items-center">
+            <i class="fa-solid fa-graduation-cap text-purple-600 mr-3"></i>학년별 교육과정
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                <div class="bg-blue-50 w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-blue-600 font-bold text-xl">1</div>
+                <h3 class="text-xl font-bold mb-3 text-gray-800">중학교 1학년</h3>
+                <p class="text-gray-500 text-sm mb-6">1학년 자유학기제 및 교과 수업 자료입니다.</p>
+                <button onclick="toggleGrade(1, '중1')" class="text-blue-600 font-bold text-sm flex items-center hover:underline group">
+                    자료 보기 <i id="arrow-1" class="fa-solid fa-chevron-right ml-2 text-xs transition-transform"></i>
+                </button>
+                <div id="list-1" class="file-list-container space-y-2">
+                    <div id="files-1" class="space-y-2 mt-2"></div>
+                </div>
             </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                <div class="bg-green-50 w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-green-600 font-bold text-xl">2</div>
+                <h3 class="text-xl font-bold mb-3 text-gray-800">중학교 2학년</h3>
+                <p class="text-gray-500 text-sm mb-6">2학년 교과 과정 연계 인터랙티브 교구입니다.</p>
+                <button onclick="toggleGrade(2, '중2')" class="text-green-600 font-bold text-sm flex items-center hover:underline group">
+                    자료 보기 <i id="arrow-2" class="fa-solid fa-chevron-right ml-2 text-xs transition-transform"></i>
+                </button>
+                <div id="list-2" class="file-list-container space-y-2">
+                    <div id="files-2" class="space-y-2 mt-2"></div>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 ring-2 ring-purple-100">
+                <div class="bg-purple-50 w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-purple-600 font-bold text-xl">3</div>
+                <h3 class="text-xl font-bold mb-3 text-gray-800">중학교 3학년</h3>
+                <p class="text-gray-500 text-sm mb-6">제곱근, 피타고라스 등 3학년 핵심 도구입니다.</p>
+                <button onclick="toggleGrade(3, '중3')" class="text-purple-600 font-bold text-sm flex items-center hover:underline group">
+                    자료 보기 <i id="arrow-3" class="fa-solid fa-chevron-right ml-2 text-xs transition-transform"></i>
+                </button>
+                <div id="list-3" class="file-list-container space-y-2">
+                    <div id="files-3" class="space-y-2 mt-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-gray-800 mb-8 px-2 flex items-center">
+            <i class="fa-solid fa-dice text-orange-500 mr-3"></i>창의적 체험활동 (보드게임)
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <a href="요트 다이스 조별 게임.html" class="flex items-center p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group">
+                <div class="text-3xl mr-6">🎲</div>
+                <div>
+                    <h4 class="font-bold text-gray-800 group-hover:text-orange-500">요트 다이스 게임</h4>
+                    <p class="text-sm text-gray-500">주사위 확률 전략 게임</p>
+                </div>
+            </a>
+            <a href="코드네임 조별 게임.html" class="flex items-center p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group">
+                <div class="text-3xl mr-6">🕵️</div>
+                <div>
+                    <h4 class="font-bold text-gray-800 group-hover:text-orange-500">코드네임 게임</h4>
+                    <p class="text-sm text-gray-500">단어 연상 추리 조별 활동</p>
+                </div>
+            </a>
         </div>
     </div>
 
     <script>
-        async function loadFiles() {
-            const repo = "thiago-alcantaraA/ALCANTARA";
-            const container = document.getElementById('all-files');
-            
-            try {
-                // 저장소의 모든 파일을 재귀적으로(깊숙이) 가져옵니다.
-                const response = await fetch(`https://api.github.com/repos/${repo}/git/trees/main?recursive=1`);
-                const data = await response.json();
-                container.innerHTML = '';
+        const repo = "thiago-alcantaraA/ALCANTARA";
 
-                data.tree.forEach(file => {
-                    // index.html을 제외한 모든 html 파일 탐색
-                    if (file.path.endsWith('.html') && !file.path.includes('index.html')) {
-                        const a = document.createElement('a');
-                        a.href = file.path;
-                        a.className = "flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-purple-50 hover:text-purple-600 transition border border-transparent hover:border-purple-100 group";
-                        
-                        // 폴더 경로 제거하고 파일 이름만 추출
-                        const fileName = file.path.split('/').pop().replace('.html', '');
-                        
-                        a.innerHTML = `
-                            <span class="font-medium text-gray-700 group-hover:text-purple-700">${fileName}</span>
-                            <i class="fa-solid fa-circle-play opacity-20 group-hover:opacity-100 transition"></i>
-                        `;
-                        container.appendChild(a);
-                    }
-                });
+        async function toggleGrade(num, folderName) {
+            const list = document.getElementById(`list-${num}`);
+            const arrow = document.getElementById(`arrow-${num}`);
+            const container = document.getElementById(`files-${num}`);
 
-                if (container.innerHTML === '') {
-                    container.innerHTML = '<p class="col-span-2 text-gray-400">등록된 교구가 없습니다.</p>';
+            // 닫혀있을 때 열면서 목록 로딩
+            if (!list.classList.contains('open')) {
+                container.innerHTML = '<p class="text-xs text-gray-400 py-2">불러오는 중...</p>';
+                list.classList.add('open');
+                arrow.style.transform = "rotate(90deg)";
+
+                try {
+                    const res = await fetch(`https://api.github.com/repos/${repo}/contents/${folderName}`);
+                    const files = await res.json();
+                    container.innerHTML = '';
+
+                    if (!Array.isArray(files)) throw new Error();
+
+                    files.forEach(file => {
+                        if (file.name.endsWith('.html')) {
+                            const a = document.createElement('a');
+                            a.href = file.path;
+                            a.className = "block p-3 bg-gray-50 rounded-lg text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition truncate";
+                            a.innerText = file.name.replace('.html', '');
+                            container.appendChild(a);
+                        }
+                    });
+                } catch (e) {
+                    container.innerHTML = '<p class="text-xs text-gray-400 py-2 italic">해당 폴더에 파일이 없거나 생성되지 않았습니다.</p>';
                 }
-            } catch (e) {
-                container.innerHTML = '<p class="col-span-2 text-red-400">목록을 불러오지 못했습니다.</p>';
+            } else {
+                list.classList.remove('open');
+                arrow.style.transform = "rotate(0deg)";
             }
         }
-        loadFiles();
     </script>
 </body>
 </html>
