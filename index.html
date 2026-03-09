@@ -20,31 +20,31 @@
         </h2>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-                <div class="bg-blue-50 w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-blue-600 font-bold text-xl">1</div>
-                <h3 class="text-xl font-bold mb-3 text-gray-800">중학교 1학년</h3>
-                <button onclick="toggleGrade(1)" class="text-blue-600 font-bold text-sm flex items-center hover:underline">자료 보기 <i id="arrow-1" class="fa-solid fa-chevron-right ml-2 text-xs transition-transform"></i></button>
-                <div id="list-1" class="file-list-container"><div id="files-1" class="space-y-2 mt-2"></div></div>
-            </div>
-            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-                <div class="bg-green-50 w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-green-600 font-bold text-xl">2</div>
-                <h3 class="text-xl font-bold mb-3 text-gray-800">중학교 2학년</h3>
-                <button onclick="toggleGrade(2)" class="text-green-600 font-bold text-sm flex items-center hover:underline">자료 보기 <i id="arrow-2" class="fa-solid fa-chevron-right ml-2 text-xs transition-transform"></i></button>
-                <div id="list-2" class="file-list-container"><div id="files-2" class="space-y-2 mt-2"></div></div>
-            </div>
-            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 ring-2 ring-purple-100">
-                <div class="bg-purple-50 w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-purple-600 font-bold text-xl">3</div>
-                <h3 class="text-xl font-bold mb-3 text-gray-800">중학교 3학년</h3>
-                <button onclick="toggleGrade(3)" class="text-purple-600 font-bold text-sm flex items-center hover:underline">자료 보기 <i id="arrow-3" class="fa-solid fa-chevron-right ml-2 text-xs transition-transform"></i></button>
-                <div id="list-3" class="file-list-container"><div id="files-3" class="space-y-2 mt-2"></div></div>
-            </div>
+            <script>
+                const grades = [
+                    { n: 1, name: "중학교 1학년", color: "blue" },
+                    { n: 2, name: "중학교 2학년", color: "green" },
+                    { n: 3, name: "중학교 3학년", color: "purple" }
+                ];
+                grades.forEach(g => {
+                    document.write(`
+                        <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                            <div class="bg-${g.color}-50 w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-${g.color}-600 font-bold text-xl">${g.n}</div>
+                            <h3 class="text-xl font-bold mb-3 text-gray-800">${g.name}</h3>
+                            <button onclick="toggleGrade(${g.n})" class="text-${g.color}-600 font-bold text-sm flex items-center hover:underline">
+                                자료 보기 <i id="arrow-${g.n}" class="fa-solid fa-chevron-right ml-2 text-xs transition-transform"></i>
+                            </button>
+                            <div id="list-${g.n}" class="file-list-container"><div id="files-${g.n}" class="space-y-2 mt-2"></div></div>
+                        </div>
+                    `);
+                });
+            </script>
         </div>
 
         <h2 class="text-2xl font-bold text-gray-800 mb-8 px-2 flex items-center">
             <i class="fa-solid fa-dice text-orange-500 mr-3"></i>창의적 체험활동 (보드게임)
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="board-games">
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="board-games"></div>
     </div>
 
     <script>
@@ -53,26 +53,33 @@
 
         async function init() {
             try {
+                // 저장소의 모든 파일을 강제로 다 긁어옵니다 (재귀적 검색)
                 const res = await fetch(`https://api.github.com/repos/${repo}/git/trees/main?recursive=1`);
                 const data = await res.json();
-                allFiles = data.tree.filter(f => f.path.endsWith('.html') && f.path !== 'index.html');
+                // HTML 파일만 골라내기
+                allFiles = data.tree.filter(f => f.path.toLowerCase().endsWith('.html') && !f.path.includes('index.html'));
                 renderBoardGames();
-            } catch (e) { console.error("데이터 로딩 실패"); }
+            } catch (e) { console.error("데이터 로드 실패"); }
         }
 
-        function toggleGrade(num) {
-            const list = document.getElementById(`list-${num}`);
-            const arrow = document.getElementById(`arrow-${num}`);
-            const container = document.getElementById(`files-${num}`);
+        function toggleGrade(n) {
+            const list = document.getElementById(`list-${n}`);
+            const arrow = document.getElementById(`arrow-${n}`);
+            const container = document.getElementById(`files-${n}`);
             
             if (!list.classList.contains('open')) {
-                const filtered = allFiles.filter(f => f.path.includes(`중${num}`));
-                container.innerHTML = filtered.length ? '' : '<p class="text-xs text-gray-400 py-2 italic">자료 준비 중</p>';
+                // 파일 이름이나 경로에 '중1', '중2', '중3'이 포함되어 있으면 통과!
+                const filtered = allFiles.filter(f => f.path.includes(`중${n}`));
+                container.innerHTML = filtered.length ? '' : '<p class="text-xs text-gray-400 py-2 italic">자료를 찾는 중이거나 없습니다.</p>';
+                
                 filtered.forEach(file => {
                     const a = document.createElement('a');
-                    a.href = file.path;
+                    // 깃허브 페이지에서 한글 경로 인식을 위해 encodeURI 사용
+                    a.href = encodeURI(file.path);
                     a.className = "block p-3 bg-gray-50 rounded-lg text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition truncate";
-                    a.innerText = file.path.split('/').pop().replace('.html', '');
+                    // 경로에서 파일명만 깔끔하게 추출
+                    const displayName = file.path.split('/').pop().replace('.html', '');
+                    a.innerText = displayName;
                     container.appendChild(a);
                 });
                 list.classList.add('open');
@@ -85,13 +92,16 @@
 
         function renderBoardGames() {
             const bgContainer = document.getElementById('board-games');
+            // 게임 관련 키워드가 있는 파일들 추출
             const games = allFiles.filter(f => f.path.includes('게임') || f.path.includes('다이스') || f.path.includes('네임'));
+            bgContainer.innerHTML = games.length ? '' : '<p class="text-gray-400">보드게임을 준비 중입니다.</p>';
             games.forEach(file => {
                 const icon = file.path.includes('다이스') ? '🎲' : '🕵️';
+                const displayName = file.path.split('/').pop().replace('.html', '');
                 bgContainer.innerHTML += `
-                    <a href="${file.path}" class="flex items-center p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group">
+                    <a href="${encodeURI(file.path)}" class="flex items-center p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group">
                         <div class="text-3xl mr-6">${icon}</div>
-                        <div><h4 class="font-bold text-gray-800 group-hover:text-orange-500">${file.path.split('/').pop().replace('.html', '')}</h4></div>
+                        <div><h4 class="font-bold text-gray-800 group-hover:text-orange-500">${displayName}</h4></div>
                     </a>`;
             });
         }
