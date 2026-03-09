@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>중3 수학 자료실</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 py-12 px-6">
+    <div class="max-w-3xl mx-auto">
+        <a href="index.html" class="text-gray-500 hover:text-gray-800 mb-6 inline-block">
+            <i class="fa-solid fa-chevron-left mr-2"></i> 돌아가기
+        </a>
+        <h1 class="text-3xl font-bold text-gray-800 mb-8">중학교 3학년 수학 교구</h1>
+        
+        <div id="file-list" class="space-y-4">
+            </div>
+    </div>
+
+    <script>
+        async function loadFiles() {
+            const repo = "thiago-alcantaraA/ALCANTARA";
+            const res = await fetch(`https://api.github.com/repos/${repo}/git/trees/main?recursive=1`);
+            const data = await res.json();
+            const container = document.getElementById('file-list');
+            
+            // 이름에 '중3'이 포함된 파일만 필터링
+            const files = data.tree.filter(f => f.path.includes('중3') && f.path.endsWith('.html'));
+            
+            files.forEach(file => {
+                const name = file.path.split('/').pop().replace('.html', '');
+                container.innerHTML += `
+                    <a href="${encodeURI(file.path)}" class="block p-5 bg-white rounded-2xl shadow-sm border border-gray-100 hover:border-purple-400 hover:shadow-md transition flex justify-between items-center group">
+                        <span class="text-lg font-medium text-gray-700 group-hover:text-purple-600">${name}</span>
+                        <i class="fa-solid fa-play text-purple-300 group-hover:text-purple-600"></i>
+                    </a>`;
+            });
+        }
+        loadFiles();
+    </script>
+</body>
+</html>
