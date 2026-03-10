@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중3 수학 판서 - 제곱근의 뜻과 표현</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --chalkboard-bg: #1e3d33; 
+            --chalk-white: rgba(255, 255, 255, 0.95);
+            --chalk-yellow: #fdf08a;
+            --chalk-blue: #a5f3fc;
+            --chalk-pink: #fca5a5;
+            --box-border: rgba(165, 243, 252, 0.4);
+        }
+        body {
+            background-color: #121212;
+            font-family: 'Noto Sans KR', sans-serif;
+            color: var(--chalk-white);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .chalkboard-container {
+            width: 95%;
+            max-width: 1250px;
+            padding: 12px;
+            background: #3d2b1f; 
+            border-radius: 8px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .chalkboard {
+            background-color: var(--chalkboard-bg);
+            background-image: url('https://www.transparenttextures.com/patterns/black-chalkboard.png');
+            padding: 35px 50px;
+            position: relative;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.7);
+            border-radius: 4px;
+        }
+        .handwritten { font-family: 'Nanum Pen Script', cursive; }
+        .highlight-yellow { color: var(--chalk-yellow); }
+        .highlight-blue { color: var(--chalk-blue); }
+        .highlight-pink { color: var(--chalk-pink); }
+        
+        /* 가로로 길게 한 줄로 펼쳐지는 상단 박스 */
+        .top-summary-container {
+            border: 1.5px solid var(--box-border);
+            border-radius: 10px;
+            margin-bottom: 40px;
+            width: 100%;
+        }
+        .top-summary-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .summary-item {
+            flex: 1;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center; /* 가로 정렬을 위해 수정 */
+            gap: 15px;
+        }
+        .summary-item:not(:last-child) {
+            border-right: 1.5px solid var(--box-border);
+        }
+
+        .content-box {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+            height: 100%;
+        }
+        .definition-formula {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        mjx-container { color: inherit !important; }
+        .point-tag {
+            border-left: 4px solid var(--chalk-yellow);
+            background: rgba(253, 240, 138, 0.1);
+            padding: 10px 15px;
+            margin-top: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chalkboard-container">
+        <div class="chalkboard">
+            <!-- 최상단 문구 -->
+            <div class="text-center mb-4">
+                <p class="handwritten text-2xl highlight-yellow">"수학은 복잡한 것을 간단히 하는 것" <span class="text-lg opacity-60 ml-2">(ex. $7 \times 7 = 7^2$)</span></p>
+                <div class="w-full border-b border-dashed border-white/10 mt-2"></div>
+            </div>
+
+            <!-- 메인 제목 -->
+            <header class="mb-6 flex items-center">
+                <div class="w-5 h-5 border-2 border-white rounded-full mr-3"></div>
+                <h1 class="text-3xl font-bold handwritten highlight-yellow">1. 제곱근의 뜻과 표현</h1>
+            </header>
+
+            <!-- 상단 요약 바: 완전히 가로로 길게 펼쳐진 레이아웃 -->
+            <div class="top-summary-container">
+                <div class="top-summary-flex">
+                    <div class="summary-item">
+                        <span class="handwritten text-2xl highlight-blue whitespace-nowrap">1) 등식</span>
+                        <span class="handwritten text-xl opacity-80">수·식의 같음을 나타낸 것</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="handwritten text-2xl highlight-blue whitespace-nowrap">2) 방정식</span>
+                        <span class="handwritten text-xl opacity-80">$x$의 값에 따라 참/거짓 결정</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="handwritten text-2xl highlight-blue whitespace-nowrap">3) 해(근)</span>
+                        <span class="handwritten text-xl opacity-80">방정식을 참이 되게 하는 $x$</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하단 컨텐츠 영역 -->
+            <div class="grid grid-cols-12 gap-8">
+                <!-- I. 제곱근의 정의 -->
+                <div class="col-span-7">
+                    <h2 class="text-2xl handwritten highlight-yellow mb-4">Ⅰ. 제곱근의 정의</h2>
+                    <div class="content-box">
+                        <div class="definition-formula">
+                            <span class="handwritten text-4xl">$x^2 = a$</span>
+                            <span class="text-2xl opacity-60">$\longrightarrow$</span>
+                            <span class="handwritten text-4xl">$x$는 $a$의 <span class="underline underline-offset-8">제곱근</span></span>
+                        </div>
+
+                        <!-- 도형 예시 -->
+                        <div class="flex justify-around items-end mt-12 mb-4">
+                            <div class="text-center">
+                                <div class="w-20 h-20 border-2 border-dashed border-white flex items-center justify-center handwritten text-xl mb-2">넓이 4</div>
+                                <p class="handwritten text-lg">한 변: 2</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-14 h-14 border-2 border-dashed border-white flex items-center justify-center handwritten text-lg mb-2">넓이 1</div>
+                                <p class="handwritten text-lg">한 변: 1</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-16 h-16 border-2 border-yellow-400 flex items-center justify-center handwritten text-xl mb-2 highlight-yellow bg-yellow-400/5">넓이 3</div>
+                                <p class="handwritten text-xl highlight-yellow">한 변: ?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- II. 근호의 표현 -->
+                <div class="col-span-5">
+                    <h2 class="text-2xl handwritten highlight-yellow mb-4">Ⅱ. 근호($\sqrt{\quad}$)의 표현</h2>
+                    <div class="content-box">
+                        <div class="handwritten text-2xl space-y-6 pt-2">
+                            <p>$x^2 = 3$의 근 :</p>
+                            <div class="pl-4 space-y-5">
+                                <div class="flex items-center">
+                                    <span class="text-blue-300 mr-3 text-xl">→</span> 
+                                    <span>양의 제곱근 :</span>
+                                    <span class="text-4xl ml-4">$\sqrt{3}$</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-blue-300 mr-3 text-xl">→</span> 
+                                    <span>음의 제곱근 :</span>
+                                    <span class="text-4xl ml-4 highlight-pink">$-\sqrt{3}$</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="point-tag">
+                            <p class="handwritten text-xl">
+                                <span class="highlight-yellow font-bold mr-2">POINT:</span> 
+                                기호($\sqrt{\quad}$)를 쓰면 복잡한 수도 간단!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하단 분필 선반 -->
+            <div class="mt-12 flex justify-center">
+                <div class="w-48 h-2 bg-white/10 rounded-full border-t border-white/5"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: true
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>
