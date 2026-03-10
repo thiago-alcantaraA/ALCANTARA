@@ -1,0 +1,33 @@
+<script>
+    async function loadMaterials() {
+        const repo = "thiago-alcantaraA/ALCANTARA";
+        const res = await fetch(`https://api.github.com/repos/${repo}/git/trees/main?recursive=1`);
+        const data = await res.json();
+        const container = document.getElementById('material-list');
+        
+        // '중3' 포함 + '프로그램' 미포함 + .html 파일만 필터링
+        const materials = data.tree.filter(f => 
+            f.path.includes('중3') && 
+            !f.path.includes('프로그램') && 
+            f.path.endsWith('.html') &&
+            !f.path.includes('index.html')
+        );
+        
+        // (이하 출력 로직은 이전과 동일)
+        if (materials.length === 0) {
+            container.innerHTML = '<p class="text-gray-300 italic p-10 text-center">등록된 수업자료가 없습니다.</p>';
+            return;
+        }
+        materials.forEach(file => {
+            const name = file.path.split('/').pop().replace('.html', '');
+            container.innerHTML += `
+                <a href="${encodeURI(file.path)}" class="flex items-center p-6 bg-gray-50 rounded-2xl hover:bg-purple-50 transition group border border-transparent hover:border-purple-100">
+                    <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm mr-6 group-hover:scale-110 transition text-purple-400">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <span class="font-bold text-gray-700 group-hover:text-purple-700 text-lg">${name}</span>
+                </a>`;
+        });
+    }
+    loadMaterials();
+</script>
