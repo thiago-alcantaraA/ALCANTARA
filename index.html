@@ -7,51 +7,77 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8f9fa; }
         .menu-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
-        .menu-content.open { max-height: 200px; margin-top: 1.5rem; }
+        .menu-content.open { max-height: 250px; margin-top: 1.5rem; }
     </style>
 </head>
-<body class="bg-gray-50 py-12 px-6">
+<body class="py-12 px-6">
     <div class="max-w-6xl mx-auto">
         <h1 class="text-3xl font-bold text-gray-800 mb-12 flex items-center">
             <i class="fa-solid fa-graduation-cap text-purple-600 mr-3"></i> 학년별 교육과정
         </h1>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
-                <div class="bg-blue-50 w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-blue-600 font-bold text-xl">1</div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+                <div class="bg-blue-50 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-blue-600 font-bold text-xl">1</div>
                 <h3 class="text-xl font-bold mb-4 text-gray-800">중학교 1학년</h3>
-                <button onclick="toggleMenu(1)" class="text-blue-600 font-bold text-sm flex items-center">자료 보기 <i id="arrow-1" class="fa-solid fa-chevron-down ml-2 transition-transform"></i></button>
-                <div id="menu-1" class="menu-content space-y-2">
-                    <a href="grade1_materials.html" class="block p-3 bg-gray-50 rounded-xl hover:bg-blue-50 text-sm font-bold">📚 수업자료</a>
-                    <a href="grade1_programs.html" class="block p-3 bg-gray-50 rounded-xl hover:bg-blue-50 text-sm font-bold">💻 프로그램</a>
+                <button onclick="toggleMenu(1)" class="text-blue-600 font-bold text-sm flex items-center group">
+                    자료 보기 <i id="arrow-1" class="fa-solid fa-chevron-down ml-2 text-xs transition-transform"></i>
+                </button>
+                <div id="menu-1" class="menu-content space-y-3">
+                    <a href="grade1_materials.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-blue-50 transition font-bold text-gray-700 text-sm">📚 수업자료</a>
+                    <a href="grade1_programs.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-blue-50 transition font-bold text-gray-700 text-sm">💻 프로그램</a>
                 </div>
             </div>
-            <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
-                <div class="bg-green-50 w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-green-600 font-bold text-xl">2</div>
+
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+                <div class="bg-green-50 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-green-600 font-bold text-xl">2</div>
                 <h3 class="text-xl font-bold mb-4 text-gray-800">중학교 2학년</h3>
-                <button onclick="toggleMenu(2)" class="text-green-600 font-bold text-sm flex items-center">자료 보기 <i id="arrow-2" class="fa-solid fa-chevron-down ml-2 transition-transform"></i></button>
-                <div id="menu-2" class="menu-content space-y-2">
-                    <a href="grade2_materials.html" class="block p-3 bg-gray-50 rounded-xl hover:bg-green-50 text-sm font-bold">📚 수업자료</a>
-                    <a href="grade2_programs.html" class="block p-3 bg-gray-50 rounded-xl hover:bg-green-50 text-sm font-bold">💻 프로그램</a>
+                <button onclick="toggleMenu(2)" class="text-green-600 font-bold text-sm flex items-center group">
+                    자료 보기 <i id="arrow-2" class="fa-solid fa-chevron-down ml-2 text-xs transition-transform"></i>
+                </button>
+                <div id="menu-2" class="menu-content space-y-3">
+                    <a href="grade2_materials.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-green-50 transition font-bold text-gray-700 text-sm">📚 수업자료</a>
+                    <a href="grade2_programs.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-green-50 transition font-bold text-gray-700 text-sm">💻 프로그램</a>
                 </div>
             </div>
-            <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-purple-100 ring-2 ring-purple-50">
-                <div class="bg-purple-50 w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-purple-600 font-bold text-xl">3</div>
+
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-purple-100 ring-2 ring-purple-50">
+                <div class="bg-purple-50 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-purple-600 font-bold text-xl">3</div>
                 <h3 class="text-xl font-bold mb-4 text-gray-800">중학교 3학년</h3>
-                <button onclick="toggleMenu(3)" class="text-purple-600 font-bold text-sm flex items-center">자료 보기 <i id="arrow-3" class="fa-solid fa-chevron-down ml-2 transition-transform"></i></button>
-                <div id="menu-3" class="menu-content space-y-2">
-                    <a href="grade3_materials.html" class="block p-3 bg-gray-50 rounded-xl hover:bg-purple-50 text-sm font-bold">📚 수업자료</a>
-                    <a href="grade3_programs.html" class="block p-3 bg-gray-50 rounded-xl hover:bg-purple-50 text-sm font-bold">💻 프로그램</a>
+                <button onclick="toggleMenu(3)" class="text-purple-600 font-bold text-sm flex items-center group">
+                    자료 보기 <i id="arrow-3" class="fa-solid fa-chevron-down ml-2 text-xs transition-transform"></i>
+                </button>
+                <div id="menu-3" class="menu-content space-y-3">
+                    <a href="grade3_materials.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-purple-50 transition font-bold text-gray-700 text-sm">📚 수업자료</a>
+                    <a href="grade3_programs.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-purple-50 transition font-bold text-gray-700 text-sm">💻 프로그램</a>
                 </div>
             </div>
         </div>
+
+        <h2 class="text-2xl font-bold text-gray-800 mb-8 flex items-center">
+            <i class="fa-solid fa-dice text-orange-500 mr-3"></i> 창의적 체험활동 (보드게임)
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <a href="요트 다이스 조별 게임.html" class="flex items-center p-6 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition group">
+                <span class="text-3xl mr-6">🎲</span>
+                <span class="font-bold text-gray-700 group-hover:text-orange-500">요트 다이스 조별 게임</span>
+            </a>
+            <a href="코드네임 조별 게임.html" class="flex items-center p-6 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition group">
+                <span class="text-3xl mr-6">🕵️</span>
+                <span class="font-bold text-gray-700 group-hover:text-orange-500">코드네임 조별 게임</span>
+            </a>
+        </div>
     </div>
+
     <script>
         function toggleMenu(n) {
-            const m = document.getElementById(`menu-${n}`);
-            const a = document.getElementById(`arrow-${n}`);
-            m.classList.toggle('open');
-            a.style.transform = m.classList.contains('open') ? "rotate(180deg)" : "rotate(0deg)";
+            const menu = document.getElementById(`menu-${n}`);
+            const arrow = document.getElementById(`arrow-${n}`);
+            menu.classList.toggle('open');
+            arrow.style.transform = menu.classList.contains('open') ? "rotate(180deg)" : "rotate(0deg)";
         }
     </script>
 </body>
