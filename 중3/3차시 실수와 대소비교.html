@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중3 수학 판서 - 무리수와 실수</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --chalkboard-bg: #1e3d33; 
+            --chalk-white: rgba(255, 255, 255, 0.95);
+            --chalk-yellow: #fdf08a;
+            --chalk-blue: #a5f3fc;
+            --chalk-pink: #fca5a5;
+        }
+        @media print {
+            @page { size: A4 landscape; margin: 0; }
+            body { background: white !important; padding: 0; }
+            .chalkboard-container { 
+                box-shadow: none !important; 
+                background: white !important; 
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: none !important;
+            }
+            .chalkboard { 
+                background: var(--chalkboard-bg) !important; 
+                -webkit-print-color-adjust: exact;
+                height: 210mm;
+                padding: 25px !important;
+                border-radius: 0 !important;
+            }
+        }
+        body {
+            background-color: #121212;
+            font-family: 'Noto Sans KR', sans-serif;
+            color: var(--chalk-white);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .chalkboard-container {
+            width: 95%;
+            max-width: 1200px;
+            padding: 10px;
+            background: #3d2b1f; 
+            border-radius: 8px;
+        }
+        .chalkboard {
+            background-color: var(--chalkboard-bg);
+            background-image: url('https://www.transparenttextures.com/patterns/black-chalkboard.png');
+            padding: 25px 35px;
+            position: relative;
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.6);
+            overflow: hidden;
+        }
+        .handwritten { font-family: 'Nanum Pen Script', cursive; }
+        .highlight-yellow { color: var(--chalk-yellow); }
+        .highlight-blue { color: var(--chalk-blue); }
+        .highlight-pink { color: var(--chalk-pink); }
+        
+        .box-container {
+            background-color: rgba(255, 255, 255, 0.04);
+            border: 1.5px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 15px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .tree-line {
+            border-left: 2px solid rgba(255,255,255,0.3);
+            margin-left: 20px;
+            padding-left: 20px;
+            position: relative;
+        }
+        .tree-line::before {
+            content: "";
+            position: absolute; left: 0; top: 18px;
+            width: 12px; border-top: 2px solid rgba(255,255,255,0.3);
+        }
+        mjx-container { color: inherit !important; }
+    </style>
+</head>
+<body>
+    <div class="chalkboard-container">
+        <div class="chalkboard">
+            <header class="mb-4 border-b border-dashed border-white/20 pb-2 flex justify-between items-end">
+                <h1 class="text-3xl font-bold handwritten highlight-yellow">3. 무리수와 실수</h1>
+                <p class="handwritten text-lg opacity-60">중학교 수학 계통 정리</p>
+            </header>
+
+            <div class="grid grid-cols-2 gap-6 items-start">
+                <!-- 왼쪽 섹션: 유지 -->
+                <div class="space-y-4">
+                    <section class="box-container" style="height: auto;">
+                        <h2 class="text-xl handwritten highlight-blue mb-2">학습 계통</h2>
+                        <ul class="handwritten text-lg space-y-1 opacity-90">
+                            <li>• <span class="highlight-pink">중1:</span> 소인수분해, 정수와 유리수</li>
+                            <li>• <span class="highlight-pink">중2:</span> 유리수와 순환소수</li>
+                            <li>• <span class="highlight-pink font-bold">중3:</span> 제곱근 &rarr; <span class="highlight-yellow">무리수와 실수</span></li>
+                        </ul>
+                    </section>
+
+                    <section class="box-container">
+                        <h2 class="text-xl handwritten highlight-blue mb-3">Ⅰ. 실수의 체계</h2>
+                        <div class="handwritten text-xl leading-relaxed flex-grow">
+                            <div class="flex items-start">
+                                <span class="text-2xl mt-1">실수 <span class="text-base opacity-60">(Real)</span></span>
+                                <div class="tree-line space-y-4 mt-2">
+                                    <div>
+                                        <span class="highlight-blue text-2xl">유리수</span>
+                                        <p class="text-base mt-0.5 opacity-80">분수 $\frac{a}{b}$ 꼴 가능 ($b \neq 0$)</p>
+                                    </div>
+                                    <div class="pt-1">
+                                        <span class="highlight-yellow text-3xl">무리수</span>
+                                        <p class="text-base mt-0.5 opacity-80">유리수X (순환X 무한소수)</p>
+                                        <p class="text-xs opacity-70 font-sans mt-1">ex) $\sqrt{2}, \sqrt{3}, \pi, 0.101001\dots$</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-white/10 text-center handwritten text-xl highlight-pink">
+                            "실수는 수직선을 <span class="underline">완전히</span> 메울 수 있다!"
+                        </div>
+                    </section>
+                </div>
+
+                <!-- 오른쪽 섹션: 수정된 귀여운 그림 + 대소 관계 -->
+                <div class="space-y-4">
+                    <!-- 수직선 그림 섹션 (간소화) -->
+                    <section class="box-container border-white/10" style="height: auto;">
+                        <h2 class="text-xl handwritten highlight-blue mb-2">수직선 위의 무리수</h2>
+                        <div class="relative h-40 mt-2">
+                            <!-- SVG로 더 심플하고 귀엽게 그림 -->
+                            <svg viewBox="0 0 400 150" class="w-full h-full">
+                                <!-- 수직선 -->
+                                <line x1="20" y1="120" x2="380" y2="120" stroke="white" stroke-width="2" opacity="0.5" />
+                                
+                                <!-- 눈금 (심플하게) -->
+                                <text x="50" y="140" fill="white" font-family="Nanum Pen Script" font-size="16" text-anchor="middle">1</text>
+                                <circle cx="50" cy="120" r="3" fill="var(--chalk-yellow)" />
+                                
+                                <text x="310" y="140" fill="var(--chalk-pink)" font-family="Nanum Pen Script" font-size="20" text-anchor="middle" font-weight="bold">1+√20</text>
+                                
+                                <!-- 삼각형 -->
+                                <path d="M 50 120 L 250 120 L 250 40 Z" fill="rgba(165, 243, 252, 0.1)" stroke="var(--chalk-blue)" stroke-width="3" />
+                                
+                                <!-- 빗변 강조 -->
+                                <line x1="50" y1="120" x2="250" y2="40" stroke="var(--chalk-pink)" stroke-width="4" stroke-linecap="round" />
+                                
+                                <!-- 떨어지는 점선 -->
+                                <path d="M 250 40 A 215 215 0 0 1 310 120" fill="none" stroke="var(--chalk-pink)" stroke-width="2" stroke-dasharray="5,5" />
+                                <circle cx="310" cy="120" r="5" fill="var(--chalk-pink)" />
+                                
+                                <!-- 길이 표시 -->
+                                <text x="150" y="115" fill="var(--chalk-blue)" font-family="Nanum Pen Script" font-size="14" text-anchor="middle">4</text>
+                                <text x="265" y="85" fill="var(--chalk-blue)" font-family="Nanum Pen Script" font-size="14" text-anchor="middle">2</text>
+                                <text x="130" y="70" fill="var(--chalk-pink)" font-family="Nanum Pen Script" font-size="18" text-anchor="middle" transform="rotate(-22, 130, 70)">빗변 = √20</text>
+                            </svg>
+                        </div>
+                    </section>
+
+                    <!-- 실수의 대소 관계 (간소화 및 위치 조정) -->
+                    <section class="box-container border-yellow-500/20" style="height: auto;">
+                        <h2 class="text-xl handwritten highlight-blue mb-3 text-center">실수의 대소 관계</h2>
+                        <div class="bg-black/20 p-5 rounded-xl border border-white/10">
+                            <p class="handwritten text-2xl highlight-yellow mb-5 text-center">두 실수의 차($a-b$) 이용</p>
+                            <div class="handwritten text-lg flex flex-col items-center space-y-2 opacity-90">
+                                <p>① $a - b > 0 \implies \mathbf{a > b}$</p>
+                                <p>② $a - b = 0 \implies \mathbf{a = b}$</p>
+                                <p>③ $a - b < 0 \implies \mathbf{a < b}$</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- 하단 분필 선반 -->
+            <div class="mt-4 flex justify-center opacity-30">
+                <div class="w-40 h-1.5 bg-white/20 rounded-full border-t border-white/10"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$']], processEscapes: true } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>
