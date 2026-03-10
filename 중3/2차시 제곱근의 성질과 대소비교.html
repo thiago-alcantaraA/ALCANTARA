@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중3 수학 판서 - 제곱근의 성질과 대소 비교</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --chalkboard-bg: #1e3d33; 
+            --chalk-white: rgba(255, 255, 255, 0.95);
+            --chalk-yellow: #fdf08a;
+            --chalk-blue: #a5f3fc;
+            --chalk-pink: #fca5a5;
+            --box-border: rgba(165, 243, 252, 0.3);
+        }
+        body {
+            background-color: #121212;
+            font-family: 'Noto Sans KR', sans-serif;
+            color: var(--chalk-white);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        /* 칠판 컨테이너: A4 가로 비율(1.414:1) 적용 */
+        .chalkboard-container {
+            width: 100%;
+            max-width: 1150px;
+            aspect-ratio: 1.414 / 1; 
+            padding: 12px;
+            background: #3d2b1f; 
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+        }
+        .chalkboard {
+            flex: 1;
+            background-color: var(--chalkboard-bg);
+            background-image: url('https://www.transparenttextures.com/patterns/black-chalkboard.png');
+            padding: 30px 40px;
+            position: relative;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.7);
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .handwritten { font-family: 'Nanum Pen Script', cursive; }
+        .highlight-yellow { color: var(--chalk-yellow); }
+        .highlight-blue { color: var(--chalk-blue); }
+        .highlight-pink { color: var(--chalk-pink); }
+        
+        .box-container {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px 20px;
+        }
+
+        .review-box {
+            border: 1.5px solid var(--box-border);
+            border-radius: 8px;
+            padding: 12px;
+            background: rgba(165, 243, 252, 0.05);
+        }
+
+        .comparison-visual {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            border: 1.5px solid var(--chalk-white);
+        }
+        .inner-square {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 35px;
+            height: 35px;
+            border: 1.5px solid var(--chalk-blue);
+            background: rgba(165, 243, 252, 0.1);
+        }
+
+        .case-card {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        mjx-container { color: inherit !important; }
+    </style>
+</head>
+<body>
+    <div class="chalkboard-container">
+        <div class="chalkboard">
+            <!-- 제목 -->
+            <header class="mb-6 flex justify-between items-center border-b border-white/10 pb-2">
+                <div class="flex items-center">
+                    <span class="w-4 h-4 bg-blue-300 rounded-full mr-3 shadow-[0_0_8px_rgba(165,243,252,0.5)]"></span>
+                    <h1 class="text-3xl font-bold handwritten highlight-yellow underline decoration-wavy underline-offset-4">1-2. 제곱근의 성질과 대소 비교</h1>
+                </div>
+                <div class="handwritten text-xl opacity-60">중3 수학 판서</div>
+            </header>
+
+            <!-- 메인 판서 영역 (비율이 늘어난 만큼 여백과 배치를 최적화) -->
+            <div class="grid grid-cols-12 gap-6 flex-grow">
+                <!-- 왼쪽 컬럼 -->
+                <div class="col-span-4 flex flex-col gap-5">
+                    <div class="review-box">
+                        <p class="handwritten text-2xl highlight-blue mb-2">복습 : 근(根) &rarr; '해'</p>
+                        <div class="handwritten text-xl space-y-1">
+                            <p>$x^2 = \Box$ 는 방정식</p>
+                            <p>&rdsh; $x$는 $\Box$의 제곱근</p>
+                        </div>
+                    </div>
+
+                    <div class="box-container border-pink-400/40 flex-grow">
+                        <h2 class="handwritten text-2xl highlight-pink mb-3">★ 핵심 : $\sqrt{a^2} = |a|$</h2>
+                        <div class="bg-pink-400/5 p-4 rounded-xl space-y-4 border-l-4 border-pink-400/30 flex-grow flex flex-col justify-center">
+                            <p class="handwritten text-4xl">$a \ge 0 \longrightarrow \color{#a5f3fc}{a}$</p>
+                            <div class="h-2"></div>
+                            <p class="handwritten text-4xl">$a < 0 \longrightarrow \color{#fca5a5}{-a}$</p>
+                        </div>
+                        <p class="handwritten text-xl opacity-70 mt-4 text-center">* $a$가 음수일 때 $-a$는 양수!</p>
+                    </div>
+                </div>
+
+                <!-- 오른쪽 컬럼 -->
+                <div class="col-span-8 flex flex-col gap-5">
+                    <div class="box-container">
+                        <h2 class="handwritten text-2xl highlight-yellow mb-3">1. 제곱근의 성질 ($a > 0$)</h2>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="border-r border-white/10 pr-4">
+                                <span class="handwritten text-sm bg-blue-400/20 px-3 py-0.5 rounded highlight-blue">제곱근의 정의 이용</span>
+                                <div class="handwritten text-3xl space-y-3 mt-3">
+                                    <p>① $(\sqrt{a})^2 = a$</p>
+                                    <p>② $(-\sqrt{a})^2 = a$</p>
+                                </div>
+                            </div>
+                            <div class="pl-4">
+                                <span class="handwritten text-sm bg-pink-400/20 px-3 py-0.5 rounded highlight-pink">성질 (절댓값)</span>
+                                <div class="handwritten text-3xl space-y-3 mt-3">
+                                    <p>③ $\sqrt{a^2} = a$</p>
+                                    <p>④ $\sqrt{(-a)^2} = a$</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="box-container flex-grow">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h2 class="handwritten text-2xl highlight-yellow">2. 제곱근의 대소 비교</h2>
+                                <p class="handwritten text-lg opacity-80 mt-1">&rarr; 핵심 전략: "모양을 통일하라!"</p>
+                            </div>
+                            <div class="flex items-center gap-6 bg-white/5 p-3 rounded-xl border border-white/10">
+                                <div class="comparison-visual">
+                                    <div class="inner-square"></div>
+                                    <span class="absolute -bottom-5 left-1 text-xs highlight-blue">$\sqrt{a}$</span>
+                                    <span class="absolute -right-5 bottom-1 text-xs">$\sqrt{b}$</span>
+                                </div>
+                                <div class="handwritten text-3xl leading-tight">
+                                    <p>$\sqrt{a} < \sqrt{b}$</p>
+                                    <p class="highlight-yellow">$\iff a < b$</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="case-card border-t-4 border-blue-300/30">
+                                <p class="handwritten highlight-blue text-lg mb-2">① 둘 다 $\sqrt{\enspace}$</p>
+                                <p class="handwritten text-2xl highlight-yellow">$\sqrt{5} < \sqrt{7}$</p>
+                            </div>
+                            <div class="case-card border-t-4 border-blue-300/30">
+                                <p class="handwritten highlight-blue text-lg mb-2">② 둘 다 없을 때</p>
+                                <p class="handwritten text-2xl highlight-yellow">$3 < 5$</p>
+                            </div>
+                            <div class="case-card border-2 border-yellow-400/40 shadow-lg">
+                                <p class="handwritten highlight-pink text-lg mb-1">③ 하나만 있을 때 ★</p>
+                                <p class="handwritten text-2xl highlight-yellow">$\sqrt{9} > \sqrt{7}$</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 p-2 bg-pink-400/10 rounded-lg handwritten text-center text-xl">
+                            <span class="highlight-pink">주의!</span> 음수가 붙으면 부등호 방향이 <span class="highlight-yellow">반대</span>가 된다!
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하단 분필 트레이 -->
+            <div class="mt-6 flex justify-center">
+                <div class="w-32 h-1.5 bg-white/10 rounded-full border-t border-white/5"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>
