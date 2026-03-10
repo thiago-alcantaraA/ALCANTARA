@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>중3 프로그램</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 py-12 px-6">
+    <div class="max-w-4xl mx-auto">
+        <a href="index.html" class="text-gray-400 hover:text-purple-600 mb-8 inline-block font-bold">← 메인으로 돌아가기</a>
+        <div class="bg-white p-10 rounded-[2.5rem] shadow-sm border border-purple-50">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2 text-purple-600">중3 수학 프로그램</h1>
+            <p class="text-purple-300 mb-10 italic">Interactive Tools</p>
+            <div id="file-list" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+        </div>
+    </div>
+    <script>
+        async function loadFiles() {
+            const res = await fetch(`https://api.github.com/repos/thiago-alcantaraA/ALCANTARA/git/trees/main?recursive=1`);
+            const data = await res.json();
+            const container = document.getElementById('file-list');
+            const files = data.tree.filter(f => f.path.includes('중3') && f.path.includes('프로그램') && f.path.endsWith('.html'));
+            container.innerHTML = files.length ? '' : '<p class="text-center text-gray-300 col-span-2">등록된 프로그램이 없습니다.</p>';
+            files.forEach(file => {
+                const name = file.path.split('/').pop().replace('.html', '');
+                container.innerHTML += `<a href="${encodeURI(file.path)}" class="p-8 bg-purple-50/30 rounded-[2rem] hover:bg-purple-50 transition border border-transparent hover:border-purple-200 flex flex-col font-bold text-gray-800"><i class="fa-solid fa-laptop-code text-xl mb-4 text-purple-400"></i>${name}</a>`;
+            });
+        }
+        loadFiles();
+    </script>
+</body>
+</html>
