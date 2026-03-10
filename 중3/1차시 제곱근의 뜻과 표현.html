@@ -24,22 +24,29 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            padding: 20px;
         }
         .chalkboard-container {
-            width: 95%;
+            width: 100%;
             max-width: 1250px;
             padding: 12px;
             background: #3d2b1f; 
             border-radius: 8px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            /* 내용이 없을 때도 영역을 차지하도록 최소 높이 설정 */
+            min-height: 800px;
+            display: flex;
         }
         .chalkboard {
+            flex: 1;
             background-color: var(--chalkboard-bg);
             background-image: url('https://www.transparenttextures.com/patterns/black-chalkboard.png');
             padding: 35px 50px;
             position: relative;
             box-shadow: inset 0 0 100px rgba(0,0,0,0.7);
             border-radius: 4px;
+            display: flex;
+            flex-direction: column;
         }
         .handwritten { font-family: 'Nanum Pen Script', cursive; }
         .highlight-yellow { color: var(--chalk-yellow); }
@@ -63,7 +70,7 @@
             flex: 1;
             padding: 15px 20px;
             display: flex;
-            align-items: center; /* 가로 정렬을 위해 수정 */
+            align-items: center;
             gap: 15px;
         }
         .summary-item:not(:last-child) {
@@ -94,6 +101,11 @@
             padding: 10px 15px;
             margin-top: 25px;
         }
+
+        /* 수식이 로딩되기 전까지 숨김 방지 */
+        .math-content {
+            visibility: visible !important;
+        }
     </style>
 </head>
 <body>
@@ -111,7 +123,7 @@
                 <h1 class="text-3xl font-bold handwritten highlight-yellow">1. 제곱근의 뜻과 표현</h1>
             </header>
 
-            <!-- 상단 요약 바: 완전히 가로로 길게 펼쳐진 레이아웃 -->
+            <!-- 상단 요약 바 -->
             <div class="top-summary-container">
                 <div class="top-summary-flex">
                     <div class="summary-item">
@@ -130,7 +142,7 @@
             </div>
 
             <!-- 하단 컨텐츠 영역 -->
-            <div class="grid grid-cols-12 gap-8">
+            <div class="grid grid-cols-12 gap-8 flex-grow">
                 <!-- I. 제곱근의 정의 -->
                 <div class="col-span-7">
                     <h2 class="text-2xl handwritten highlight-yellow mb-4">Ⅰ. 제곱근의 정의</h2>
@@ -190,18 +202,29 @@
             </div>
 
             <!-- 하단 분필 선반 -->
-            <div class="mt-12 flex justify-center">
-                <div class="w-48 h-2 bg-white/10 rounded-full border-t border-white/5"></div>
+            <div class="mt-12 flex justify-center pb-4">
+                <div class="w-48 h-2 bg-white/10 rounded-full border-t border-white/5 shadow-inner"></div>
             </div>
         </div>
     </div>
 
+    <!-- MathJax 설정 보완 -->
     <script>
         window.MathJax = {
             tex: {
-                inlineMath: [['$', '$']],
-                displayMath: [['$$', '$$']],
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
                 processEscapes: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        console.log('MathJax is ready');
+                    });
+                }
             }
         };
     </script>
