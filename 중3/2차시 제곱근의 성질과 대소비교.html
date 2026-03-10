@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>중3 수학 판서 - 제곱근의 성질과 대소 비교</title>
+    <!-- 구글 폰트 로드 -->
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -26,7 +28,7 @@
             min-height: 100vh;
             padding: 20px;
         }
-        /* 칠판 컨테이너: A4 가로 비율(1.414:1) 적용 */
+        /* 칠판 컨테이너: A4 가로 비율(1.414:1) */
         .chalkboard-container {
             width: 100%;
             max-width: 1150px;
@@ -92,7 +94,12 @@
             text-align: center;
         }
 
-        mjx-container { color: inherit !important; }
+        /* MathJax 렌더링 오류 방지 스타일 */
+        mjx-container { 
+            color: inherit !important; 
+            display: inline-block !important;
+            margin: 0 !important;
+        }
     </style>
 </head>
 <body>
@@ -107,15 +114,14 @@
                 <div class="handwritten text-xl opacity-60">중3 수학 판서</div>
             </header>
 
-            <!-- 메인 판서 영역 (비율이 늘어난 만큼 여백과 배치를 최적화) -->
             <div class="grid grid-cols-12 gap-6 flex-grow">
                 <!-- 왼쪽 컬럼 -->
                 <div class="col-span-4 flex flex-col gap-5">
                     <div class="review-box">
-                        <p class="handwritten text-2xl highlight-blue mb-2">복습 : 근(根) &rarr; '해'</p>
+                        <p class="handwritten text-2xl highlight-blue mb-2">복습 : 근(根) → '해'</p>
                         <div class="handwritten text-xl space-y-1">
                             <p>$x^2 = \Box$ 는 방정식</p>
-                            <p>&rdsh; $x$는 $\Box$의 제곱근</p>
+                            <p>↳ $x$는 $\Box$의 제곱근</p>
                         </div>
                     </div>
 
@@ -156,7 +162,7 @@
                         <div class="flex justify-between items-start mb-4">
                             <div>
                                 <h2 class="handwritten text-2xl highlight-yellow">2. 제곱근의 대소 비교</h2>
-                                <p class="handwritten text-lg opacity-80 mt-1">&rarr; 핵심 전략: "모양을 통일하라!"</p>
+                                <p class="handwritten text-lg opacity-80 mt-1">→ 핵심 전략: "모양을 통일하라!"</p>
                             </div>
                             <div class="flex items-center gap-6 bg-white/5 p-3 rounded-xl border border-white/10">
                                 <div class="comparison-visual">
@@ -199,11 +205,15 @@
         </div>
     </div>
 
+    <!-- MathJax 설정 보완 (충돌 방지) -->
     <script>
         window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
                 displayMath: [['$$', '$$']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
             }
         };
     </script>
