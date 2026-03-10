@@ -1,68 +1,44 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>수학 수업 자료실</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap');
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8f9fa; }
-    </style>
-</head>
-<body class="py-12 px-6">
-    <div class="max-w-6xl mx-auto">
-        <div class="mb-12 px-2">
-            <h1 class="text-3xl font-bold text-gray-800 flex items-center">
-                <i class="fa-solid fa-graduation-cap text-purple-600 mr-3"></i> 학년별 교육과정
-            </h1>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition">
-                <div class="bg-blue-50 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-blue-600 font-bold text-xl">1</div>
-                <h3 class="text-xl font-bold mb-2 text-gray-800">중학교 1학년</h3>
-                <p class="text-gray-400 text-sm mb-6 font-light">자료 준비 중입니다.</p>
-                <a href="grade1.html" class="text-blue-600 font-bold text-sm flex items-center group">
-                    자료 보기 <i class="fa-solid fa-arrow-right ml-2 text-xs transition-transform group-hover:translate-x-1"></i>
-                </a>
-            </div>
-
-            <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition">
-                <div class="bg-green-50 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-green-600 font-bold text-xl">2</div>
-                <h3 class="text-xl font-bold mb-2 text-gray-800">중학교 2학년</h3>
-                <p class="text-gray-400 text-sm mb-6 font-light">자료 준비 중입니다.</p>
-                <a href="grade2.html" class="text-green-600 font-bold text-sm flex items-center group">
-                    자료 보기 <i class="fa-solid fa-arrow-right ml-2 text-xs transition-transform group-hover:translate-x-1"></i>
-                </a>
-            </div>
-
-            <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 ring-2 ring-purple-50 hover:shadow-md transition">
-                <div class="bg-purple-50 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-purple-600 font-bold text-xl">3</div>
-                <h3 class="text-xl font-bold mb-2 text-gray-800">중학교 3학년</h3>
-                <p class="text-gray-400 text-sm mb-6 font-light">자료 준비 중입니다.</p>
-                <a href="grade3.html" class="text-purple-600 font-bold text-sm flex items-center group">
-                    자료 보기 <i class="fa-solid fa-arrow-right ml-2 text-xs transition-transform group-hover:translate-x-1"></i>
-                </a>
-            </div>
-        </div>
-
-        <div class="mb-8 px-2">
-            <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-                <i class="fa-solid fa-dice text-orange-500 mr-3"></i> 창의적 체험활동 (보드게임)
-            </h1>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <a href="요트 다이스 조별 게임.html" class="flex items-center p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group">
-                <span class="text-3xl mr-6">🎲</span>
-                <span class="font-bold text-gray-700 group-hover:text-orange-500">요트 다이스 조별 게임</span>
-            </a>
-            <a href="코드네임 조별 게임.html" class="flex items-center p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group">
-                <span class="text-3xl mr-6">🕵️</span>
-                <span class="font-bold text-gray-700 group-hover:text-orange-500">코드네임 조별 게임</span>
-            </a>
-        </div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition">
+        <div class="bg-blue-50 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-blue-600 font-bold text-xl">1</div>
+        <h3 class="text-xl font-bold mb-6 text-gray-800">중학교 1학년</h3>
+        <button onclick="showMenu(1)" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition">
+            선택하기
+        </button>
     </div>
-</body>
-</html>
+    </div>
+
+<div id="menuModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white p-8 rounded-[2.5rem] max-w-sm w-full mx-4 shadow-2xl">
+        <h2 id="modalTitle" class="text-2xl font-bold text-center mb-8">무엇을 보시겠습니까?</h2>
+        <div class="space-y-4">
+            <button onclick="goToPage('materials')" class="w-full py-5 bg-gray-50 rounded-2xl hover:bg-purple-50 group transition flex items-center px-6">
+                <span class="text-2xl mr-4">📚</span>
+                <span class="font-bold text-gray-700 group-hover:text-purple-600 text-lg">수업자료</span>
+            </button>
+            <button onclick="goToPage('programs')" class="w-full py-5 bg-gray-50 rounded-2xl hover:bg-orange-50 group transition flex items-center px-6">
+                <span class="text-2xl mr-4">💻</span>
+                <span class="font-bold text-gray-700 group-hover:text-orange-600 text-lg">프로그램</span>
+            </button>
+        </div>
+        <button onclick="closeMenu()" class="mt-8 w-full text-gray-400 text-sm hover:underline">닫기</button>
+    </div>
+</div>
+
+<script>
+    let selectedGrade = 0;
+    function showMenu(grade) {
+        selectedGrade = grade;
+        document.getElementById('modalTitle').innerText = `중학교 ${grade}학년`;
+        document.getElementById('menuModal').classList.remove('hidden');
+        document.getElementById('menuModal').classList.add('flex');
+    }
+    function closeMenu() {
+        document.getElementById('menuModal').classList.add('hidden');
+        document.getElementById('menuModal').classList.remove('flex');
+    }
+    function goToPage(type) {
+        // 예: grade3_programs.html 또는 grade3_materials.html로 이동
+        location.href = `grade${selectedGrade}_${type}.html`;
+    }
+</script>
