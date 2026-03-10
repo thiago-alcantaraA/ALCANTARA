@@ -1,0 +1,33 @@
+<script>
+    async function loadPrograms() {
+        const repo = "thiago-alcantaraA/ALCANTARA";
+        const res = await fetch(`https://api.github.com/repos/${repo}/git/trees/main?recursive=1`);
+        const data = await res.json();
+        const container = document.getElementById('program-list');
+        
+        // '중3' 포함 + '프로그램' 포함 + .html 파일 필터링
+        const programs = data.tree.filter(f => 
+            f.path.includes('중3') && 
+            f.path.includes('프로그램') && 
+            f.path.endsWith('.html')
+        );
+        
+        // (이하 출력 로직은 이전과 동일)
+        if (programs.length === 0) {
+            container.innerHTML = '<p class="text-gray-300 italic p-10 text-center col-span-2">등록된 프로그램이 없습니다.</p>';
+            return;
+        }
+        programs.forEach(file => {
+            const name = file.path.split('/').pop().replace('.html', '');
+            container.innerHTML += `
+                <a href="${encodeURI(file.path)}" class="flex flex-col p-8 bg-orange-50/30 rounded-[2rem] hover:bg-orange-50 transition group border border-transparent hover:border-orange-200">
+                    <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-6 group-hover:rotate-12 transition text-orange-400 text-xl">
+                        <i class="fa-solid fa-laptop-code"></i>
+                    </div>
+                    <span class="font-bold text-gray-800 group-hover:text-orange-700 text-xl mb-2">${name}</span>
+                    <span class="text-sm text-orange-300">프로그램 실행하기 →</span>
+                </a>`;
+        });
+    }
+    loadPrograms();
+</script>
