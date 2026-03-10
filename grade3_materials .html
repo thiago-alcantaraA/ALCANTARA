@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중3 수학 수업자료</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 py-12 px-6">
+    <div class="max-w-4xl mx-auto">
+        <a href="index.html" class="text-gray-400 hover:text-purple-600 mb-8 inline-flex items-center transition">
+            <i class="fa-solid fa-chevron-left mr-2"></i> 메인 포털로 돌아가기
+        </a>
+        
+        <div class="bg-white p-10 rounded-[2.5rem] shadow-sm border border-gray-100">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">중학교 3학년 수업자료</h1>
+            <p class="text-gray-400 mb-10 italic">Mathematics Class Materials</p>
+            
+            <div id="material-list" class="grid grid-cols-1 gap-4">
+                <p class="text-gray-300 italic p-10 text-center text-sm">자료를 불러오고 있습니다...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadMaterials() {
+            const repo = "thiago-alcantaraA/ALCANTARA";
+            const res = await fetch(`https://api.github.com/repos/${repo}/git/trees/main?recursive=1`);
+            const data = await res.json();
+            const container = document.getElementById('material-list');
+            
+            // '중3' 포함 + '프로그램' 미포함 + .html 파일 필터링
+            const materials = data.tree.filter(f => 
+                f.path.includes('중3') && 
+                !f.path.includes('프로그램') && 
+                f.path.endsWith('.html') &&
+                !f.path.includes('index.html') &&
+                !f.path.includes('grade') // 상세 페이지 자체 제외
+            );
+            
+            if (materials.length === 0) {
+                container.innerHTML = '<p class="text-gray-300 italic p-10 text-center">등록된 수업자료가 없습니다.</p>';
+                return;
+            }
+
+            container.innerHTML = ''; // 로딩 메시지 비우기
+            materials.forEach(file => {
+                const name = file.path.split('/').pop().replace('.html', '');
+                container.innerHTML += `
+                    <a href="${encodeURI(file.path)}" class="flex items-center p-6 bg-gray-50 rounded-2xl hover:bg-purple-50 transition group border border-transparent hover:border-purple-100">
+                        <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm mr-6 group-hover:scale-110 transition text-purple-400">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                        <span class="font-bold text-gray-700 group-hover:text-purple-700 text-lg">${name}</span>
+                    </a>`;
+            });
+        }
+        loadMaterials();
+    </script>
+</body>
+</html>
