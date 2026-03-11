@@ -14,21 +14,24 @@
         /* 근호(Root) 시각화 스타일 */
         .root-container {
             display: inline-flex;
-            align-items: flex-start;
+            align-items: center;
             position: relative;
+            vertical-align: middle;
         }
 
         .root-svg {
-            height: 1.2em;
-            margin-right: -2px;
-            align-self: center;
+            height: 1.4em;
+            margin-right: -1.5px;
+            flex-shrink: 0;
         }
 
         .root-content {
             border-top: 2.5px solid currentColor;
-            padding-top: 2px;
-            margin-top: 4px;
+            padding-top: 1px;
+            padding-left: 4px;
+            padding-right: 6px;
             display: inline-block;
+            line-height: 1;
         }
         
         #mathDisplay {
@@ -49,7 +52,6 @@
             white-space: nowrap;
         }
 
-        /* 버튼 비활성화 스타일 */
         button:disabled {
             opacity: 0.4;
             cursor: not-allowed;
@@ -69,7 +71,7 @@
         <!-- 수식 계산 영역 -->
         <div class="bg-white px-6 py-6 border-t border-b border-gray-100">
             <div id="mathDisplay" class="text-2xl md:text-3xl font-bold text-gray-800 math-container">
-                <!-- 기준점과 빗변 수식이 표시됨 -->
+                <!-- 기준점과 빗변 수식 -->
             </div>
         </div>
 
@@ -119,14 +121,14 @@
         let progress = 0;
         let state = 'IDLE'; 
 
-        const PADDING_BOTTOM = 100; // 아래쪽 좌표 표시 공간
+        const PADDING_BOTTOM = 140; 
         const UNIT_PIXELS = 55;
 
         function getRootHtml(content) {
             return `
                 <div class="root-container">
                     <svg class="root-svg" viewBox="0 0 12 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 9L4 13L11 1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M1 9.5L4 13.5L11 1.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     <span class="root-content">${content}</span>
                 </div>
@@ -208,7 +210,6 @@
             if (state !== 'IDLE') {
                 const triProgress = (state === 'DRAWING_TRIANGLE') ? progress : 1;
                 
-                // 밑변 그리기
                 ctx.beginPath();
                 ctx.strokeStyle = '#6366f1';
                 ctx.lineWidth = 6;
@@ -218,7 +219,6 @@
                 ctx.lineTo(startX + currentA, centerY);
                 ctx.stroke();
 
-                // 높이 그리기
                 if (triProgress > 0.5) {
                     const hProgress = (triProgress - 0.5) * 2;
                     ctx.beginPath();
@@ -227,7 +227,6 @@
                     ctx.stroke();
                 }
 
-                // 삼각형 완성 및 빗변 강조
                 if (triProgress === 1) {
                     ctx.beginPath();
                     ctx.strokeStyle = '#6366f1';
@@ -256,7 +255,6 @@
                 const startAngle = -Math.atan2(b, a);
                 const radius = c * UNIT_PIXELS;
 
-                // 오른쪽 호
                 const targetAngleRight = 0;
                 const currentAngleRight = startAngle + (targetAngleRight - startAngle) * arcProgress;
                 ctx.setLineDash([8, 8]);
@@ -266,7 +264,6 @@
                 ctx.arc(startX, centerY, radius, startAngle, currentAngleRight, false);
                 ctx.stroke();
 
-                // 왼쪽 호
                 const targetAngleLeft = -Math.PI;
                 const currentAngleLeft = startAngle + (targetAngleLeft - startAngle) * arcProgress;
                 ctx.beginPath();
@@ -276,6 +273,8 @@
                 ctx.setLineDash([]);
 
                 if (state === 'FINISHED') {
+                    const textY = centerY + 70; // Y축 위치 소폭 조정
+
                     // 오른쪽 점 P
                     const targetXRight = startX + radius;
                     ctx.beginPath();
@@ -286,11 +285,16 @@
                     ctx.lineWidth = 3;
                     ctx.stroke();
                     
+                    // P는 중앙 정렬 유지, 좌표는 오른쪽 옆에
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
                     ctx.fillStyle = '#f43f5e';
-                    ctx.font = 'bold 20px sans-serif';
-                    ctx.fillText('P', targetXRight, centerY + 45);
-                    ctx.font = 'bold 16px sans-serif';
-                    ctx.fillText(`${origin} + √${innerVal}`, targetXRight, centerY + 70);
+                    ctx.font = 'bold 30px sans-serif';
+                    ctx.fillText('P', targetXRight, textY);
+                    
+                    ctx.textAlign = 'left';
+                    ctx.font = 'bold 22px sans-serif';
+                    ctx.fillText(` (${origin} + √${innerVal})`, targetXRight + 15, textY + 5);
 
                     // 왼쪽 점 Q
                     const targetXLeft = startX - radius;
@@ -302,16 +306,19 @@
                     ctx.lineWidth = 3;
                     ctx.stroke();
 
+                    ctx.textAlign = 'center';
                     ctx.fillStyle = '#10b981';
-                    ctx.font = 'bold 20px sans-serif';
-                    ctx.fillText('Q', targetXLeft, centerY + 45);
-                    ctx.font = 'bold 16px sans-serif';
-                    ctx.fillText(`${origin} - √${innerVal}`, targetXLeft, centerY + 70);
+                    ctx.font = 'bold 30px sans-serif';
+                    ctx.fillText('Q', targetXLeft, textY);
+                    
+                    ctx.textAlign = 'left';
+                    ctx.font = 'bold 22px sans-serif';
+                    ctx.fillText(` (${origin} - √${innerVal})`, targetXLeft + 15, textY + 5);
                 }
             }
 
             if (state === 'DRAWING_TRIANGLE') {
-                progress += 0.015; 
+                progress += 0.003; 
                 if (progress >= 1) {
                     progress = 1;
                     state = 'TRIANGLE_DONE';
@@ -320,7 +327,7 @@
                 }
                 animationId = requestAnimationFrame(draw);
             } else if (state === 'DRAWING_ARC') {
-                progress += 0.015; 
+                progress += 0.003; 
                 if (progress >= 1) {
                     progress = 1;
                     state = 'FINISHED';
