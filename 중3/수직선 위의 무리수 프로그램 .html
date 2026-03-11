@@ -35,8 +35,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
-            min-height: 4rem;
+            gap: 1rem;
+            min-height: 5rem;
             overflow: visible;
         }
 
@@ -62,14 +62,14 @@
     <div class="max-w-4xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
         
         <!-- 그림 영역 (Canvas) -->
-        <div class="relative w-full h-[420px] bg-white">
+        <div class="relative w-full h-[400px] bg-white">
             <canvas id="gameCanvas" class="w-full h-full"></canvas>
         </div>
 
         <!-- 수식 계산 영역 -->
-        <div class="bg-white px-6 py-4 border-t border-b border-gray-100">
+        <div class="bg-white px-6 py-6 border-t border-b border-gray-100">
             <div id="mathDisplay" class="text-2xl md:text-3xl font-bold text-gray-800 math-container">
-                <!-- 수식이 동적으로 업데이트됨 -->
+                <!-- 기준점과 빗변 수식이 표시됨 -->
             </div>
         </div>
 
@@ -77,7 +77,7 @@
         <div class="p-8 bg-gray-50/50">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-tighter mb-2 ml-1">기준점</label>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-tighter mb-2 ml-1">기준점 (O)</label>
                     <input type="number" id="originInput" value="0" class="w-full px-5 py-3 bg-white border-2 border-gray-100 rounded-2xl focus:border-indigo-500 outline-none text-lg shadow-sm transition-all">
                 </div>
                 <div>
@@ -95,7 +95,7 @@
                     삼각형 그리기
                 </button>
                 <button id="step2Btn" disabled class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-black py-5 px-6 rounded-2xl transition-all transform active:scale-[0.98] text-xl shadow-xl shadow-rose-100">
-                    호 그리기
+                    호 그리기 (양방향)
                 </button>
                 <button id="resetBtn" class="bg-white hover:bg-gray-100 text-gray-500 font-bold py-5 px-8 rounded-2xl border-2 border-gray-100 transition-all text-xl">
                     초기화
@@ -117,12 +117,11 @@
 
         let animationId;
         let progress = 0;
-        let state = 'IDLE'; // IDLE, DRAWING_TRIANGLE, TRIANGLE_DONE, DRAWING_ARC, FINISHED
+        let state = 'IDLE'; 
 
-        const PADDING = 60; 
-        const UNIT_PIXELS = 55; // 범위를 -5~7로 늘리기 위해 단위 길이 살짝 조정
+        const PADDING_BOTTOM = 100; // 아래쪽 좌표 표시 공간
+        const UNIT_PIXELS = 55;
 
-        // 루트 수식 레이아웃 생성 함수
         function getRootHtml(content) {
             return `
                 <div class="root-container">
@@ -134,7 +133,6 @@
             `;
         }
 
-        // 캔버스 초기화
         function initCanvas() {
             const rect = canvas.parentNode.getBoundingClientRect();
             canvas.width = rect.width;
@@ -143,13 +141,10 @@
             updateMathText();
         }
 
-        // 수직선(축) 그리기 (-5부터 7까지 고정)
         function drawStaticAxis() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const centerY = canvas.height - PADDING;
-            
-            // 0의 위치를 화면 중앙에서 살짝 왼쪽으로 이동하여 7까지 균형 있게 표시
-            const centerX = canvas.width / 2 - UNIT_PIXELS; 
+            const centerY = canvas.height - PADDING_BOTTOM;
+            const centerX = canvas.width / 2; 
 
             ctx.beginPath();
             ctx.strokeStyle = '#e2e8f0';
@@ -163,7 +158,7 @@
             ctx.font = '800 16px sans-serif';
             ctx.fillStyle = '#94a3b8';
 
-            for (let i = -5; i <= 7; i++) {
+            for (let i = -7; i <= 7; i++) {
                 const x = centerX + i * UNIT_PIXELS;
                 ctx.beginPath();
                 ctx.moveTo(x, centerY - 8);
@@ -173,25 +168,17 @@
             }
         }
 
-        // 하단 수식 업데이트
         function updateMathText() {
             const a = parseFloat(baseInput.value) || 0;
             const b = parseFloat(heightInput.value) || 0;
             const origin = parseFloat(originInput.value) || 0;
-            const sumSq = (a * a + b * b);
-            const innerVal = Number.isInteger(sumSq) ? sumSq : sumSq.toFixed(1);
-            
-            const originPart = origin !== 0 ? `${origin} + ` : "";
             
             mathDisplay.innerHTML = `
-                <span>빗변</span>
-                <span class="mx-1">=</span>
+                <span class="text-gray-500">기준점(O) = ${origin}</span>
+                <span class="mx-4 text-gray-200">|</span>
+                <span>빗변의 길이</span>
+                <span class="mx-2">=</span>
                 ${getRootHtml(`<span class="math-value">${a}² + ${b}²</span>`)}
-                <span class="mx-3 text-gray-300">|</span>
-                <span>위치</span>
-                <span class="mx-1">=</span>
-                <span>${originPart}</span>
-                ${getRootHtml(`<span class="math-value">${innerVal}</span>`)}
             `;
         }
 
@@ -204,16 +191,16 @@
             input.addEventListener('input', handleInputChange);
         });
 
-        // 통합 드로잉 함수
         function draw() {
             const origin = parseFloat(originInput.value) || 0;
             const a = parseFloat(baseInput.value) || 0;
             const b = parseFloat(heightInput.value) || 0;
             const sumSq = a * a + b * b;
             const c = Math.sqrt(sumSq);
+            const innerVal = Number.isInteger(sumSq) ? sumSq : sumSq.toFixed(1);
             
-            const centerY = canvas.height - PADDING;
-            const centerX = canvas.width / 2 - UNIT_PIXELS;
+            const centerY = canvas.height - PADDING_BOTTOM;
+            const centerX = canvas.width / 2;
             const startX = centerX + origin * UNIT_PIXELS;
 
             drawStaticAxis();
@@ -221,16 +208,17 @@
             if (state !== 'IDLE') {
                 const triProgress = (state === 'DRAWING_TRIANGLE') ? progress : 1;
                 
+                // 밑변 그리기
                 ctx.beginPath();
                 ctx.strokeStyle = '#6366f1';
                 ctx.lineWidth = 6;
                 ctx.lineCap = 'round';
                 ctx.moveTo(startX, centerY);
-                
                 const currentA = a * UNIT_PIXELS * Math.min(triProgress * 2, 1);
                 ctx.lineTo(startX + currentA, centerY);
                 ctx.stroke();
 
+                // 높이 그리기
                 if (triProgress > 0.5) {
                     const hProgress = (triProgress - 0.5) * 2;
                     ctx.beginPath();
@@ -239,6 +227,7 @@
                     ctx.stroke();
                 }
 
+                // 삼각형 완성 및 빗변 강조
                 if (triProgress === 1) {
                     ctx.beginPath();
                     ctx.strokeStyle = '#6366f1';
@@ -265,31 +254,64 @@
             if (state === 'DRAWING_ARC' || state === 'FINISHED') {
                 const arcProgress = (state === 'DRAWING_ARC') ? progress : 1;
                 const startAngle = -Math.atan2(b, a);
-                const currentAngle = startAngle + (0 - startAngle) * arcProgress;
                 const radius = c * UNIT_PIXELS;
 
-                ctx.setLineDash([12, 10]);
+                // 오른쪽 호
+                const targetAngleRight = 0;
+                const currentAngleRight = startAngle + (targetAngleRight - startAngle) * arcProgress;
+                ctx.setLineDash([8, 8]);
                 ctx.beginPath();
                 ctx.strokeStyle = '#f43f5e';
                 ctx.lineWidth = 3;
-                ctx.arc(startX, centerY, radius, startAngle, currentAngle, false);
+                ctx.arc(startX, centerY, radius, startAngle, currentAngleRight, false);
+                ctx.stroke();
+
+                // 왼쪽 호
+                const targetAngleLeft = -Math.PI;
+                const currentAngleLeft = startAngle + (targetAngleLeft - startAngle) * arcProgress;
+                ctx.beginPath();
+                ctx.strokeStyle = '#10b981'; 
+                ctx.arc(startX, centerY, radius, startAngle, currentAngleLeft, true);
                 ctx.stroke();
                 ctx.setLineDash([]);
 
                 if (state === 'FINISHED') {
-                    const targetX = startX + radius;
+                    // 오른쪽 점 P
+                    const targetXRight = startX + radius;
                     ctx.beginPath();
                     ctx.fillStyle = '#f43f5e';
-                    ctx.arc(targetX, centerY, 10, 0, Math.PI * 2);
+                    ctx.arc(targetXRight, centerY, 10, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.strokeStyle = 'white';
                     ctx.lineWidth = 3;
                     ctx.stroke();
+                    
+                    ctx.fillStyle = '#f43f5e';
+                    ctx.font = 'bold 20px sans-serif';
+                    ctx.fillText('P', targetXRight, centerY + 45);
+                    ctx.font = 'bold 16px sans-serif';
+                    ctx.fillText(`${origin} + √${innerVal}`, targetXRight, centerY + 70);
+
+                    // 왼쪽 점 Q
+                    const targetXLeft = startX - radius;
+                    ctx.beginPath();
+                    ctx.fillStyle = '#10b981';
+                    ctx.arc(targetXLeft, centerY, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#10b981';
+                    ctx.font = 'bold 20px sans-serif';
+                    ctx.fillText('Q', targetXLeft, centerY + 45);
+                    ctx.font = 'bold 16px sans-serif';
+                    ctx.fillText(`${origin} - √${innerVal}`, targetXLeft, centerY + 70);
                 }
             }
 
             if (state === 'DRAWING_TRIANGLE') {
-                progress += 0.006; 
+                progress += 0.015; 
                 if (progress >= 1) {
                     progress = 1;
                     state = 'TRIANGLE_DONE';
@@ -298,14 +320,14 @@
                 }
                 animationId = requestAnimationFrame(draw);
             } else if (state === 'DRAWING_ARC') {
-                progress += 0.006; 
+                progress += 0.015; 
                 if (progress >= 1) {
                     progress = 1;
                     state = 'FINISHED';
                     step2Btn.disabled = true;
                 }
                 animationId = requestAnimationFrame(draw);
-            } else if (state === 'TRIANGLE_DONE' || state === 'FINISHED' || state === 'IDLE') {
+            } else {
                 animationId = requestAnimationFrame(draw);
             }
         }
@@ -336,7 +358,9 @@
         resetBtn.addEventListener('click', resetAnimation);
 
         window.addEventListener('resize', initCanvas);
-        window.onload = initCanvas;
+        window.onload = function() {
+            initCanvas();
+        };
     </script>
 </body>
 </html>
