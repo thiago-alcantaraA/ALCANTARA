@@ -15,6 +15,7 @@
 </head>
 <body class="py-12 px-6">
     <div class="max-w-6xl mx-auto">
+        <!-- 학년별 교육과정 섹션 -->
         <h1 class="text-4xl font-extrabold text-gray-800 mb-12 flex items-center">
             <i class="fa-solid fa-graduation-cap text-purple-600 mr-4"></i> 학년별 교육과정
         </h1>
@@ -57,10 +58,11 @@
             </div>
         </div>
 
+        <!-- 보드게임 섹션 -->
         <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
             <i class="fa-solid fa-dice text-orange-500 mr-4"></i> 창의적 체험활동 (보드게임)
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
             <a href="요트 다이스 조별 게임.html" class="flex items-center p-7 bg-white rounded-[2rem] shadow-sm border border-gray-100 hover:shadow-lg transition group">
                 <span class="text-4xl mr-6 group-hover:rotate-12 transition">🎲</span>
                 <span class="font-bold text-gray-700 group-hover:text-orange-500 text-lg">요트 다이스</span>
@@ -74,6 +76,31 @@
                 <span class="font-bold text-gray-700 group-hover:text-orange-500 text-lg">초성게임</span>
             </a>
         </div>
+
+        <!-- 학급 관리 도구 섹션 (추가됨) -->
+        <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+            <i class="fa-solid fa-toolbox text-indigo-500 mr-4"></i> 학급 관리 도구
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <a href="랜덤 숫자뽑기.html" class="flex items-center p-7 bg-white rounded-[2rem] shadow-sm border border-indigo-100 hover:shadow-lg hover:border-indigo-300 transition group">
+                <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mr-6 group-hover:bg-indigo-100 transition">
+                    <i class="fa-solid fa-shuffle text-3xl text-indigo-500 group-hover:rotate-45 transition"></i>
+                </div>
+                <div>
+                    <span class="block font-bold text-gray-800 text-lg">랜덤 숫자뽑기</span>
+                    <span class="text-sm text-gray-500 font-medium">발표자 선정 및 번호 추첨</span>
+                </div>
+            </a>
+            <a href="자리배치도.html" class="flex items-center p-7 bg-white rounded-[2rem] shadow-sm border border-indigo-100 hover:shadow-lg hover:border-indigo-300 transition group">
+                <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mr-6 group-hover:bg-indigo-100 transition">
+                    <i class="fa-solid fa-chair text-3xl text-indigo-500 group-hover:scale-110 transition"></i>
+                </div>
+                <div>
+                    <span class="block font-bold text-gray-800 text-lg">자리배치도</span>
+                    <span class="text-sm text-gray-500 font-medium">좌석 배치 및 명렬표 관리</span>
+                </div>
+            </a>
+        </div>
     </div>
 
     <script>
@@ -81,7 +108,9 @@
             const menu = document.getElementById(`menu-${n}`);
             const arrow = document.getElementById(`arrow-${n}`);
             menu.classList.toggle('open');
-            arrow.style.transform = menu.classList.contains('open') ? "rotate(180deg)" : "rotate(0deg)";
+            if(arrow) {
+                arrow.style.transform = menu.classList.contains('open') ? "rotate(180deg)" : "rotate(0deg)";
+            }
         }
     </script>
 </body>
