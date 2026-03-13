@@ -6,11 +6,18 @@
     <title>제곱근 표 학습 도우미</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .highlight-line { background-color: #fef08a !important; } /* 노란색 배경 */
-        .highlight-intersect { background-color: #ef4444 !important; color: white !important; font-weight: bold; } /* 빨간색 배경 */
-        .table-container { max-height: 65vh; overflow-y: auto; border: 1px solid #e5e7eb; }
+        /* 첫 번째 선택 (노란색/빨간색) */
+        .highlight-line-1 { background-color: #fef08a !important; }
+        .highlight-intersect-1 { background-color: #ef4444 !important; color: white !important; font-weight: bold; }
+        
+        /* 두 번째 선택 (하늘색/파란색) */
+        .highlight-line-2 { background-color: #bae6fd !important; }
+        .highlight-intersect-2 { background-color: #2563eb !important; color: white !important; font-weight: bold; }
+
+        .table-container { max-height: 60vh; overflow-y: auto; border: 1px solid #e5e7eb; }
         table { border-collapse: separate; border-spacing: 0; }
         th { position: sticky; top: 0; background-color: #f3f4f6; z-index: 30; border-bottom: 2px solid #e5e7eb; }
+        
         /* 첫 번째 열(수 라벨) 고정 */
         td:first-child, th:first-child { 
             position: sticky; 
@@ -19,54 +26,84 @@
             z-index: 40; 
             border-right: 2px solid #e5e7eb;
         }
-        /* 교차 지점의 z-index 관리 */
         th:first-child { z-index: 50; }
         
-        /* 클릭 가능한 셀 스타일 */
         .clickable-cell:hover {
             background-color: #e2e8f0;
             cursor: pointer;
         }
+
+        /* 버튼 애니메이션 */
+        .btn-active { background-color: #ef4444 !important; color: white !important; border-color: #dc2626 !important; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen p-4 md:p-8 text-slate-800 font-sans">
 
-    <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-6">
+    <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-xl p-6">
         <!-- 헤더 영역 -->
         <div class="text-center mb-6">
             <h1 class="text-3xl font-bold text-slate-900 mb-2">제곱근 표 완벽 가이드</h1>
-            <p class="text-slate-600">숫자를 직접 입력하거나, 표의 칸을 <span class="text-blue-600 font-bold italic">클릭</span>해 보세요.</p>
+            <p class="text-slate-600">숫자를 고정하고 다른 숫자와 비교해 보세요. 표의 칸을 클릭해도 값이 입력됩니다.</p>
         </div>
 
-        <!-- 입력 영역 -->
-        <div class="flex flex-col md:flex-row items-center justify-center gap-6 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-100">
-            <div class="relative">
-                <label for="searchVal" class="block text-sm font-medium text-slate-700 mb-2 underline decoration-blue-300">숫자 입력 (범위: 1.00 ~ 99.9)</label>
-                <div class="flex items-center gap-2">
-                    <span class="text-2xl font-serif">√</span>
-                    <input type="number" id="searchVal" step="0.01" min="1.00" max="99.9" 
-                           placeholder="1.23"
-                           class="w-48 px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 text-xl font-bold shadow-sm">
+        <!-- 컨트롤 영역 -->
+        <div class="flex flex-wrap items-center justify-start gap-6 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+            
+            <!-- 고정 버튼 -->
+            <div class="flex flex-col items-center">
+                <span class="text-xs text-slate-400 mb-1 font-bold">비교 모드</span>
+                <button id="lockBtn" class="px-6 py-3 bg-white border-2 border-slate-300 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-sm min-w-[100px]">
+                    고정하기
+                </button>
+            </div>
+
+            <!-- 세트 1 -->
+            <div class="flex items-end gap-3 p-3 bg-red-50 rounded-2xl border border-red-100">
+                <div class="flex flex-col">
+                    <label for="searchVal" class="text-xs font-bold text-red-700 mb-1 ml-1">첫 번째 숫자</label>
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl font-serif text-red-600">√</span>
+                        <input type="number" id="searchVal" step="0.01" min="1.00" max="99.9" 
+                               placeholder="1.23"
+                               class="w-32 px-4 py-2 border-2 border-red-200 rounded-lg focus:outline-none focus:border-red-500 text-lg font-bold">
+                    </div>
+                </div>
+                <div id="resultDisplay" class="flex items-center justify-center min-w-[160px] h-[48px] bg-red-600 text-white px-4 rounded-lg shadow-md transition-all duration-300 opacity-0">
+                    <!-- 근사값 표시 -->
                 </div>
             </div>
-            
-            <div id="resultDisplay" class="flex items-center justify-center min-w-[320px] h-20 bg-blue-600 text-white px-8 rounded-2xl shadow-lg transition-all duration-300 transform scale-100 opacity-0">
-                <!-- 결과 텍스트가 여기에 표시됨 -->
+
+            <!-- 세트 2 (처음엔 숨김) -->
+            <div id="inputGroup2" class="flex items-end gap-3 p-3 bg-blue-50 rounded-2xl border border-blue-100 hidden">
+                <div class="flex flex-col">
+                    <label for="searchVal2" class="text-xs font-bold text-blue-700 mb-1 ml-1">두 번째 숫자</label>
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl font-serif text-blue-600">√</span>
+                        <input type="number" id="searchVal2" step="0.01" min="1.00" max="99.9" 
+                               placeholder="5.67"
+                               class="w-32 px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-500 text-lg font-bold">
+                    </div>
+                </div>
+                <div id="resultDisplay2" class="flex items-center justify-center min-w-[160px] h-[48px] bg-blue-600 text-white px-4 rounded-lg shadow-md transition-all duration-300 hidden">
+                    <!-- 근사값 표시 -->
+                </div>
             </div>
         </div>
 
-        <!-- 범례 및 안내 -->
-        <div class="flex flex-wrap gap-6 justify-center mb-6 text-sm font-medium">
-            <div class="flex items-center gap-2">
-                <div class="w-5 h-5 bg-yellow-200 border border-yellow-400 rounded"></div>
-                <span>가로(행) / 세로(열) 방향</span>
+        <!-- 범례 -->
+        <div class="flex flex-wrap gap-6 mb-6 text-sm font-medium ml-2">
+            <div class="flex items-center gap-2 text-red-600">
+                <div class="w-4 h-4 bg-yellow-200 border border-yellow-400 rounded"></div>
+                <span>첫 번째 경로</span>
+                <div class="w-4 h-4 bg-red-500 rounded ml-2"></div>
+                <span>첫 번째 근사값</span>
             </div>
-            <div class="flex items-center gap-2">
-                <div class="w-5 h-5 bg-red-500 rounded"></div>
-                <span>만나는 칸 (근사값)</span>
+            <div id="legend2" class="flex items-center gap-2 text-blue-600 opacity-30">
+                <div class="w-4 h-4 bg-blue-200 border border-blue-300 rounded"></div>
+                <span>두 번째 경로</span>
+                <div class="w-4 h-4 bg-blue-600 rounded ml-2"></div>
+                <span>두 번째 근사값</span>
             </div>
-            <div class="text-slate-400">|</div>
-            <div class="text-blue-600 italic">* 표 안의 숫자를 클릭하면 해당 수를 찾아줍니다.</div>
         </div>
 
         <!-- 테이블 영역 -->
@@ -75,31 +112,27 @@
                 <thead>
                     <tr id="tableHeader">
                         <th class="p-4 border-b border-r font-black text-slate-600 bg-slate-100">수</th>
-                        <!-- 0~9 헤더가 스크립트에서 생성됨 -->
                     </tr>
                 </thead>
-                <tbody id="tableBody">
-                    <!-- 데이터 행이 스크립트에서 생성됨 -->
-                </tbody>
+                <tbody id="tableBody"></tbody>
             </table>
-        </div>
-        
-        <div class="mt-6 flex flex-col md:flex-row justify-between items-center text-slate-400 text-xs px-2 gap-4">
-            <p>* 이 표는 중학교 3학년 수학 교과서의 표준 제곱근 표 형식을 따릅니다.</p>
-            <div class="flex gap-4">
-                <span>1.00 ~ 9.99 : 소수 둘째 자리까지 찾기</span>
-                <span>10.0 ~ 99.9 : 소수 첫째 자리까지 찾기</span>
-            </div>
         </div>
     </div>
 
     <script>
         const tableBody = document.getElementById('tableBody');
         const tableHeader = document.getElementById('tableHeader');
-        const searchInput = document.getElementById('searchVal');
-        const resultDisplay = document.getElementById('resultDisplay');
+        const searchInput1 = document.getElementById('searchVal');
+        const searchInput2 = document.getElementById('searchVal2');
+        const resultDisplay1 = document.getElementById('resultDisplay');
+        const resultDisplay2 = document.getElementById('resultDisplay2');
+        const inputGroup2 = document.getElementById('inputGroup2');
+        const lockBtn = document.getElementById('lockBtn');
+        const legend2 = document.getElementById('legend2');
 
-        // 1. 헤더 (0~9) 생성
+        let isLocked = false;
+
+        // 1. 헤더 생성
         for (let i = 0; i <= 9; i++) {
             const th = document.createElement('th');
             th.className = 'p-4 border-b border-r font-bold text-slate-700';
@@ -109,26 +142,16 @@
 
         // 2. 데이터 행 생성
         function generateTable() {
-            // Part 1: 1.0 ~ 9.9
-            for (let rowVal = 1.0; rowVal <= 9.9; rowVal += 0.1) {
-                createRow(rowVal.toFixed(1), 0.01);
-            }
-            
-            // 구분선
+            for (let rowVal = 1.0; rowVal <= 9.9; rowVal += 0.1) createRow(rowVal.toFixed(1), 0.01);
             const spacer = document.createElement('tr');
             spacer.innerHTML = `<td colspan="11" class="bg-slate-200 h-2"></td>`;
             tableBody.appendChild(spacer);
-
-            // Part 2: 10 ~ 99
-            for (let rowVal = 10; rowVal <= 99; rowVal += 1) {
-                createRow(rowVal.toString(), 0.1);
-            }
+            for (let rowVal = 10; rowVal <= 99; rowVal += 1) createRow(rowVal.toString(), 0.1);
         }
 
         function createRow(rowLabel, step) {
             const tr = document.createElement('tr');
             tr.dataset.row = rowLabel;
-            
             const tdLabel = document.createElement('td');
             tdLabel.className = 'p-3 border-b border-r font-bold text-slate-800 bg-slate-50';
             tdLabel.innerText = rowLabel;
@@ -136,21 +159,17 @@
 
             for (let col = 0; col <= 9; col++) {
                 const td = document.createElement('td');
-                td.className = 'clickable-cell p-3 border-b border-r text-slate-500 transition-all duration-150 cursor-default';
-                
-                // 실제 값 계산 (제곱근)
+                td.className = 'clickable-cell p-3 border-b border-r text-slate-500 transition-all duration-150';
                 const originalValue = parseFloat(rowLabel) + (col * step);
                 const sqrtValue = Math.sqrt(originalValue).toFixed(3);
-                
                 td.innerText = sqrtValue;
                 td.dataset.col = col;
                 
-                // 클릭 이벤트 추가: 칸을 누르면 해당 수를 입력창에 넣고 하이라이트
                 td.addEventListener('click', () => {
-                    searchInput.value = originalValue.toFixed(step === 0.01 ? 2 : 1);
+                    const targetInput = isLocked ? searchInput2 : searchInput1;
+                    targetInput.value = originalValue.toFixed(step === 0.01 ? 2 : 1);
                     updateHighlight();
                 });
-
                 tr.appendChild(td);
             }
             tableBody.appendChild(tr);
@@ -158,24 +177,27 @@
 
         generateTable();
 
-        // 3. 검색 및 하이라이트 로직
+        // 3. 하이라이트 통합 로직
         function updateHighlight() {
-            const valString = searchInput.value;
-            const val = parseFloat(valString);
-            
-            // 초기화
             document.querySelectorAll('td').forEach(td => {
-                td.classList.remove('highlight-line', 'highlight-intersect');
+                td.classList.remove('highlight-line-1', 'highlight-intersect-1', 'highlight-line-2', 'highlight-intersect-2');
             });
-            document.querySelectorAll('tr').forEach(tr => {
-                tr.classList.remove('highlight-line');
-            });
-            resultDisplay.style.opacity = "0";
 
-            if (isNaN(val) || val < 1.0 || val >= 100.0) return;
+            applyHighlight(searchInput1.value, 1, resultDisplay1);
+            if (isLocked) {
+                applyHighlight(searchInput2.value, 2, resultDisplay2);
+            }
+        }
+
+        function applyHighlight(valString, index, displayElement) {
+            const val = parseFloat(valString);
+            if (isNaN(val) || val < 1.0 || val >= 100.0) {
+                displayElement.style.opacity = "0";
+                if (index === 2) displayElement.classList.add('hidden');
+                return;
+            }
 
             let rowTarget, colTarget;
-
             if (val < 10) {
                 rowTarget = (Math.floor(val * 10) / 10).toFixed(1);
                 colTarget = Math.round((val * 100) % 10);
@@ -185,44 +207,60 @@
             }
 
             const sqrtResult = Math.sqrt(val).toFixed(3);
-
-            // 결과 표시 (근사값 용어 사용)
-            resultDisplay.innerHTML = `
-                <div class="text-center">
-                    <span class="text-sm opacity-80 block mb-1">√${val} 의 근사값</span>
-                    <span class="text-3xl font-black">${sqrtResult}</span>
+            displayElement.innerHTML = `
+                <div class="text-center leading-tight">
+                    <span class="text-[10px] opacity-90 block">근사값</span>
+                    <span class="text-xl font-black">${sqrtResult}</span>
                 </div>
             `;
-            resultDisplay.style.opacity = "1";
+            displayElement.style.opacity = "1";
+            if (index === 2) displayElement.classList.remove('hidden');
 
-            // 행 하이라이트
             const targetRow = document.querySelector(`tr[data-row="${rowTarget}"]`);
             if (targetRow) {
-                targetRow.querySelectorAll('td').forEach(td => td.classList.add('highlight-line'));
-                
-                // 열 하이라이트
-                const allRows = document.querySelectorAll('#tableBody tr');
-                allRows.forEach(row => {
+                targetRow.querySelectorAll('td').forEach(td => td.classList.add(`highlight-line-${index}`));
+                document.querySelectorAll('#tableBody tr').forEach(row => {
                     const targetTd = row.querySelector(`td[data-col="${colTarget}"]`);
                     if (targetTd) {
                         if (row === targetRow) {
-                            targetTd.classList.add('highlight-intersect');
+                            targetTd.classList.add(`highlight-intersect-${index}`);
                         } else {
-                            targetTd.classList.add('highlight-line');
+                            targetTd.classList.add(`highlight-line-${index}`);
                         }
                     }
                 });
-
-                // 선택된 위치로 부드럽게 스크롤
-                targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (index === (isLocked ? 2 : 1)) {
+                    targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
             }
         }
 
-        searchInput.addEventListener('input', updateHighlight);
+        // 고정 버튼 이벤트
+        lockBtn.addEventListener('click', () => {
+            isLocked = !isLocked;
+            if (isLocked) {
+                lockBtn.innerText = "해제하기";
+                lockBtn.classList.add('btn-active');
+                inputGroup2.classList.remove('hidden');
+                resultDisplay2.classList.remove('hidden');
+                legend2.classList.remove('opacity-30');
+                searchInput2.focus();
+            } else {
+                lockBtn.innerText = "고정하기";
+                lockBtn.classList.remove('btn-active');
+                inputGroup2.classList.add('hidden');
+                resultDisplay2.classList.add('hidden');
+                legend2.classList.add('opacity-30');
+                searchInput2.value = "";
+            }
+            updateHighlight();
+        });
 
-        // 초기값 설정
+        searchInput1.addEventListener('input', updateHighlight);
+        searchInput2.addEventListener('input', updateHighlight);
+
         window.onload = () => {
-            searchInput.value = 1.23;
+            searchInput1.value = 1.23;
             updateHighlight();
         };
     </script>
