@@ -36,33 +36,6 @@
             transform: rotate(180deg);
         }
 
-        /* 캐릭터 애니메이션 */
-        @keyframes tail-wag {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(15deg); }
-        }
-        .shiba-tail {
-            animation: tail-wag 0.8s infinite ease-in-out;
-            transform-origin: bottom left;
-        }
-
-        @keyframes ear-move {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-2px); }
-        }
-        .shiba-ear {
-            animation: ear-move 2s infinite ease-in-out;
-        }
-
-        @keyframes blink {
-            0%, 90%, 100% { transform: scaleY(1); }
-            95% { transform: scaleY(0.1); }
-        }
-        .shiba-eye {
-            animation: blink 4s infinite;
-            transform-origin: center;
-        }
-
         @media print {
             .print-hidden {
                 display: none !important;
@@ -148,42 +121,6 @@
                                 <i data-lucide="refresh-cw" class="w-5 h-5"></i> 설정 초기화
                             </button>
                         </div>
-                    </div>
-
-                    <!-- 더 크고 귀여운 시바견 캐릭터 (요청 반영) -->
-                    <div class="flex flex-col items-center pt-6 opacity-90 hover:opacity-100 transition-opacity duration-300">
-                        <svg width="180" height="180" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <!-- 꼬리 -->
-                            <circle cx="20" cy="75" r="10" fill="#D97706" class="shiba-tail" />
-                            <!-- 몸통 -->
-                            <rect x="25" y="55" width="50" height="30" rx="15" fill="#F59E0B" />
-                            <!-- 다리 (흰색 발) -->
-                            <rect x="30" y="80" width="8" height="12" rx="4" fill="#FFFFFF" />
-                            <rect x="62" y="80" width="8" height="12" rx="4" fill="#FFFFFF" />
-                            <!-- 얼굴 -->
-                            <circle cx="50" cy="45" r="28" fill="#F59E0B" />
-                            <path d="M30 45C30 32 70 32 70 45C70 60 50 68 30 45Z" fill="#FFFFFF" />
-                            <!-- 귀 -->
-                            <path class="shiba-ear" d="M22 20L12 5L32 15L22 20Z" fill="#D97706" />
-                            <path class="shiba-ear" d="M78 20L88 5L68 15L78 20Z" fill="#D97706" />
-                            <path class="shiba-ear" d="M22 20L18 12L28 18L22 20Z" fill="#FDE68A" />
-                            <path class="shiba-ear" d="M78 20L82 12L72 18L78 20Z" fill="#FDE68A" />
-                            <!-- 눈 -->
-                            <g class="shiba-eye">
-                                <circle cx="38" cy="42" r="3.5" fill="#1F2937" />
-                                <circle cx="62" cy="42" r="3.5" fill="#1F2937" />
-                                <circle cx="37" cy="41" r="1.2" fill="white" />
-                                <circle cx="61" cy="41" r="1.2" fill="white" />
-                            </g>
-                            <!-- 코 -->
-                            <ellipse cx="50" cy="50" rx="4.5" ry="3" fill="#1F2937" />
-                            <!-- 입 -->
-                            <path d="M45 55C45 58 50 58 50 55M50 55C50 58 55 58 55 55" stroke="#1F2937" stroke-width="2" stroke-linecap="round" />
-                            <!-- 볼터치 -->
-                            <circle cx="30" cy="52" r="3.5" fill="#FCA5A5" fill-opacity="0.6" />
-                            <circle cx="70" cy="52" r="3.5" fill="#FCA5A5" fill-opacity="0.6" />
-                        </svg>
-                        <p class="text-base font-black text-indigo-600 mt-3 tracking-wider">너! 내 짝꿍이 되라!</p>
                     </div>
                 </div>
 
