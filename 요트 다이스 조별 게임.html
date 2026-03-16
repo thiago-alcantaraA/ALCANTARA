@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>전자칠판용 요트 다이스 (6개 조)</title>
+    <title>요트 다이스 토너먼트 (스크롤 방지 레이아웃)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
         body { 
             font-family: 'Pretendard', sans-serif; 
-            background-color: #f8fafc; 
-            overflow: hidden; /* 전자칠판에서 스크롤 방지 */
+            background-color: #f1f5f9; 
+            overflow: hidden; 
             height: 100vh;
         }
         #app {
@@ -18,71 +18,65 @@
             display: flex;
             flex-direction: column;
             padding: 1rem;
+            box-sizing: border-box;
         }
+        /* 주사위 크기 복구 (이전 스타일) */
         .dice { 
-            width: clamp(50px, 6vw, 80px); 
-            height: clamp(50px, 6vw, 80px); 
+            width: 75px; 
+            height: 75px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            font-size: clamp(2rem, 4vw, 3.5rem); 
-            border-radius: 16px; 
+            font-size: 3.5rem; 
+            border-radius: 15px; 
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
             cursor: pointer; 
-            border: 3px solid #e2e8f0; 
+            border: 4px solid #e2e8f0; 
             background-color: white; 
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
         .dice.held { 
             background-color: #2563eb !important; 
             color: white; 
-            transform: translateY(-12px); 
-            box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.4); 
+            transform: translateY(-8px); 
+            box-shadow: 0 15px 20px -5px rgba(37, 99, 235, 0.4); 
             border-color: #1e40af; 
         }
-        .rank-badge { 
-            position: absolute; 
-            top: -8px; 
-            right: -8px; 
-            width: 32px; 
-            height: 32px; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            color: white; 
-            font-weight: 900; 
-            z-index: 20;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            font-size: 0.875rem;
-        }
+        /* 점수 항목 높이를 화면 높이에 맞게 최적화 (스크롤 방지 핵심) */
         .score-row {
-            height: clamp(28px, 3.5vh, 40px);
+            height: 3.8vh; /* 12개 항목 * 3.8vh = 45.6vh */
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1rem;
         }
-        /* 전자칠판 터치 대응을 위해 버튼 크기 확보 */
         .record-btn {
-            min-width: 45px;
-            transition: transform 0.1s;
-        }
-        .record-btn:active {
-            transform: scale(0.9);
+            min-width: 50px;
+            font-size: 1rem;
+            padding: 2px 8px;
         }
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
+        header { height: 15vh; min-height: 120px; }
+        main { height: 83vh; }
     </style>
 </head>
 <body>
     <div id="app">
-        <!-- 상단 컨트롤러 -->
-        <header class="flex items-center justify-between bg-white rounded-2xl shadow-md p-4 mb-4 border-l-8 border-blue-600">
+        <!-- 상단 헤더 (주사위 칸은 적당한 크기 유지) -->
+        <header class="flex items-center justify-between bg-white rounded-[25px] shadow-md p-4 mb-4 border-l-[10px] border-blue-600">
             <div class="flex items-center gap-6">
                 <div>
                     <h1 class="text-2xl font-black text-slate-800 leading-tight">🎲 요트 다이스</h1>
-                    <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">우리 반 조별 대항전</p>
+                    <select v-model="gameMode" class="bg-blue-50 border-none font-bold px-3 py-1 rounded-lg text-sm outline-none text-blue-700">
+                        <option value="prelim1">예선 1경기 (1, 2, 3조)</option>
+                        <option value="prelim2">예선 2경기 (4, 5, 6조)</option>
+                        <option value="final">👑 최종 결승전</option>
+                    </select>
                 </div>
-                <div class="h-12 w-px bg-slate-200"></div>
-                <div class="flex gap-4">
+                <div class="flex gap-3">
                     <div v-for="(val, idx) in dice" :key="idx" 
                          @click="toggleHold(idx)"
                          class="dice select-none"
@@ -92,96 +86,87 @@
                 </div>
             </div>
             
-            <div class="flex items-center gap-6 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+            <div class="flex items-center gap-4">
                 <div class="text-center px-4">
-                    <div class="text-[10px] text-slate-400 font-black uppercase">남은 기회</div>
+                    <div class="text-[10px] text-slate-400 font-black uppercase">Rolls</div>
                     <div class="text-3xl font-black text-blue-600 leading-none">{{ rollsLeft }}<span class="text-sm text-slate-300">/3</span></div>
                 </div>
                 <button @click="rollDice" 
                         :disabled="rollsLeft === 0"
                         class="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-black py-4 px-10 rounded-xl text-xl transition-all shadow-lg active:scale-95">
-                    주사위 굴리기
+                    굴리기
                 </button>
-                <button @click="resetTurn" class="p-2 text-slate-400 hover:text-red-500 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                <button @click="resetTurn" class="p-2 text-slate-300 hover:text-red-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                 </button>
             </div>
         </header>
 
-        <!-- 점수판 영역 -->
-        <main class="flex-1 grid grid-cols-6 gap-3 min-h-0">
-            <div v-for="(team, tIdx) in teams" :key="tIdx" 
-                 class="bg-white rounded-2xl shadow-sm flex flex-col relative border border-slate-200 overflow-hidden"
-                 :class="{'ring-4 ring-blue-500 ring-inset': totalFilled(tIdx) < 12 && dice[0] !== 0}">
+        <!-- 점수판 영역 (글씨와 칸을 최대한 크게) -->
+        <main class="grid gap-4" :class="currentTeams.length === 3 ? 'grid-cols-3' : 'grid-cols-4'">
+            <div v-for="(team, tIdx) in currentTeams" :key="team.id" 
+                 class="bg-white rounded-[30px] shadow-sm flex flex-col relative border border-slate-200 overflow-hidden"
+                 :class="{'ring-4 ring-blue-500 ring-inset': !isGameOver && dice[0] !== 0}">
                 
-                <!-- 순위 -->
-                <div v-if="team.rank <= 3 && totalFilled(tIdx) > 0" 
-                     class="rank-badge shadow-lg"
-                     :class="rankColor(team.rank)">
-                    {{ team.rank }}
-                </div>
-
                 <!-- 팀 헤더 -->
-                <div class="p-3 border-b-2 flex justify-between items-center" :style="{ backgroundColor: teamColors[tIdx] + '15', borderBottomColor: teamColors[tIdx] }">
-                    <span class="font-black text-lg" :style="{ color: teamColors[tIdx] }">{{ team.name }}</span>
+                <div class="p-4 border-b-2 flex justify-between items-center" :style="{ backgroundColor: team.color + '10', borderBottomColor: team.color }">
+                    <input v-model="team.name" class="bg-transparent font-black text-3xl outline-none w-2/3" :style="{ color: team.color }">
                     <div class="text-right">
-                        <span class="text-[10px] text-slate-400 block font-bold">총점</span>
-                        <span class="text-2xl font-black text-slate-800 leading-none">{{ calculateTotal(tIdx) }}</span>
+                        <span class="text-[10px] text-slate-400 block font-bold">TOTAL</span>
+                        <span class="text-4xl font-black text-slate-800 leading-none">{{ calculateTotal(team) }}</span>
                     </div>
                 </div>
 
-                <!-- 점수 항목 (한글화 완료) -->
-                <div class="flex-1 p-2 space-y-1 overflow-y-auto no-scrollbar">
-                    <div v-for="(category, key) in categories" :key="key" 
-                         class="score-row flex items-center justify-between px-2 rounded-lg transition-colors border-b border-slate-50 last:border-0 hover:bg-slate-50">
-                        <div class="text-[11px] font-bold text-slate-600">{{ category.name }}</div>
+                <!-- 점수 항목 (화면에 꽉 차게) -->
+                <div class="flex-1 overflow-hidden bg-white">
+                    <div v-for="(category, key) in categories" :key="key" class="score-row">
+                        <div class="text-lg font-bold text-slate-700">{{ category.name }}</div>
                         
                         <button v-if="team.scores[key] === null" 
-                                @click="recordScore(tIdx, key)"
+                                @click="recordScore(team, key)"
                                 :disabled="dice[0] === 0"
-                                class="record-btn text-[11px] font-black px-2 py-1 bg-white border-2 border-slate-200 rounded-md text-slate-400 hover:border-green-500 hover:text-green-600 disabled:opacity-10 transition-all">
+                                class="record-btn font-black bg-white border-2 border-slate-100 rounded-lg text-slate-200 hover:border-green-500 hover:text-green-600 disabled:opacity-10 transition-all">
                             +{{ previewScore(key) }}
                         </button>
-                        <div v-else class="font-black text-slate-800 text-sm">
+                        <div v-else class="font-black text-slate-900 text-2xl">
                             {{ team.scores[key] }}
                         </div>
                     </div>
                 </div>
 
-                <!-- 하단 보너스 -->
-                <div class="p-2 bg-slate-50 border-t">
-                    <div class="flex justify-between text-[10px] font-bold mb-1">
-                        <span class="text-slate-400">보너스 합계 {{ subtotal(tIdx) }}/63</span>
-                        <span :class="subtotal(tIdx) >= 63 ? 'text-green-600 font-black' : 'text-slate-300'">+35 보너스</span>
+                <!-- 하단 보너스 바 -->
+                <div class="p-4 bg-slate-50 border-t">
+                    <div class="flex justify-between text-xs font-black mb-1">
+                        <span class="text-slate-400">보너스 ({{ subtotal(team) }}/63)</span>
+                        <span :class="subtotal(team) >= 63 ? 'text-green-600' : 'text-slate-300'">+35점</span>
                     </div>
-                    <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                        <div class="bg-blue-500 h-full transition-all duration-700" :style="{ width: Math.min(100, (subtotal(tIdx)/63)*100) + '%' }"></div>
+                    <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
+                        <div class="bg-blue-500 h-full transition-all duration-1000" :style="{ width: Math.min(100, (subtotal(team)/63)*100) + '%' }"></div>
                     </div>
                 </div>
             </div>
         </main>
 
-        <!-- 최종 결과 화면 -->
-        <div v-if="isGameOver" class="fixed inset-0 bg-slate-900/90 flex items-center justify-center z-50 p-10 backdrop-blur-md">
-            <div class="bg-white rounded-[40px] p-12 max-w-4xl w-full text-center shadow-2xl border-t-[20px] border-blue-600">
-                <h2 class="text-5xl font-black mb-10 text-slate-800 tracking-tighter">🏆 최종 순위 발표</h2>
-                
-                <div class="grid grid-cols-2 gap-6 mb-12">
-                    <div v-for="(team, idx) in sortedTeams" :key="team.name" 
-                         class="flex justify-between items-center p-6 rounded-3xl transition-all border-2"
-                         :class="idx === 0 ? 'bg-yellow-50 border-yellow-200 scale-105 shadow-xl' : 'bg-slate-50 border-slate-100'">
-                        <div class="flex items-center gap-4">
-                            <span class="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-xl shadow-md" :class="rankColor(idx+1)">
-                                {{ idx+1 }}
+        <!-- 결과 창 및 진출 로직 -->
+        <div v-if="isGameOver" class="fixed inset-0 bg-slate-900/95 flex items-center justify-center z-50 p-8 backdrop-blur-md">
+            <div class="bg-white rounded-[40px] p-12 max-w-3xl w-full text-center shadow-2xl">
+                <h2 class="text-5xl font-black mb-8 text-slate-800">경기 결과</h2>
+                <div class="space-y-4 mb-10">
+                    <div v-for="(team, idx) in sortedTeams" :key="team.id" 
+                         class="flex justify-between items-center p-6 rounded-2xl border-2"
+                         :class="idx < 2 && gameMode !== 'final' ? 'bg-blue-50 border-blue-200 scale-105' : 'bg-slate-50 border-slate-100'">
+                        <div class="flex items-center gap-5">
+                            <span class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-white text-2xl" 
+                                  :class="idx === 0 ? 'bg-yellow-500' : (idx === 1 ? 'bg-slate-400' : 'bg-slate-300')">
+                                {{ idx + 1 }}
                             </span>
-                            <span class="font-black text-slate-700 text-2xl">{{ team.name }}</span>
+                            <span class="font-black text-slate-800 text-3xl">{{ team.name }}</span>
                         </div>
-                        <span class="text-4xl font-black text-blue-600">{{ team.finalTotal }}점</span>
+                        <span class="text-5xl font-black text-blue-600">{{ calculateTotal(team) }}점</span>
                     </div>
                 </div>
-                
-                <button @click="restartGame" class="bg-slate-900 text-white font-black py-6 px-16 rounded-3xl text-2xl hover:bg-blue-600 transition-all shadow-2xl active:scale-95">
-                    새 게임 시작하기
+                <button @click="proceedToNext" class="bg-blue-600 text-white font-black py-5 px-14 rounded-2xl text-2xl hover:bg-blue-700 transition-all shadow-xl">
+                    {{ gameMode === 'final' ? '처음으로' : '승리 팀 결승 진출시키기' }}
                 </button>
             </div>
         </div>
@@ -189,38 +174,41 @@
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
-        const { createApp, ref, computed } = Vue;
+        const { createApp, ref, computed, watch } = Vue;
 
         createApp({
             setup() {
                 const diceIcons = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-                const teamColors = ['#ef4444', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6'];
+                const gameMode = ref('prelim1');
                 
                 const categories = {
-                    ones: { name: '1번 (Aces)' },
-                    twos: { name: '2번 (Deuces)' },
-                    threes: { name: '3번 (Threes)' },
-                    fours: { name: '4번 (Fours)' },
-                    fives: { name: '5번 (Fives)' },
-                    sixes: { name: '6번 (Sixes)' },
-                    choice: { name: '자유 선택 (Choice)' },
-                    fourKind: { name: '4개 똑같이 (4-Kind)' },
-                    fullHouse: { name: '풀하우스 (3+2)' },
-                    sStraight: { name: '작은 스트레이트' },
-                    lStraight: { name: '큰 스트레이트' },
-                    yacht: { name: '요트 (5개 똑같이)' }
+                    ones: { name: '1번' }, twos: { name: '2번' }, threes: { name: '3번' },
+                    fours: { name: '4번' }, fives: { name: '5번' }, sixes: { name: '6번' },
+                    choice: { name: '자유' }, fourKind: { name: '4-Kind' }, fullHouse: { name: '풀하우스' },
+                    sStraight: { name: 'S.스트레이트' }, lStraight: { name: 'L.스트레이트' }, yacht: { name: '요트' }
                 };
 
-                const teams = ref(Array.from({length: 6}, (_, i) => ({
-                    name: `${i+1}조`,
-                    scores: Object.fromEntries(Object.keys(categories).map(k => [k, null])),
-                    rank: 1,
-                    finalTotal: 0
-                })));
+                const createTeam = (id, name, color) => ({
+                    id, name, color,
+                    scores: Object.fromEntries(Object.keys(categories).map(k => [k, null]))
+                });
+
+                const allTeams = ref({
+                    t1: createTeam('t1', '1조', '#ef4444'), t2: createTeam('t2', '2조', '#f59e0b'), t3: createTeam('t3', '3조', '#10b981'),
+                    t4: createTeam('t4', '4조', '#06b6d4'), t5: createTeam('t5', '5조', '#3b82f6'), t6: createTeam('t6', '6조', '#8b5cf6'),
+                    fa: createTeam('fa', '결승A', '#f43f5e'), fb: createTeam('fb', '결승B', '#8b5cf6'),
+                    fc: createTeam('fc', '결승C', '#10b981'), fd: createTeam('fd', '결승D', '#f59e0b')
+                });
 
                 const dice = ref([0, 0, 0, 0, 0]);
                 const held = ref([false, false, false, false, false]);
                 const rollsLeft = ref(3);
+
+                const currentTeams = computed(() => {
+                    if (gameMode.value === 'prelim1') return [allTeams.value.t1, allTeams.value.t2, allTeams.value.t3];
+                    if (gameMode.value === 'prelim2') return [allTeams.value.t4, allTeams.value.t5, allTeams.value.t6];
+                    return [allTeams.value.fa, allTeams.value.fb, allTeams.value.fc, allTeams.value.fd];
+                });
 
                 const rollDice = () => {
                     if (rollsLeft.value > 0) {
@@ -230,9 +218,7 @@
                 };
 
                 const toggleHold = (idx) => {
-                    if (rollsLeft.value < 3 && rollsLeft.value > 0) {
-                        held.value[idx] = !held.value[idx];
-                    }
+                    if (rollsLeft.value < 3 && rollsLeft.value > 0) held.value[idx] = !held.value[idx];
                 };
 
                 const resetTurn = () => {
@@ -264,7 +250,7 @@
                             let maxS = 1, curS = 1;
                             for(let i=0; i<sortedUnique.length-1; i++) {
                                 if(sortedUnique[i+1] === sortedUnique[i] + 1) curS++;
-                                else curS = 1;
+                                else if(sortedUnique[i+1] !== sortedUnique[i]) curS = 1;
                                 maxS = Math.max(maxS, curS);
                             }
                             return maxS >= 4 ? 15 : 0;
@@ -282,35 +268,33 @@
                 };
 
                 const previewScore = (key) => calculatePotential(key, dice.value);
+                const recordScore = (team, key) => { team.scores[key] = previewScore(key); resetTurn(); };
+                const subtotal = (team) => ['ones','twos','threes','fours','fives','sixes'].reduce((acc, k) => acc + (team.scores[k] || 0), 0);
+                const calculateTotal = (team) => Object.values(team.scores).reduce((acc, v) => acc + (v || 0), 0) + (subtotal(team) >= 63 ? 35 : 0);
+                const totalFilled = (team) => Object.values(team.scores).filter(v => v !== null).length;
+                const isGameOver = computed(() => currentTeams.value.every(t => totalFilled(t) === 12));
+                const sortedTeams = computed(() => [...currentTeams.value].sort((a, b) => calculateTotal(b) - calculateTotal(a)));
 
-                const recordScore = (tIdx, key) => {
-                    teams.value[tIdx].scores[key] = previewScore(key);
-                    updateRankings();
+                const proceedToNext = () => {
+                    const top = sortedTeams.value;
+                    if (gameMode.value === 'prelim1') {
+                        allTeams.value.fa.name = top[0].name;
+                        allTeams.value.fb.name = top[1].name;
+                        gameMode.value = 'prelim2';
+                    } else if (gameMode.value === 'prelim2') {
+                        allTeams.value.fc.name = top[0].name;
+                        allTeams.value.fd.name = top[1].name;
+                        gameMode.value = 'final';
+                    } else { location.reload(); }
+                    resetTurn();
                 };
 
-                const subtotal = (tIdx) => ['ones','twos','threes','fours','fives','sixes'].reduce((acc, k) => acc + (teams.value[tIdx].scores[k] || 0), 0);
-                const calculateTotal = (tIdx) => Object.values(teams.value[tIdx].scores).reduce((acc, v) => acc + (v || 0), 0) + (subtotal(tIdx) >= 63 ? 35 : 0);
-                const totalFilled = (tIdx) => Object.values(teams.value[tIdx].scores).filter(v => v !== null).length;
-
-                const updateRankings = () => {
-                    const totals = teams.value.map((t, i) => ({ index: i, total: calculateTotal(i) }));
-                    totals.sort((a, b) => b.total - a.total);
-                    totals.forEach((t, idx) => {
-                        teams.value[t.index].rank = idx + 1;
-                        teams.value[t.index].finalTotal = t.total;
-                    });
-                };
-
-                const isGameOver = computed(() => teams.value.every(t => totalFilled(teams.value.indexOf(t)) === 12));
-                const sortedTeams = computed(() => [...teams.value].sort((a, b) => b.finalTotal - a.finalTotal));
-                const rankColor = (rank) => rank === 1 ? 'bg-yellow-500' : rank === 2 ? 'bg-slate-400' : rank === 3 ? 'bg-amber-700' : 'bg-slate-200';
-                const restartGame = () => location.reload();
+                watch(gameMode, () => resetTurn());
 
                 return {
-                    dice, held, rollsLeft, diceIcons, rollDice, toggleHold, resetTurn,
-                    teams, teamColors, categories, 
-                    previewScore, recordScore, calculateTotal, subtotal, totalFilled,
-                    isGameOver, sortedTeams, rankColor, restartGame
+                    gameMode, dice, held, rollsLeft, diceIcons, rollDice, toggleHold, resetTurn,
+                    currentTeams, categories, previewScore, recordScore, calculateTotal, subtotal, 
+                    isGameOver, sortedTeams, proceedToNext
                 };
             }
         }).mount('#app');
