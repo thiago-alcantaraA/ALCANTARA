@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이차방정식 풀이 원리 비교 학습기</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React 및 Babel CDN (프로토타입용) -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .font-serif { font-family: 'Noto Serif KR', serif; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+
+        // --- 수학 기호 렌더링 컴포넌트 ---
+        const Highlight = ({ children }) => (
+            <span className="bg-yellow-200 px-1 py-0.5 rounded-md mx-0.5 border border-yellow-300 shadow-sm not-italic">
+                {children}
+            </span>
+        );
+
+        const Frac = ({ n, d }) => {
+            if (d === 1) return <>{n}</>;
+            if (d === -1) return <>-{n}</>;
+            return (
+                <span className="inline-flex flex-col items-center align-middle mx-1 text-[0.9em]">
+                    <span className="border-b border-gray-600 px-1 text-center w-full">{n}</span>
+                    <span className="text-center w-full">{d}</span>
+                </span>
+            );
+        };
+
+        const Sqrt = ({ children }) => (
+            <span className="inline-flex items-center align-middle">
+                <span className="text-xl leading-none font-serif">√</span>
+                <span className="border-t border-gray-600 px-1 -ml-0.5">{children}</span>
+            </span>
+        );
+
+        const Pow = ({ base, exp = "2" }) => (
+            <span>{base}<sup className="text-xs ml-0.5">{exp}</sup></span>
+        );
+
+        const PM = () => <span className="mx-1">±</span>;
+
+        const Step = ({ label, children, sub }) => (
+            <div className="relative pl-6 border-l-2 border-slate-100">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-200 border-4 border-white"></div>
+                <h3 className="text-sm font-bold text-slate-400 not-italic mb-3 uppercase tracking-wider">{label}</h3>
+                <div className="flex flex-wrap items-center">
+                    {children}
+                </div>
+                {sub && <p className="mt-2 text-xs text-indigo-400 font-medium not-italic">{sub}</p>}
+            </div>
+        );
+
+        function App() {
+            const [a, setA] = useState(1);
+            const [b, setB] = useState(-4);
+            const [c, setC] = useState(3);
+
+            const gcd = (x, y) => {
+                x = Math.abs(x);
+                y = Math.abs(y);
+                while (y) { x %= y; [x, y] = [y, x]; }
+                return x;
+            };
+
+            const simplify = (n, d) => {
+                if (d === 0) return { n, d };
+                const common = gcd(n, d);
+                let finalN = n / common;
+                let finalD = d / common;
+                if (finalD < 0) { finalN = -finalN; finalD = -finalD; }
+                return { n: finalN, d: finalD };
+            };
+
+            const data = useMemo(() => {
+                if (a === 0) return null;
+                return {
+                    a, b, c,
+                    b_a: simplify(b, a),
+                    c_a: simplify(c, a),
+                    minus_c_a: simplify(-c, a),
+                    b_2a: simplify(b, 2 * a),
+                    b2_4a2: simplify(b * b, 4 * a * a),
+                    disc: b * b - 4 * a * c,
+                    right_side: simplify(b * b - 4 * a * c, 4 * a * a)
+                };
+            }, [a, b, c]);
+
+            const renderInitialEq = () => {
+                if (!data) return "";
+                let els = [];
+                if (data.a === 1) els.push(<span key="a"><Pow base="x" /></span>);
+                else if (data.a === -1) els.push(<span key="a">-<Pow base="x" /></span>);
+                else els.push(<span key="a">{data.a}<Pow base="x" /></span>);
+                if (data.b > 0) els.push(<span key="b"> + {data.b}x</span>);
+                else if (data.b < 0) els.push(<span key="b"> - {Math.abs(data.b)}x</span>);
+                if (data.c > 0) els.push(<span key="c"> + {data.c}</span>);
+                else if (data.c < 0) els.push(<span key="c"> - {Math.abs(data.c)}</span>);
+                els.push(<span key="eq"> = 0</span>);
+                return els;
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-50 p-4 md:p-8 text-slate-800">
+                    <div className="max-w-6xl mx-auto">
+                        <header className="mb-10 text-center">
+                            <h1 className="text-3xl font-bold text-indigo-900 mb-3 underline decoration-indigo-300 underline-offset-8">
+                                이차방정식 풀이 원리 비교기
+                            </h1>
+                            <p className="text-slate-600 italic">계수를 입력하여 완전제곱식 풀이와 공식을 비교해 보세요.</p>
+                        </header>
+
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-10">
+                            <div className="flex flex-wrap items-center justify-center gap-6 text-2xl font-medium">
+                                <div className="flex flex-col items-center gap-2">
+                                    <span className="text-xs text-slate-400 font-bold uppercase">계수 a</span>
+                                    <div className="flex items-center gap-2">
+                                        <input type="number" value={a} onChange={e => setA(Number(e.target.value))} className="w-24 p-2 bg-indigo-50 border-2 border-indigo-100 rounded-xl text-center focus:border-indigo-500 outline-none" />
+                                        <Pow base="x" />
+                                    </div>
+                                </div>
+                                <span className="pt-6">+</span>
+                                <div className="flex flex-col items-center gap-2">
+                                    <span className="text-xs text-slate-400 font-bold uppercase">계수 b</span>
+                                    <div className="flex items-center gap-2">
+                                        <input type="number" value={b} onChange={e => setB(Number(e.target.value))} className="w-24 p-2 bg-indigo-50 border-2 border-indigo-100 rounded-xl text-center focus:border-indigo-500 outline-none" />
+                                        <span>x</span>
+                                    </div>
+                                </div>
+                                <span className="pt-6">+</span>
+                                <div className="flex flex-col items-center gap-2">
+                                    <span className="text-xs text-slate-400 font-bold uppercase">상수 c</span>
+                                    <div className="flex items-center gap-2">
+                                        <input type="number" value={c} onChange={e => setC(Number(e.target.value))} className="w-24 p-2 bg-indigo-50 border-2 border-indigo-100 rounded-xl text-center focus:border-indigo-500 outline-none" />
+                                        <span>= 0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {a === 0 && <p className="text-red-500 text-center mt-6 font-bold">이차항 계수(a)는 0일 수 없습니다!</p>}
+                        </div>
+
+                        {data && (
+                            <div className="grid lg:grid-cols-2 gap-8">
+                                <div className="bg-white rounded-2xl shadow-lg border-t-8 border-blue-500 p-8 space-y-10 italic font-serif text-lg">
+                                    <h2 className="text-xl font-bold text-blue-800 not-italic mb-4">1. 수치 풀이 (분수)</h2>
+                                    <Step label="시작: 입력한 식"><div className="text-xl text-blue-900 font-bold not-italic">{renderInitialEq()}</div></Step>
+                                    <Step label="1단계: a로 나누기"><Pow base="x" /> + <Frac n={data.b_a.n} d={data.b_a.d} />x + <Frac n={data.c_a.n} d={data.c_a.d} /> = 0</Step>
+                                    <Step label="2단계: 상수 이항"><Pow base="x" /> + <Frac n={data.b_a.n} d={data.b_a.d} />x = <Frac n={data.minus_c_a.n} d={data.minus_c_a.d} /></Step>
+                                    <Step label="3단계: (b/2a)² 더하기"><Pow base="x" /> + <Frac n={data.b_a.n} d={data.b_a.d} />x + <Highlight><Frac n={data.b2_4a2.n} d={data.b2_4a2.d} /></Highlight> = <Frac n={data.minus_c_a.n} d={data.minus_c_a.d} /> + <Highlight><Frac n={data.b2_4a2.n} d={data.b2_4a2.d} /></Highlight></Step>
+                                    <Step label="4단계: 완전제곱식"><Pow base={<span>(x + <Frac n={data.b_2a.n} d={data.b_2a.d} />)</span>} /> = <Frac n={data.right_side.n} d={data.right_side.d} /></Step>
+                                    <Step label="5단계: 해 구하기">
+                                        {data.disc < 0 ? <span className="text-red-500 not-italic">실근 없음</span> : 
+                                        <div className="not-italic">x = <Frac n={-data.b_2a.n} d={data.b_2a.d} /> <PM /> <Frac n={<Sqrt>{data.disc}</Sqrt>} d={Math.abs(2 * a)} /></div>}
+                                    </Step>
+                                </div>
+
+                                <div className="bg-white rounded-2xl shadow-lg border-t-8 border-emerald-500 p-8 space-y-10 italic font-serif text-lg">
+                                    <h2 className="text-xl font-bold text-emerald-800 not-italic mb-4">2. 공식 유도 (일반)</h2>
+                                    <Step label="시작: 일반식"><div className="text-xl text-emerald-900 font-bold not-italic"><Pow base="ax" /> + bx + c = 0</div></Step>
+                                    <Step label="1단계: a로 나누기"><Pow base="x" /> + <Frac n="b" d="a" />x + <Frac n="c" d="a" /> = 0</Step>
+                                    <Step label="2단계: 상수 이항"><Pow base="x" /> + <Frac n="b" d="a" />x = -<Frac n="c" d="a" /></Step>
+                                    <Step label="3단계: (b/2a)² 더하기"><Pow base="x" /> + <Frac n="b" d="a" />x + <Highlight><Pow base={<span>(<Frac n="b" d="2a" />)</span>} /></Highlight> = -<Frac n="c" d="a" /> + <Highlight><Pow base={<span>(<Frac n="b" d="2a" />)</span>} /></Highlight></Step>
+                                    <Step label="4단계: 완전제곱식"><Pow base={<span>(x + <Frac n="b" d="2a" />)</span>} /> = <Frac n={<><Pow base="b" /> - 4ac</>} d={<>4<Pow base="a" /></>} /></Step>
+                                    <Step label="5단계: 공식 완성"><div className="not-italic">x = <Frac n={<>-b <PM /> <Sqrt><Pow base="b" /> - 4ac</Sqrt></>} d="2a" /></div></Step>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
