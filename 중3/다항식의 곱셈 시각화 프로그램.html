@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>다항식 곱셈 및 동류항 시각화</title>
-    <!-- Tailwind CSS CDN: 스타일을 담당합니다 -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .rect-box {
@@ -14,8 +14,8 @@
             justify-content: center;
             color: white;
             font-weight: bold;
-            font-size: 1.25rem;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            font-size: 2.5rem; /* 사각형 내부 문자 크기 조정 */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
             border: 2px solid rgba(255,255,255,0.3);
         }
         .math-text {
@@ -23,59 +23,64 @@
             font-style: italic;
         }
         sup {
-            font-size: 0.7em;
+            font-size: 0.6em;
             vertical-align: super;
             line-height: 0;
         }
-        /* 입력창 포커스 시 테두리 색상 */
         input:focus {
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5);
+        }
+        /* 가로 배치 시 내용이 넘치지 않도록 스크롤바 숨김 및 레이아웃 최적화 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col items-center p-4">
-    <div class="max-w-4xl w-full bg-white rounded-3xl shadow-2xl p-6 md:p-8 mt-4 md:mt-10">
-        <h1 class="text-xl md:text-2xl font-extrabold text-center mb-8 text-gray-800">다항식 곱셈: 동류항 계산 모드</h1>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4">
+    <div class="max-w-[1600px] w-full bg-white rounded-3xl shadow-2xl p-6 md:p-10 mt-2">
+        <h1 class="text-2xl md:text-4xl font-extrabold text-center mb-10 text-gray-800 underline decoration-indigo-200">다항식 곱셈: 분배법칙과 동류항</h1>
         
         <!-- 문자 및 숫자 입력 영역 -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-10">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12 bg-gray-50 p-6 rounded-2xl border-2 border-gray-200">
             <div class="relative">
-                <label class="text-xs font-bold text-red-500 uppercase tracking-wider">가로 항 1</label>
-                <input type="text" id="charA" value="a" maxlength="8" class="w-full border-b-2 border-red-300 p-2 text-center text-lg md:text-xl focus:border-red-500 outline-none math-text bg-transparent">
+                <label class="text-sm font-bold text-red-600 uppercase mb-1 block">가로 항 1</label>
+                <input type="text" id="charA" value="a" maxlength="8" class="w-full border-b-4 border-red-300 p-2 text-center text-3xl md:text-4xl font-bold focus:border-red-500 outline-none math-text bg-transparent">
             </div>
             <div class="relative">
-                <label class="text-xs font-bold text-orange-500 uppercase tracking-wider">가로 항 2</label>
-                <input type="text" id="charB" value="b" maxlength="8" class="w-1/2 border-b-2 border-orange-300 p-2 text-center text-lg md:text-xl focus:border-orange-500 outline-none math-text bg-transparent">
+                <label class="text-sm font-bold text-orange-600 uppercase mb-1 block">가로 항 2</label>
+                <input type="text" id="charB" value="b" maxlength="8" class="w-full border-b-4 border-orange-300 p-2 text-center text-3xl md:text-4xl font-bold focus:border-orange-500 outline-none math-text bg-transparent">
             </div>
             <div class="relative">
-                <label class="text-xs font-bold text-green-500 uppercase tracking-wider">세로 항 1</label>
-                <input type="text" id="charC" value="c" maxlength="8" class="w-full border-b-2 border-green-300 p-2 text-center text-lg md:text-xl focus:border-green-500 outline-none math-text bg-transparent">
+                <label class="text-sm font-bold text-green-600 uppercase mb-1 block">세로 항 1</label>
+                <input type="text" id="charC" value="c" maxlength="8" class="w-full border-b-4 border-green-300 p-2 text-center text-3xl md:text-4xl font-bold focus:border-green-500 outline-none math-text bg-transparent">
             </div>
             <div class="relative">
-                <label class="text-xs font-bold text-purple-500 uppercase tracking-wider">세로 항 2</label>
-                <input type="text" id="charD" value="d" maxlength="8" class="w-full border-b-2 border-purple-300 p-2 text-center text-lg md:text-xl focus:border-purple-500 outline-none math-text bg-transparent">
+                <label class="text-sm font-bold text-purple-600 uppercase mb-1 block">세로 항 2</label>
+                <input type="text" id="charD" value="d" maxlength="8" class="w-full border-b-4 border-purple-300 p-2 text-center text-3xl md:text-4xl font-bold focus:border-purple-500 outline-none math-text bg-transparent">
             </div>
         </div>
 
-        <div class="flex flex-col items-center space-y-8">
-            <!-- 사각형 모델 영역 -->
-            <div class="relative flex flex-col items-center overflow-x-auto w-full py-4">
-                <div class="inline-flex flex-col items-center">
+        <!-- 메인 콘텐츠 영역 (좌우 1:1.2 비율 배치) -->
+        <div class="flex flex-col lg:flex-row items-center lg:items-stretch justify-center gap-10">
+            
+            <!-- 왼쪽: 사각형 모델 영역 -->
+            <div class="w-full lg:w-2/5 flex flex-col items-center justify-center border-r-0 lg:border-r-2 border-gray-100 pr-0 lg:pr-10">
+                <div class="relative inline-flex flex-col items-center">
                     <!-- 상단 가로 길이 -->
-                    <div class="flex w-64 mb-2 border-b-2 border-gray-300 pb-1">
-                        <div id="labA" class="w-1/2 text-center font-bold text-red-600 math-text text-lg border-r border-gray-200"></div>
-                        <div id="labB" class="w-1/2 text-center font-bold text-orange-600 math-text text-lg"></div>
+                    <div class="flex w-80 mb-4 border-b-4 border-gray-400 pb-2">
+                        <div id="labA" class="w-1/2 text-center font-bold text-red-600 math-text text-3xl md:text-4xl border-r-2 border-gray-200"></div>
+                        <div id="labB" class="w-1/2 text-center font-bold text-orange-600 math-text text-3xl md:text-4xl"></div>
                     </div>
 
                     <div class="flex items-center">
                         <!-- 왼쪽 세로 길이 -->
-                        <div class="flex flex-col h-64 mr-2 border-r-2 border-gray-300 pr-1">
-                            <div id="labC" class="h-1/2 flex items-center justify-end font-bold text-green-600 math-text text-lg border-b border-gray-200 pr-1"></div>
-                            <div id="labD" class="h-1/2 flex items-center justify-end font-bold text-purple-600 math-text text-lg pr-1"></div>
+                        <div class="flex flex-col h-80 mr-4 border-r-4 border-gray-400 pr-2">
+                            <div id="labC" class="h-1/2 flex items-center justify-end font-bold text-green-600 math-text text-3xl md:text-4xl border-b-2 border-gray-200 pr-2"></div>
+                            <div id="labD" class="h-1/2 flex items-center justify-end font-bold text-purple-600 math-text text-3xl md:text-4xl pr-2"></div>
                         </div>
 
                         <!-- 4개 사각형 -->
-                        <div class="relative w-64 h-64 border-2 border-gray-200 rounded-sm overflow-hidden shadow-sm bg-gray-100">
+                        <div class="relative w-80 h-80 border-4 border-gray-300 rounded-2xl overflow-hidden shadow-xl bg-gray-100 flex-shrink-0">
                             <div class="grid grid-cols-2 grid-rows-2 w-full h-full">
                                 <div id="rectAC" class="rect-box bg-red-400"></div>
                                 <div id="rectBC" class="rect-box bg-orange-400"></div>
@@ -85,30 +90,39 @@
                         </div>
                     </div>
                 </div>
+                <p class="mt-6 text-xl text-gray-400 font-bold">사각형 모델 (넓이)</p>
             </div>
 
-            <!-- 수식 전개 과정 영역 -->
-            <div class="w-full bg-gray-50 p-6 rounded-2xl border border-gray-100 font-serif shadow-inner overflow-x-auto">
-                <div class="flex flex-nowrap items-center justify-start md:justify-center gap-2 text-lg md:text-2xl text-gray-700 min-w-max">
-                    <div class="math-text">(<span class="tA"></span> + <span class="tB"></span>)(<span class="tC"></span> + <span class="tD"></span>)</div>
-                    <div class="text-gray-400">=</div>
-                    <div class="math-text">
-                        <span id="step1" class="font-bold text-blue-600"></span>
+            <!-- 오른쪽: 수식 전개 과정 영역 -->
+            <div class="w-full lg:w-3/5 bg-slate-50 p-6 md:p-10 rounded-[2.5rem] border-2 border-slate-200 font-serif shadow-inner flex flex-col justify-center">
+                <div class="flex flex-col space-y-12">
+                    <!-- 문제 식 -->
+                    <div class="flex flex-wrap items-center gap-4 text-3xl md:text-4xl text-gray-800 font-bold">
+                        <div class="math-text">(<span class="tA"></span> + <span class="tB"></span>)(<span class="tC"></span> + <span class="tD"></span>)</div>
                     </div>
-                </div>
-                
-                <div class="flex items-center justify-start md:justify-center gap-2 mt-6 text-xl md:text-3xl border-t border-gray-200 pt-6 min-w-max">
-                    <div class="text-gray-400">=</div>
-                    <div id="expandedResult" class="math-text font-bold tracking-wider flex flex-wrap gap-2">
-                        <!-- 전개된 결과 -->
-                    </div>
-                </div>
 
-                <!-- 최종 정리 결과 (동류항 합산 시) -->
-                <div id="simplifiedSection" class="hidden flex items-center justify-start md:justify-center gap-2 mt-4 text-2xl md:text-4xl text-indigo-600 border-t-2 border-indigo-100 pt-4 min-w-max">
-                    <div class="text-gray-400 text-xl md:text-2xl">∴</div>
-                    <div id="finalResult" class="math-text font-black tracking-widest">
-                        <!-- 최종 합산 식 -->
+                    <!-- 1차 분배 단계 -->
+                    <div class="flex flex-wrap items-center gap-4 text-3xl md:text-4xl text-gray-700">
+                        <div class="text-gray-300 text-4xl font-light">=</div>
+                        <div class="math-text leading-tight">
+                            <span id="step1" class="font-bold text-blue-600"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- 2차 분배 결과 -->
+                    <div class="flex flex-wrap items-center gap-4 text-3xl md:text-4xl border-t-2 border-slate-200 pt-10">
+                        <div class="text-gray-300 text-4xl font-light">=</div>
+                        <div id="expandedResult" class="math-text font-bold tracking-wider flex flex-wrap gap-x-6 gap-y-2">
+                            <!-- 전개 결과 -->
+                        </div>
+                    </div>
+
+                    <!-- 최종 정리 결과 -->
+                    <div id="simplifiedSection" class="hidden flex items-center gap-6 mt-6 text-5xl md:text-6xl text-indigo-700 border-t-4 border-indigo-100 pt-8">
+                        <div class="text-gray-300 text-3xl">∴</div>
+                        <div id="finalResult" class="math-text font-black tracking-widest leading-none">
+                            <!-- 최종 결과 -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -116,11 +130,9 @@
     </div>
 
     <script>
-        // DOM이 모두 로드된 후 실행되도록 설정 (홈페이지 삽입 시 안정성 강화)
         document.addEventListener('DOMContentLoaded', function() {
             const inputs = ['charA', 'charB', 'charC', 'charD'];
 
-            // 입력값에서 계수와 문자 분리 (예: '2x' -> 2, 'x')
             function parseTerm(s) {
                 s = s.trim();
                 if (!s) return { coeff: 0, variable: '' };
@@ -136,7 +148,6 @@
                 return { coeff, variable };
             }
 
-            // 두 항의 곱셈 처리 (숫자 계산 및 지수 표현)
             function multiplyTerms(t1Str, t2Str) {
                 const t1 = parseTerm(t1Str);
                 const t2 = parseTerm(t2Str);
@@ -157,7 +168,6 @@
                 return { coeff: resCoeff, variable: resVar, rawVar: rawVarKey };
             }
 
-            // 항을 사람이 읽기 좋은 수식 형태로 변환
             function formatTerm(coeff, variable, isFirst = false) {
                 if (coeff === 0) return '';
                 let s = '';
@@ -182,13 +192,11 @@
                     { id: 'BD', color: 'text-purple-500', val: multiplyTerms(b, d) }
                 ];
 
-                // 1. 사각형 내부 텍스트 업데이트
                 terms.forEach(t => {
                     const html = formatTerm(t.val.coeff, t.val.variable, true);
                     document.getElementById('rect' + t.id).innerHTML = html || '0';
                 });
 
-                // 2. 외부 라벨 업데이트
                 document.getElementById('labA').innerText = a;
                 document.getElementById('labB').innerText = b;
                 document.getElementById('labC').innerText = c;
@@ -198,10 +206,8 @@
                 document.querySelectorAll('.tC').forEach(el => el.innerText = c);
                 document.querySelectorAll('.tD').forEach(el => el.innerText = d);
 
-                // 3. 분배법칙 단계별 수식
                 document.getElementById('step1').innerHTML = `${a}(${c} + ${d}) + ${b}(${c} + ${d})`;
 
-                // 4. 전개된 4개 항 표시
                 const expandedEl = document.getElementById('expandedResult');
                 expandedEl.innerHTML = '';
                 terms.forEach((t, idx) => {
@@ -211,7 +217,6 @@
                     expandedEl.appendChild(span);
                 });
 
-                // 5. 동류항 합산 로직 (순서 유지)
                 const sumMap = {};
                 const order = [];
                 const varDisplayMap = {};
@@ -246,12 +251,10 @@
                 }
             }
 
-            // 이벤트 바인딩
             inputs.forEach(id => {
                 document.getElementById(id).addEventListener('input', update);
             });
 
-            // 초기 실행
             update();
         });
     </script>
