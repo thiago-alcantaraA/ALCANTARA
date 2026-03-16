@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중3 수학 판서 - 제곱근의 곱셈과 나눗셈</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --chalkboard-bg: #1e3d33; 
+            --chalk-white: rgba(255, 255, 255, 0.95);
+            --chalk-yellow: #fdf08a;
+            --chalk-blue: #a5f3fc;
+            --chalk-pink: #fca5a5;
+            --box-border: rgba(165, 243, 252, 0.3);
+        }
+        body {
+            background-color: #121212;
+            font-family: 'Noto Sans KR', sans-serif;
+            color: var(--chalk-white);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        /* A4 가로 비율(1.414:1) */
+        .chalkboard-container {
+            width: 100%;
+            max-width: 1250px;
+            aspect-ratio: 1.414 / 1; 
+            padding: 15px;
+            background: #3d2b1f; 
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+        }
+        .chalkboard {
+            flex: 1;
+            background-color: var(--chalkboard-bg);
+            background-image: url('https://www.transparenttextures.com/patterns/black-chalkboard.png');
+            padding: 25px 40px;
+            position: relative;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.7);
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .handwritten { font-family: 'Nanum Pen Script', cursive; }
+        .highlight-yellow { color: var(--chalk-yellow); }
+        .highlight-blue { color: var(--chalk-blue); }
+        .highlight-pink { color: var(--chalk-pink); }
+        
+        .box-container {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px 20px;
+        }
+
+        mjx-container { 
+            color: inherit !important; 
+            display: inline-block !important;
+            margin: 0 !important;
+            vertical-align: middle !important;
+        }
+        
+        .comment-text {
+            font-size: 0.85em;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="chalkboard-container">
+        <div class="chalkboard">
+            <!-- 제목 -->
+            <header class="mb-4">
+                <p class="handwritten text-lg opacity-60 flex items-center">
+                    <span class="w-2 h-2 border border-white rounded-full mr-2"></span>
+                    근호를 포함한 식의 계산
+                </p>
+                <h1 class="text-3xl font-bold handwritten highlight-yellow mt-1">√ 복습</h1>
+            </header>
+
+            <div class="grid grid-cols-2 gap-6 flex-grow">
+                <!-- 왼쪽 컬럼 -->
+                <div class="flex flex-col gap-5">
+                    <!-- 연산 법칙 복습 박스 -->
+                    <div class="box-container space-y-3">
+                        <ul class="handwritten text-xl space-y-3">
+                            <li>• 소인수 분해</li>
+                            <li>• 연산 법칙
+                                <div class="pl-6 space-y-2 mt-1">
+                                    <p>$a + b = b + a \implies$ <span class="highlight-blue text-lg">수의 순서 : 교환</span></p>
+                                    <p>$(a + b) + c = a + (b + c) \implies$ <span class="highlight-blue text-lg">계산 순서 : 결합</span></p>
+                                    <div class="flex items-center gap-3">
+                                        <div class="space-y-0.5">
+                                            <p>$a \times (b + c) = ab + ac$</p>
+                                            <p>$ab + ac = a(b + c)$</p>
+                                        </div>
+                                        <div class="text-3xl highlight-blue">}</div>
+                                        <span class="highlight-blue text-lg">분배</span>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- 곱셈 증명 박스 -->
+                    <div class="box-container flex-grow">
+                        <div class="handwritten text-xl space-y-2">
+                            <p>$(\sqrt{a} \times \sqrt{b})^2 = \sqrt{a}\sqrt{b} \times \sqrt{a}\sqrt{b}$</p>
+                            <p class="pl-10">$= \sqrt{a} \times \underline{\sqrt{a} \times \sqrt{b}} \times \sqrt{b}$</p>
+                            <p class="pl-10">$= (\sqrt{a} \times \sqrt{a}) \times (\sqrt{b} \times \sqrt{b}) = ab$</p>
+                            
+                            <div class="mt-4 space-y-1">
+                                <p class="highlight-yellow text-2xl">$\implies \sqrt{a}\sqrt{b}$는 $x^2 = ab$의 해</p>
+                                <p class="text-2xl items-center flex flex-wrap">
+                                    <span>$\therefore \sqrt{a}\sqrt{b} = \sqrt{ab}$</span>
+                                    <span class="highlight-pink comment-text">($a, b > 0$) → 당연한 사실?</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 오른쪽 컬럼 -->
+                <div class="flex flex-col gap-5">
+                    <!-- 나눗셈 증명 박스 -->
+                    <div class="box-container">
+                        <div class="handwritten text-xl space-y-3">
+                            <p>$( 1/\sqrt{a} )^2 = 1/a$ 이므로</p>
+                            <p>$1/\sqrt{a}$ 은 $x^2 = 1/a$ 의 해</p>
+                            <p class="text-center highlight-yellow text-2xl">$\sqrt{(1/a)} = 1/\sqrt{a}$</p>
+                            
+                            <div class="pt-3 space-y-2 border-t border-white/10">
+                                <p class="highlight-yellow text-xl">$\implies \sqrt{a} \div \sqrt{b} = \sqrt{a} \times 1/\sqrt{b} = \sqrt{a} \times \sqrt{(1/b)}$</p>
+                                <p class="pl-6 text-2xl flex items-center flex-wrap">
+                                    <span>$= \sqrt{(a/b)}$</span>
+                                    <span class="highlight-pink comment-text">($a, b > 0$) → 당연한 사실?</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 근호 밖으로 정리 -->
+                    <div class="flex-grow flex flex-col">
+                        <h2 class="text-2xl font-bold handwritten highlight-yellow mb-2">√ 근호 밖으로 정리</h2>
+                        <div class="box-container flex-grow flex flex-col justify-center items-center">
+                            <p class="handwritten text-4xl mb-6">$\sqrt{a^2b} = \sqrt{a^2} \times \sqrt{b} = a\sqrt{b}$</p>
+                            <p class="handwritten text-xl highlight-blue">$\to$ 소인수 분해를 통해 근호 밖으로 정리</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하단 분필 트레이 -->
+            <div class="mt-5 flex justify-center">
+                <div class="w-32 h-1 bg-white/10 rounded-full"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MathJax 설정 -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>
