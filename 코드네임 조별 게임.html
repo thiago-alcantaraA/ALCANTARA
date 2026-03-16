@@ -9,183 +9,164 @@
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
         body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; height: 100vh; overflow: hidden; }
         
-        /* 카드 크기 및 폰트 최적화 */
+        /* 카드 디자인 최적화 */
         .word-card { 
-            height: 120px; 
+            height: 110px; 
             cursor: pointer; 
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
-            border-bottom-width: 6px; 
+            background: white;
+            border-radius: 20px;
         }
-        .word-card:hover:not(.revealed) { transform: translateY(-6px); }
-        .word-card.revealed { cursor: default; border-bottom-width: 0; }
+        .word-card:hover:not(.revealed) { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .word-card.revealed { cursor: default; }
         
         .word-text {
-            font-size: 2rem; 
-            line-height: 1.2;
+            font-size: 1.75rem; 
+            font-weight: 800;
+            color: #1e293b;
             word-break: keep-all;
         }
-        
-        @media (max-width: 1024px) {
-            .word-text { font-size: 1.5rem; }
-            .word-card { height: 100px; }
-        }
 
-        .team-red { background-color: #ef4444; color: white; border-color: #b91c1c; }
-        .team-blue { background-color: #3b82f6; color: white; border-color: #1d4ed8; }
-        .neutral { background-color: #cbd5e1; color: #475569; border-color: #94a3b8; }
-        .assassin { background-color: #0f172a; color: white; border-color: #000000; }
+        /* 팀 색상 설정 */
+        .team-red { background-color: #ef4444 !important; color: white !important; }
+        .team-blue { background-color: #3b82f6 !important; color: white !important; }
+        .neutral { background-color: #e2e8f0 !important; color: #64748b !important; }
+        .assassin { background-color: #1e293b !important; color: white !important; }
         
-        .active-glow-red { box-shadow: 0 0 25px rgba(239, 68, 68, 0.5); border: 4px solid #ef4444; }
-        .active-glow-blue { box-shadow: 0 0 25px rgba(59, 130, 246, 0.5); border: 4px solid #3b82f6; }
+        /* 활성화 상태 강조 효과 */
+        .active-glow-red { box-shadow: 0 0 30px rgba(239, 68, 68, 0.15); border: 2px solid rgba(239, 68, 68, 0.3); }
+        .active-glow-blue { box-shadow: 0 0 30px rgba(59, 130, 246, 0.15); border: 2px solid rgba(59, 130, 246, 0.3); }
 
-        /* 타이머 애니메이션 */
+        /* 타이머 강조 애니메이션 */
         .timer-low { animation: pulse-red 1s infinite; color: #ef4444; }
         @keyframes pulse-red {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            50% { opacity: 0.6; }
         }
     </style>
 </head>
-<body class="p-4">
-    <div id="app" class="max-w-[1500px] mx-auto h-full flex flex-col">
+<body class="p-6">
+    <div id="app" class="max-w-[1600px] mx-auto h-full flex flex-col">
         
-        <!-- 상단 헤더 -->
-        <header class="bg-white p-6 rounded-[32px] shadow-sm mb-4 border border-slate-200">
+        <!-- 상단 헤더 영역 -->
+        <header class="mb-6">
             <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center gap-6">
-                    <div>
-                        <h1 class="text-3xl font-black text-slate-800 flex items-center gap-2">
-                            🏆 6강 토너먼트 시스템
-                        </h1>
-                        <div class="flex gap-2 mt-3 overflow-x-auto pb-1 max-w-[600px]">
-                            <span v-for="(winner, idx) in prelimWinners" :key="idx" 
-                                  class="text-xs bg-green-100 px-4 py-1.5 rounded-full border border-green-200 font-bold text-green-700 whitespace-nowrap">
-                                예선 승리: {{winner}}
-                            </span>
-                            <span v-if="byeTeam" class="text-xs bg-amber-100 px-4 py-1.5 rounded-full border border-amber-200 font-bold text-amber-700 whitespace-nowrap animate-pulse">
-                                ⚡ 부전승: {{byeTeam}}
-                            </span>
-                        </div>
-                    </div>
+                <div class="flex items-center gap-4">
+                    <h1 class="text-2xl font-black text-slate-800 flex items-center gap-2">
+                        🏆 6강 토너먼트 시스템
+                    </h1>
+                </div>
 
-                    <!-- 중앙 타이머 표시 및 컨트롤 -->
-                    <div class="flex items-center gap-3 bg-slate-100 p-2 rounded-[28px] border border-slate-200">
-                        <div @click="toggleTimer" class="cursor-pointer bg-slate-900 text-white px-6 py-3 rounded-[20px] flex flex-col items-center justify-center min-w-[110px] shadow-lg hover:bg-slate-800 transition-all">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{{ isTimerPaused ? '일시정지됨' : '남은 시간' }}</span>
-                            <span class="text-3xl font-black tabular-nums" :class="{'timer-low': timeLeft <= 10 && timeLeft > 0}">
-                                {{ timeLeft }}<span class="text-lg ml-0.5">s</span>
-                            </span>
-                        </div>
-                        <div class="flex flex-col gap-1">
-                            <button @click="toggleTimer" class="p-2 bg-white rounded-xl shadow-sm hover:bg-slate-50 border border-slate-200 transition-all active:scale-90" :title="isTimerPaused ? '시작' : '중단'">
-                                <svg v-if="isTimerPaused" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                                <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                            </button>
-                            <button @click="resetTimer" class="p-2 bg-white rounded-xl shadow-sm hover:bg-slate-50 border border-slate-200 transition-all active:scale-90" title="초기화">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                            </button>
-                        </div>
+                <!-- 중앙 타이머 유닛 -->
+                <div class="flex items-center gap-3 bg-white p-2 px-3 rounded-full shadow-sm border border-slate-100">
+                    <div @click="toggleTimer" class="cursor-pointer bg-slate-900 text-white px-5 py-2 rounded-2xl flex flex-col items-center justify-center min-w-[100px] shadow-md transition-all">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">남은 시간</span>
+                        <span class="text-2xl font-black tabular-nums leading-none" :class="{'timer-low': timeLeft <= 10}">
+                            {{ timeLeft }}<span class="text-sm ml-0.5 font-bold">s</span>
+                        </span>
+                    </div>
+                    <div class="flex gap-1">
+                        <button @click="toggleTimer" class="p-2 bg-slate-50 rounded-xl hover:bg-slate-100 transition-all">
+                            <svg v-if="isTimerPaused" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        </button>
+                        <button @click="resetTimer" class="p-2 bg-slate-50 rounded-xl hover:bg-slate-100 transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        </button>
                     </div>
                 </div>
-                
-                <div class="flex items-center gap-4">
-                    <div class="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-                        <select v-model="selectedMatch" class="bg-transparent font-black px-4 py-1.5 outline-none text-base text-slate-700">
-                            <option value="0">예선 1경기 (1vs2)</option>
-                            <option value="1">예선 2경기 (3vs4)</option>
-                            <option value="2">예선 3경기 (5vs6)</option>
-                            <option value="3">준결승전 (추첨 2팀)</option>
-                            <option value="4">최종 결승전</option>
-                        </select>
-                    </div>
 
-                    <button v-if="prelimWinners.length === 3 && !byeTeam" @click="drawByeTeam" 
-                            class="bg-amber-500 text-white px-6 py-2.5 rounded-2xl font-black text-base hover:bg-amber-600 transition-all shadow-lg hover:scale-105 active:scale-95">
-                        부전승 추첨!
+                <!-- 우측 제어 메뉴 -->
+                <div class="flex items-center gap-3">
+                    <select v-model="selectedMatch" class="bg-white border border-slate-200 font-bold px-4 py-2 rounded-xl outline-none text-slate-600 shadow-sm text-sm">
+                        <option value="0">예선 1경기 (1vs2)</option>
+                        <option value="1">예선 2경기 (3vs4)</option>
+                        <option value="2">예선 3경기 (5vs6)</option>
+                        <option value="3">준결승전 (추첨 2팀)</option>
+                        <option value="4">최종 결승전</option>
+                    </select>
+                    <button @click="initGame" class="p-2 bg-slate-800 text-white rounded-xl shadow-md hover:bg-slate-700 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                     </button>
-
-                    <button @click="initGame" class="bg-slate-800 text-white p-3 rounded-2xl hover:bg-slate-700 transition-all shadow-md">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                    </button>
-                    <button @click="toggleSpyMaster" class="px-6 py-2.5 rounded-2xl font-black text-base transition-all shadow-sm border"
+                    <button @click="toggleSpyMaster" class="px-5 py-2 rounded-xl font-bold text-sm transition-all shadow-sm border"
                             :class="isSpyMaster ? 'bg-red-500 text-white border-red-600' : 'bg-white text-slate-600 border-slate-200'">
                         {{ isSpyMaster ? '정답 가리기' : '정답 확인' }}
                     </button>
                 </div>
             </div>
 
-            <!-- 점수판 -->
-            <div class="grid grid-cols-2 gap-10">
-                <div class="flex items-center justify-between p-5 rounded-[24px] transition-all border-2"
-                     :class="currentTurn === 'red' ? 'active-glow-red bg-red-50 border-red-200' : 'bg-slate-50 border-transparent opacity-60'">
+            <!-- 점수판 영역 -->
+            <div class="grid grid-cols-2 gap-8 items-center px-4">
+                <div class="flex items-center justify-between p-6 rounded-3xl transition-all"
+                     :class="currentTurn === 'red' ? 'active-glow-red bg-white' : 'bg-white opacity-40 shadow-sm'">
                     <div class="flex flex-col">
-                        <span class="text-sm font-black text-red-500 uppercase tracking-widest mb-1">RED TEAM</span>
-                        <input v-model="customTeamNames.red" class="bg-transparent text-3xl font-black text-slate-800 outline-none border-b-2 border-transparent focus:border-red-300 w-56" placeholder="팀명">
+                        <span class="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">RED TEAM</span>
+                        <input v-model="customTeamNames.red" class="bg-transparent text-3xl font-black text-slate-800 outline-none w-full" placeholder="팀명">
                     </div>
-                    <div class="text-6xl font-black text-red-600">{{ redRemaining }}</div>
+                    <div class="text-7xl font-black text-red-500">{{ redRemaining }}</div>
                 </div>
 
-                <div class="flex items-center justify-between p-5 rounded-[24px] transition-all border-2"
-                     :class="currentTurn === 'blue' ? 'active-glow-blue bg-blue-50 border-blue-200' : 'bg-slate-50 border-transparent opacity-60'">
-                    <div class="text-6xl font-black text-blue-600">{{ blueRemaining }}</div>
+                <div class="flex items-center justify-between p-6 rounded-3xl transition-all"
+                     :class="currentTurn === 'blue' ? 'active-glow-blue bg-white' : 'bg-white opacity-40 shadow-sm'">
+                    <div class="text-7xl font-black text-blue-500">{{ blueRemaining }}</div>
                     <div class="flex flex-col text-right">
-                        <span class="text-sm font-black text-blue-500 uppercase tracking-widest mb-1">BLUE TEAM</span>
-                        <input v-model="customTeamNames.blue" class="bg-transparent text-3xl font-black text-slate-800 outline-none border-b-2 border-transparent focus:border-blue-300 text-right w-56" placeholder="팀명">
+                        <span class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">BLUE TEAM</span>
+                        <input v-model="customTeamNames.blue" class="bg-transparent text-3xl font-black text-slate-800 outline-none text-right w-full" placeholder="팀명">
                     </div>
                 </div>
             </div>
         </header>
 
-        <!-- 단어 카드 보드 -->
-        <main class="flex-1 grid grid-cols-5 gap-4 min-h-0">
+        <!-- 단어 보드 (5x5 고정) -->
+        <main class="flex-1 grid grid-cols-5 gap-5 min-h-0 overflow-y-auto px-2">
             <div v-for="(card, idx) in board" :key="idx" 
                  @click="revealCard(idx)"
-                 class="word-card relative rounded-[28px] shadow-md flex items-center justify-center p-4 text-center transition-all duration-300 font-black border-x-2 border-t-2"
-                 :class="getCardClass(card)">
+                 class="word-card shadow-sm flex items-center justify-center p-6 text-center"
+                 :class="[getCardClass(card), card.revealed ? 'revealed' : '']">
                 
-                <span class="word-text tracking-tight" :class="card.revealed || isSpyMaster ? '' : 'text-slate-800'">
+                <span class="word-text" :class="card.revealed || isSpyMaster ? '' : 'text-slate-700'">
                     {{ card.word }}
                 </span>
 
                 <div v-if="isSpyMaster && !card.revealed" 
-                     class="absolute inset-0 rounded-[24px] border-[6px] opacity-40 pointer-events-none"
+                     class="absolute inset-0 rounded-[20px] border-4 opacity-30 pointer-events-none"
                      :style="{ borderColor: getTeamColor(card.type) }">
-                </div>
-
-                <div v-if="card.revealed" class="absolute top-3 right-4 opacity-30">
-                    <svg v-if="card.type === 1 || card.type === 2" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    <svg v-if="card.type === 0" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
                 </div>
             </div>
         </main>
 
-        <!-- 하단 푸터 -->
-        <footer class="mt-5 bg-slate-900 text-white p-5 rounded-[32px] flex justify-between items-center shadow-2xl border-t border-white/10">
-            <div class="flex items-center gap-8">
-                <div class="px-6 py-2 rounded-2xl text-lg font-black transition-all transform" :class="currentTurn === 'red' ? 'bg-red-500 scale-110 shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-blue-500 scale-110 shadow-[0_0_15px_rgba(59,130,246,0.4)]'">
-                    {{ currentTurn === 'red' ? '🔴 레드 팀 턴' : '🔵 블루 팀 턴' }}
+        <!-- 하단 정보창 -->
+        <footer class="mt-8 bg-slate-900 text-white p-4 px-8 rounded-3xl flex justify-between items-center shadow-2xl">
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-3 bg-white/10 px-6 py-2 rounded-2xl border border-white/5" 
+                     :class="currentTurn === 'red' ? 'border-red-500/50' : 'border-blue-500/50'">
+                    <span class="w-3 h-3 rounded-full animate-pulse" :class="currentTurn === 'red' ? 'bg-red-500' : 'bg-blue-500'"></span>
+                    <span class="font-black text-lg">{{ currentTurn === 'red' ? '레드 팀 턴' : '블루 팀 턴' }}</span>
                 </div>
-                <div v-if="timeLeft === 0" class="text-red-400 font-black animate-bounce">⏰ 시간 초과! 턴을 넘기세요.</div>
-                <p v-else class="text-base text-slate-400 font-bold italic">
-                    부전승 추첨 버튼은 예선 3팀 승자가 모두 기록되면 활성화됩니다.
-                </p>
+                <div v-if="timeLeft === 0" class="text-red-400 font-bold flex items-center gap-2">
+                    <span class="animate-bounce">⏰</span> 시간 초과! 턴을 넘기세요.
+                </div>
             </div>
-            <button @click="passTurn" class="px-8 py-3 bg-white/10 hover:bg-white/20 rounded-2xl font-black transition-all text-base border border-white/20 active:scale-95">
-                턴 넘기기
-            </button>
+            
+            <div class="flex items-center gap-4">
+                <p v-if="byeTeam" class="text-xs text-slate-400 font-bold">⚡ 부전승: {{ byeTeam }}</p>
+                <button @click="passTurn" class="px-10 py-3 bg-white/10 hover:bg-white/20 rounded-2xl font-black transition-all text-sm border border-white/10 active:scale-95">
+                    턴 넘기기
+                </button>
+            </div>
         </footer>
 
-        <!-- 모달 -->
-        <div v-if="isGameOver" class="fixed inset-0 bg-slate-950/95 flex items-center justify-center z-50 p-6 backdrop-blur-md">
-            <div class="bg-white rounded-[48px] p-12 max-w-xl w-full text-center shadow-2xl border-4 border-slate-100">
-                <div class="text-8xl mb-8 animate-bounce">{{ winnerSide === 'red' ? '🚩' : '🔹' }}</div>
-                <h2 class="text-5xl font-black mb-4 text-slate-900 tracking-tight">{{ winnerName }} 승리!</h2>
-                <p class="text-xl text-slate-500 font-bold mb-12">{{ gameOverReason }}</p>
-                <div class="flex flex-col gap-4">
-                    <button @click="recordWinner" class="bg-blue-600 text-white font-black py-5 rounded-[24px] text-2xl hover:bg-blue-700 transition-all shadow-xl active:scale-95">
+        <!-- 게임 종료 모달 -->
+        <div v-if="isGameOver" class="fixed inset-0 bg-slate-950/90 flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+            <div class="bg-white rounded-[40px] p-12 max-w-lg w-full text-center shadow-2xl">
+                <div class="text-7xl mb-6">{{ winnerSide === 'red' ? '🔴' : '🔵' }}</div>
+                <h2 class="text-4xl font-black mb-2 text-slate-900">{{ winnerName }} 승리!</h2>
+                <p class="text-lg text-slate-500 font-medium mb-10">{{ gameOverReason }}</p>
+                <div class="flex flex-col gap-3">
+                    <button @click="recordWinner" class="bg-slate-900 text-white font-black py-4 rounded-2xl text-xl hover:bg-slate-800 transition-all shadow-lg">
                         {{ recordButtonText }}
                     </button>
-                    <button @click="initGame" class="text-slate-400 font-bold py-3 hover:text-slate-600 text-lg">기록 없이 새로고침</button>
+                    <button @click="initGame" class="text-slate-400 font-bold py-2 hover:text-slate-600">다시 시작</button>
                 </div>
             </div>
         </div>
@@ -197,7 +178,39 @@
 
         createApp({
             setup() {
-                const wordPool = ["사과", "축구", "바다", "태양", "로봇", "강아지", "치킨", "휴대폰", "영화", "가방", "비행기", "경찰", "코끼리", "수박", "음악", "체육", "수학", "역사", "독도", "지도", "거울", "안경", "모자", "장갑", "신발", "비누", "공룡", "무지개", "번개", "파도", "나무", "구름", "별빛", "라면", "콜라", "연날리기", "팽이", "미끄럼틀", "그네", "솜사탕", "비빔밥", "한복", "궁궐", "자동차", "우주", "피자", "카메라", "피아노", "고래", "사막", "냉장고", "지구", "열쇠", "화산", "기차", "도서관", "시계", "침대", "연필", "포도", "장미", "나비", "사탕", "풍선", "빵", "우유", "치약", "축구공", "수영장", "놀이터", "우산", "전화기", "모니터", "책꽂이", "칠판", "지우개", "필통", "여권", "망원경", "등대", "선글라스", "캠핑", "기타", "피리", "드럼", "바이올린", "첼로", "하프", "나팔", "징", "꽹과리", "북", "가야금", "거문고", "해금", "대금", "단소", "소금", "생황", "태평소"];
+                // 대폭 확장된 단어 풀 (약 300개 이상의 다양한 명사)
+                const wordPool = [
+                    "사과", "축구", "바다", "태양", "로봇", "강아지", "치킨", "휴대폰", "영화", "가방",
+                    "비행기", "경찰", "코끼리", "수박", "음악", "체육", "수학", "역사", "독도", "지도",
+                    "거울", "안경", "모자", "장갑", "신발", "비누", "공룡", "무지개", "번개", "파도",
+                    "나무", "구름", "별빛", "라면", "콜라", "연날리기", "팽이", "미끄럼틀", "그네", "솜사탕",
+                    "비빔밥", "한복", "궁궐", "자동차", "우주", "피자", "카메라", "피아노", "고래", "사막",
+                    "냉장고", "지구", "열쇠", "화산", "기차", "도서관", "시계", "침대", "연필", "포도",
+                    "장미", "나비", "사탕", "풍선", "빵", "우유", "치약", "축구공", "수영장", "놀이터",
+                    "우산", "전화기", "모니터", "책꽂이", "칠판", "지우개", "필통", "여권", "망원경", "등대",
+                    "선글라스", "캠핑", "기타", "피리", "드럼", "바이올린", "첼로", "하프", "나팔", "북",
+                    "가야금", "해금", "단소", "생황", "태평소", "스테이크", "자전거", "다이아몬드", "현미경", "박물관",
+                    "에스컬레이터", "놀이공원", "샌드위치", "고구마", "옥수수", "코스모스", "민들레", "펭귄", "낙타", "미어캣",
+                    "북극곰", "판다", "다람쥐", "토끼", "여우", "사자", "호랑이", "기린", "얼룩말", "하마",
+                    "코뿔소", "캥거루", "돌고래", "갈매기", "독수리", "부엉이", "까마귀", "비둘기", "참새",
+                    "금붕어", "개구리", "거북이", "악어", "뱀", "달팽이", "매미", "잠자리", "벌", "개미",
+                    "노트북", "마우스", "키보드", "프린터", "텔레비전", "세탁기", "청소기", "에어컨", "선풍기", "전자레인지",
+                    "토스터", "커피머신", "믹서기", "전등", "콘센트", "배터리", "충전기", "이어폰", "스피커", "라디오",
+                    "떡볶이", "김밥", "삼겹살", "짜장면", "파스타", "만두", "된장찌개", "미역국", "칼국수", "호떡",
+                    "초콜릿", "쿠키", "케이크", "푸딩", "젤리", "오렌지", "딸기", "바나나", "메론", "복숭아",
+                    "지갑", "여권", "다이어리", "달력", "계산기", "포스트잇", "스테이플러", "가위", "풀", "테이프",
+                    "등산화", "침낭", "텐트", "배낭", "낚싯대", "나침반", "지도", "쌍안경", "구급함", "랜턴",
+                    "교과서", "백과사전", "사전", "잡지", "만화책", "신문", "편지", "엽서", "봉투", "우표",
+                    "화장실", "거실", "주방", "베란다", "현관", "계단", "옥상", "창문", "커튼", "카펫",
+                    "지하철", "버스", "택시", "오토바이", "헬리콥터", "배", "잠수함", "우주선", "인공위성", "로켓",
+                    "축구화", "농구화", "야구글러브", "테니스라켓", "골프채", "탁구라켓", "셔틀콕", "볼링공", "스케이트", "스키",
+                    "남극", "에베레스트", "아마존", "나이아가라", "피라미드", "에펠탑", "자유의여신상", "콜로세움", "만리장성", "타지마할",
+                    "도쿄", "파리", "뉴욕", "런던", "로마", "서울", "부산", "제주도", "경주", "전주",
+                    "유치원", "대학교", "회사", "공장", "시장", "마트", "백화점", "약국", "은행", "카페",
+                    "미술관", "공연장", "영화관", "경기장", "수영장", "체육관", "놀이터", "공원", "숲", "섬",
+                    "봄", "여름", "가을", "겨울", "눈사람", "산타클로스", "선물", "트리", "설날", "추석",
+                    "생일", "결혼", "졸업", "파티", "축제", "휴가", "여행", "소풍", "데이트", "산책"
+                ];
 
                 const selectedMatch = ref("0");
                 const customTeamNames = ref({ red: "1조", blue: "2조" });
@@ -212,7 +225,6 @@
                 const gameOverReason = ref("");
                 const winnerSide = ref(null);
 
-                // 타이머 관련 상태
                 const timeLeft = ref(60);
                 const isTimerPaused = ref(false);
                 let timerInterval = null;
@@ -228,19 +240,12 @@
                     }, 1000);
                 };
 
-                const toggleTimer = () => {
-                    isTimerPaused.value = !isTimerPaused.value;
-                };
-
-                const resetTimer = () => {
-                    timeLeft.value = 60;
-                    isTimerPaused.value = false;
-                };
+                const toggleTimer = () => { isTimerPaused.value = !isTimerPaused.value; };
+                const resetTimer = () => { timeLeft.value = 60; isTimerPaused.value = false; };
 
                 const recordButtonText = computed(() => {
-                    if (parseInt(selectedMatch.value) < 3) return "승자 기록하기";
-                    if (parseInt(selectedMatch.value) === 3) return "준결승 승자 기록";
-                    return "우승 결과 확정!";
+                    if (parseInt(selectedMatch.value) < 3) return "결과 기록하기";
+                    return "토너먼트 결과 확정";
                 });
 
                 watch(selectedMatch, (newVal) => {
@@ -248,12 +253,6 @@
                     if (stage === 0) customTeamNames.value = { red: "1조", blue: "2조" };
                     else if (stage === 1) customTeamNames.value = { red: "3조", blue: "4조" };
                     else if (stage === 2) customTeamNames.value = { red: "5조", blue: "6조" };
-                    else if (stage === 3 && semiFinalTeams.value.length === 2) {
-                        customTeamNames.value = { red: semiFinalTeams.value[0], blue: semiFinalTeams.value[1] };
-                    }
-                    else if (stage === 4 && byeTeam.value) {
-                        customTeamNames.value = { red: "준결승 승자", blue: byeTeam.value };
-                    }
                     initGame();
                 });
 
@@ -262,108 +261,99 @@
                     isSpyMaster.value = false;
                     currentTurn.value = 'red';
                     winnerSide.value = null;
-                    startTimer(); // 게임 초기화 시 타이머 시작
+                    startTimer();
 
+                    // 단어 풀에서 무작위 25개 추출
                     const shuffledWords = [...wordPool].sort(() => Math.random() - 0.5).slice(0, 25);
                     let types = [];
+                    // 레드팀 9개, 블루팀 8개, 암살자(검정) 1개, 중립 7개
                     for(let i=0; i<9; i++) types.push(1);
                     for(let i=0; i<8; i++) types.push(2);
                     types.push(0);
                     while(types.length < 25) types.push(-1);
                     types.sort(() => Math.random() - 0.5);
+
                     board.value = shuffledWords.map((word, i) => ({
                         word, type: types[i], revealed: false
                     }));
                 };
 
                 const getCardClass = (card) => {
-                    if (!card.revealed) return 'bg-white border-slate-200 text-slate-800';
-                    if (card.type === 1) return 'team-red scale-105 z-10 shadow-xl';
-                    if (card.type === 2) return 'team-blue scale-105 z-10 shadow-xl';
-                    if (card.type === 0) return 'assassin scale-95 opacity-80';
-                    return 'neutral scale-95 opacity-50';
+                    if (!card.revealed) return '';
+                    if (card.type === 1) return 'team-red';
+                    if (card.type === 2) return 'team-blue';
+                    if (card.type === 0) return 'assassin';
+                    return 'neutral';
                 };
 
                 const getTeamColor = (type) => {
                     if (type === 1) return '#ef4444';
                     if (type === 2) return '#3b82f6';
-                    if (type === 0) return '#000000';
-                    return '#94a3b8';
+                    if (type === 0) return '#1e293b';
+                    return '#cbd5e1';
                 };
 
                 const revealCard = (idx) => {
                     if (board.value[idx].revealed || isSpyMaster.value || isGameOver.value) return;
                     const card = board.value[idx];
                     card.revealed = true;
-                    if (card.type === 1) { if (currentTurn.value !== 'red') passTurn(); }
-                    else if (card.type === 2) { if (currentTurn.value !== 'blue') passTurn(); }
-                    else if (card.type === 0) {
+                    
+                    if (card.type === 0) {
                         winnerSide.value = currentTurn.value === 'red' ? 'blue' : 'red';
-                        gameOverReason.value = "폭탄을 골라 즉시 패배했습니다!";
+                        gameOverReason.value = "폭탄을 선택하여 즉시 패배했습니다.";
                         isGameOver.value = true;
                         clearInterval(timerInterval);
                         return;
-                    } else { passTurn(); }
+                    }
+                    
+                    if ((currentTurn.value === 'red' && card.type !== 1) || 
+                        (currentTurn.value === 'blue' && card.type !== 2)) {
+                        passTurn();
+                    }
+                    
                     checkWinCondition();
                 };
 
                 const checkWinCondition = () => {
-                    if (redRemaining.value === 0) { 
-                        winnerSide.value = 'red'; 
-                        gameOverReason.value = "모든 단어를 찾았습니다!"; 
-                        isGameOver.value = true; 
+                    if (redRemaining.value === 0) {
+                        winnerSide.value = 'red';
+                        gameOverReason.value = "모든 단어를 먼저 찾았습니다!";
+                        isGameOver.value = true;
                         clearInterval(timerInterval);
-                    }
-                    else if (blueRemaining.value === 0) { 
-                        winnerSide.value = 'blue'; 
-                        gameOverReason.value = "모든 단어를 찾았습니다!"; 
-                        isGameOver.value = true; 
+                    } else if (blueRemaining.value === 0) {
+                        winnerSide.value = 'blue';
+                        gameOverReason.value = "모든 단어를 먼저 찾았습니다!";
+                        isGameOver.value = true;
                         clearInterval(timerInterval);
                     }
                 };
 
                 const passTurn = () => {
                     currentTurn.value = currentTurn.value === 'red' ? 'blue' : 'red';
-                    startTimer(); // 턴을 넘길 때 타이머 리셋 및 재시작
+                    resetTimer();
                 };
 
                 const toggleSpyMaster = () => isSpyMaster.value = !isSpyMaster.value;
 
                 const recordWinner = () => {
                     const winner = winnerSide.value === 'red' ? customTeamNames.value.red : customTeamNames.value.blue;
-                    const stage = parseInt(selectedMatch.value);
-                    if (stage < 3) {
-                        if (!prelimWinners.value.includes(winner)) prelimWinners.value.push(winner);
-                    }
+                    if (!prelimWinners.value.includes(winner)) prelimWinners.value.push(winner);
                     isGameOver.value = false;
-                };
-
-                const drawByeTeam = () => {
-                    if (prelimWinners.value.length < 3) return;
-                    const temp = [...prelimWinners.value].sort(() => Math.random() - 0.5);
-                    byeTeam.value = temp[0];
-                    semiFinalTeams.value = [temp[1], temp[2]];
-                    selectedMatch.value = "3";
                 };
 
                 const redRemaining = computed(() => board.value.filter(c => c.type === 1 && !c.revealed).length);
                 const blueRemaining = computed(() => board.value.filter(c => c.type === 2 && !c.revealed).length);
                 const winnerName = computed(() => winnerSide.value === 'red' ? customTeamNames.value.red : customTeamNames.value.blue);
 
-                onMounted(() => {
-                    initGame();
-                });
-
-                onUnmounted(() => {
-                    clearInterval(timerInterval);
-                });
+                onMounted(() => initGame());
+                onUnmounted(() => clearInterval(timerInterval));
 
                 return {
-                    selectedMatch, customTeamNames, prelimWinners, byeTeam, semiFinalTeams,
+                    selectedMatch, customTeamNames, prelimWinners, byeTeam,
                     board, isSpyMaster, isGameOver, currentTurn, gameOverReason, winnerSide, winnerName,
                     redRemaining, blueRemaining, recordButtonText,
                     timeLeft, isTimerPaused, toggleTimer, resetTimer,
-                    initGame, getCardClass, getTeamColor, revealCard, toggleSpyMaster, passTurn, recordWinner, drawByeTeam
+                    initGame, getCardClass, getTeamColor, revealCard, toggleSpyMaster, passTurn, recordWinner
                 };
             }
         }).mount('#app');
