@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>분모의 유리화 - A4 가로형 가이드</title>
+    <style>
+        /* A4 가로 비율 및 기본 스타일 */
+        body {
+            background-color: #f0f0f0; /* 배경은 연한 회색 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+        }
+
+        /* A4 가로형 컨테이너 (297mm x 210mm 비율) */
+        .a4-landscape {
+            width: 297mm;
+            height: 210mm;
+            background-color: #1a2e26; /* 칠판 배경색 */
+            color: #ffffff;
+            padding: 15mm;
+            box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 상단 헤더 */
+        header {
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        h1 {
+            color: #fef08a; /* 노란색 분필 */
+            font-size: 36px;
+            margin: 0;
+        }
+
+        .note {
+            color: #fca5a5; /* 분홍색 강조 */
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* 2단 레이아웃 */
+        main {
+            display: flex;
+            gap: 30px;
+            flex: 1;
+        }
+
+        .column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 카드 스타일 */
+        .content-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 22px;
+            color: #fef08a;
+            margin: 0 0 15px 0;
+        }
+
+        /* 텍스트 크기 조정 */
+        p, li {
+            font-size: 17px;
+            line-height: 1.6;
+        }
+
+        ul {
+            margin: 0;
+            padding-left: 25px;
+        }
+
+        .highlight-blue { color: #7dd3fc; text-decoration: underline; font-weight: bold; }
+        .highlight-yellow { color: #fef08a; font-weight: bold; }
+
+        /* 수식 스타일 */
+        .formula-box {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        /* 하단 요약 박스 */
+        .summary {
+            border: 2px dotted #7dd3fc;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 20px;
+            color: #7dd3fc;
+            background: rgba(125, 211, 252, 0.05);
+            margin-top: auto;
+        }
+
+        .condition {
+            text-align: right;
+            color: #fca5a5;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        /* 수식 크기 적정화 */
+        .mjx-chtml {
+            font-size: 1.15em !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="a4-landscape">
+        <header>
+            <h1>분모의 유리화</h1>
+            <div class="note">※ 분모를 유리수로 만드는 과정 → 유리화</div>
+        </header>
+
+        <main>
+            <!-- 왼쪽: 정의 및 예시 -->
+            <div class="column">
+                <div class="content-box">
+                    <ul>
+                        <li>무리수의 덧셈 / 뺄셈을 하기 위한 <span class="highlight-blue">준비물</span></li>
+                        <li>수 자체는 변화 없이, <span class="highlight-yellow">분모에 있는 무리수를 유리수로</span> 바꿈</li>
+                    </ul>
+                </div>
+
+                <h2>예시: $1/\sqrt{2}$의 유리화</h2>
+                <div class="content-box">
+                    <p>i) $\sqrt{2}$의 특징 : <span class="highlight-blue">제곱하면 2가 된다.</span></p>
+                    <p>ii) 모든 수에는 <span class="highlight-yellow">1</span>이 곱해져 있다.</p>
+                    
+                    <div class="formula-box">
+                        <div>
+                            $$\Rightarrow \frac{1}{\sqrt{2}} = \frac{1}{\sqrt{2}} \times 1 = \frac{1}{\sqrt{2}} \times \frac{\sqrt{2}}{\sqrt{2}}$$
+                        </div>
+                        <div style="margin-top: 10px;">
+                            $$= \frac{1 \times \sqrt{2}}{\sqrt{2} \times \sqrt{2}} = \frac{\sqrt{2}}{2}$$
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 공식화 -->
+            <div class="column">
+                <h2>분모의 유리화 (공식화)</h2>
+                <div class="content-box" style="flex: 1; display: flex; flex-direction: column;">
+                    <div class="condition">($a > 0, b > 0$)</div>
+                    
+                    <div class="formula-box" style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 25px;">
+                        <div>
+                            $$\frac{\sqrt{a}}{\sqrt{b}} = \frac{\sqrt{a}}{\sqrt{b}} \times \frac{\sqrt{b}}{\sqrt{b}} = \frac{\sqrt{a} \times \sqrt{b}}{\sqrt{b} \times \sqrt{b}}$$
+                        </div>
+                        <div style="font-size: 1.4em; color: #fef08a;">
+                            $$= \frac{\sqrt{ab}}{b}$$
+                        </div>
+                    </div>
+
+                    <div class="summary">
+                        분자, 분모에 같은 무리수를 곱함
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 수식 렌더링 스크립트 -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>
