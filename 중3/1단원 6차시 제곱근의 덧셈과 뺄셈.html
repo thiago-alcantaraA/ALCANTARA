@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>제곱근의 덧셈과 뺄셈 - 디자인 최적화</title>
+    <title>제곱근의 덧셈과 뺄셈 - 레이아웃 개편</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -24,31 +24,31 @@
             background-color: var(--chalkboard-bg);
             color: var(--text-main);
             font-family: 'Nanum Pen Script', cursive;
-            padding: 20px 30px; /* 상하 여백 감소 */
+            padding: 20px 40px; 
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
         .title-main {
-            font-size: 1.8rem; /* 제목 크기 소폭 조절 */
+            font-size: 2rem;
             border-bottom: 2px dashed rgba(255, 255, 255, 0.3);
             display: inline-block;
-            margin-bottom: 15px; /* 여백 감소 */
+            margin-bottom: 20px;
         }
 
         .section-title {
-            font-size: 2rem; /* 섹션 제목 크기 소폭 조절 */
-            margin-bottom: 8px; /* 여백 감소 */
+            font-size: 2.2rem;
+            margin-bottom: 10px;
             color: var(--accent-yellow);
         }
 
         .box {
             background: var(--box-bg);
             border: 1.5px solid var(--border-color);
-            border-radius: 12px;
-            padding: 15px 25px; /* 내부 패딩 대폭 감소 */
-            height: auto; /* 높이 자동 조절 */
+            border-radius: 15px;
+            padding: 15px 30px;
+            height: 100%;
         }
 
         .highlight-red { color: var(--accent-red); }
@@ -56,35 +56,42 @@
         
         .dashed-divider {
             border-top: 1.5px dashed rgba(255, 255, 255, 0.3);
-            margin: 15px 0; /* 간격 감소 */
+            margin: 15px 0;
         }
 
         .summary-box {
-            border-left: 6px solid var(--accent-yellow);
+            border-left: 10px solid var(--accent-yellow);
             background: rgba(255, 249, 196, 0.05);
-            padding-left: 20px;
+            padding: 25px 40px;
         }
 
         .inner-highlight-box {
             background: rgba(0, 0, 0, 0.2);
-            padding: 10px;
-            border-radius: 8px;
+            padding: 12px;
+            border-radius: 10px;
             text-align: center;
-            margin-top: 15px; /* 간격 감소 */
+            margin-top: 15px;
         }
 
+        /* 수식 렌더링 크기 최적화 */
         .mjx-chtml {
-            font-size: 110% !important;
+            font-size: 115% !important;
         }
 
-        /* 2x2 그리드 레이아웃 */
-        .content-grid {
+        /* 메인 그리드 설정: 왼쪽 1열, 오른쪽 1열(상하 2개 박스) */
+        .main-layout {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px; /* 박스 간격 감소 */
+            gap: 25px;
+            margin-bottom: 25px;
         }
 
-        /* 가로 정렬용 스타일 */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
         .approx-row {
             display: flex;
             justify-content: space-between;
@@ -97,65 +104,68 @@
 
     <div class="title-main">○ 제곱근의 덧셈과 뺄셈</div>
 
-    <div class="content-grid">
+    <div class="main-layout">
         
-        <!-- 1. 근호의 성질 -->
+        <!-- 왼쪽: 근호의 성질 -->
         <div class="flex flex-col">
             <h2 class="section-title">근호의 성질</h2>
-            <div class="box">
-                <div class="approx-row text-xl mb-4"> <!-- 여백 및 크기 조절 -->
-                    <span>$$\sqrt{2} \approx 1.4...$$</span>
-                    <span>$$\sqrt{3} \approx 1.7...$$</span>
-                    <span>$$\sqrt{5} \approx 2.2...$$</span>
-                </div>
-                
-                <div class="pt-3 border-t border-white/10">
-                    <p class="highlight-red text-2xl mb-1">질문: \(\sqrt{2} + \sqrt{3} = \sqrt{5}\) ?</p>
-                    <p class="text-xl">→ 성립하지 않는다! <span class="highlight-red">(X)</span></p>
+            <div class="box flex flex-col justify-between">
+                <div>
+                    <div class="approx-row text-3xl mb-8"> 
+                        <span>$$\sqrt{2} \approx 1.4...$$</span>
+                        <span>$$\sqrt{3} \approx 1.7...$$</span>
+                        <span>$$\sqrt{5} \approx 2.2...$$</span>
+                    </div>
+                    
+                    <div class="pt-6 border-t border-white/10">
+                        <p class="highlight-red text-4xl mb-4">질문: \(\sqrt{2} + \sqrt{3} = \sqrt{5}\) ?</p>
+                        <p class="text-3xl">→ 성립하지 않는다! <span class="highlight-red font-bold">(X)</span></p>
+                    </div>
                 </div>
 
                 <div class="inner-highlight-box">
-                    <p class="highlight-red text-2xl">"동류항의 성질로 접근하기"</p>
+                    <p class="highlight-red text-3xl">"동류항의 성질로 접근하기"</p>
                 </div>
             </div>
         </div>
 
-        <!-- 2. 실전 계산 예시 -->
-        <div class="flex flex-col">
-            <h2 class="section-title">실전 계산 예시 (ex)</h2>
-            <div class="box">
-                <div class="space-y-2 text-xl"> <!-- 간격 좁힘 -->
-                    <p>$$\sqrt{3} + \sqrt{12} \quad = \quad \sqrt{3} + \sqrt{2^2 \times 3}$$</p>
-                    <p>$$= \quad \sqrt{3} + 2\sqrt{3} \quad = \quad \mathbf{\color{#81d4fa} 3\sqrt{3}}$$</p>
+        <!-- 오른쪽: 동류항 계산 예시 + 실전 계산 예시 -->
+        <div class="right-column">
+            <!-- 3. 동류항 계산 예시 (우측 상단으로 이동) -->
+            <div class="flex flex-col">
+                <h2 class="section-title">동류항 계산 예시</h2>
+                <div class="box">
+                    <div class="flex flex-col justify-center space-y-4">
+                        <p class="text-3xl">\(13a + 4a = \color{#81d4fa}{17a}\)</p>
+                        <div class="dashed-divider" style="margin: 5px 0;"></div>
+                        <p class="text-3xl">\(13\sqrt{13} + 4\sqrt{13} = \mathbf{\color{#81d4fa}{17\sqrt{13}}}\)</p>
+                    </div>
                 </div>
-                
-                <div class="dashed-divider"></div>
-                
-                <p class="highlight-red text-xl italic">※ 소인수 분해를 통해 가장 간단한 형태로 정리 후 계산할 것!</p>
+            </div>
+
+            <!-- 2. 실전 계산 예시 (우측 하단으로 이동) -->
+            <div class="flex flex-col">
+                <h2 class="section-title">실전 계산 예시 (ex)</h2>
+                <div class="box" style="padding: 10px 30px;">
+                    <div class="space-y-2 text-2xl"> 
+                        <p>$$\sqrt{3} + \sqrt{12} \quad = \quad \sqrt{3} + \sqrt{2^2 \times 3}$$</p>
+                        <p>$$= \quad \sqrt{3} + 2\sqrt{3} \quad = \quad \mathbf{\color{#81d4fa} 3\sqrt{3}}$$</p>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
 
-        <!-- 3. 동류항 계산 예시 -->
-        <div class="flex flex-col">
-            <h2 class="section-title">동류항 계산 예시</h2>
-            <div class="box flex flex-col justify-center py-4"> <!-- 패딩 조절 -->
-                <p class="text-3xl mb-4">\(13a + 4a = \) <span class="highlight-blue">17a</span></p>
-                <p class="text-3xl">\(13\sqrt{13} + 4\sqrt{13} = \) <span class="highlight-blue font-bold">17\sqrt{13}</span></p>
-            </div>
+    <!-- 4. 핵심 요약 (하단 전체 너비 차지) -->
+    <div class="flex flex-col">
+        <h2 class="section-title">핵심 요약</h2>
+        <div class="box summary-box">
+            <ul class="space-y-4 text-3xl">
+                <li>1. 괄호가 있으면 <span class="highlight-yellow">분배법칙</span>으로 푼다.</li>
+                <li>2. 근호 안의 수가 같으면 <span class="highlight-yellow">계수끼리</span> 더하거나 뺀다.</li>
+                <li>3. 곱셈/나눗셈이 섞여 있으면 유리수 계산과 같은 순서로 진행한다.</li>
+            </ul>
         </div>
-
-        <!-- 4. 핵심 요약 -->
-        <div class="flex flex-col">
-            <h2 class="section-title">핵심 요약</h2>
-            <div class="box summary-box">
-                <ul class="space-y-3 text-xl"> <!-- 간격 좁힘 -->
-                    <li>1. 괄호가 있으면 <span class="highlight-yellow">분배법칙</span>으로 푼다.</li>
-                    <li>2. 근호 안의 수가 같으면 <span class="highlight-yellow">계수끼리</span> 더하거나 뺀다.</li>
-                    <li>3. 곱셈/나눗셈이 섞여 있으면 유리수 계산과 같은 순서로 진행한다.</li>
-                </ul>
-            </div>
-        </div>
-
     </div>
 
 </body>
