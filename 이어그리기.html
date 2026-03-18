@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>릴레이 그림 이어그리기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            touch-action: none;
+            user-select: none;
+        }
+        .canvas-container {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 1rem;
+            overflow: hidden;
+            background-color: white;
+            position: relative;
+        }
+        #drawing-canvas {
+            cursor: crosshair;
+            display: block;
+        }
+        .tool-btn {
+            transition: all 0.2s;
+        }
+        .tool-btn:active {
+            transform: scale(0.95);
+        }
+        .active-tool {
+            background-color: #3b82f6 !important;
+            color: white !important;
+        }
+        .active-option {
+            outline: 3px solid #3b82f6;
+            outline-offset: 2px;
+        }
+        #eraser-cursor {
+            position: absolute;
+            border: 1px solid #000;
+            border-radius: 50%;
+            pointer-events: none;
+            display: none;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        #game-overlay {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+            color: white;
+            border-radius: 1rem;
+            text-align: center;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4 font-sans text-gray-900">
+
+    <!-- 1. 초기 설정 화면 -->
+    <div id="setup-screen" class="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full text-center">
+        <div class="text-5xl mb-6">🎨</div>
+        <h2 class="text-3xl font-black text-gray-800 mb-2">릴레이 이어그리기</h2>
+        <p class="text-gray-500 mb-8 font-medium">참가 인원을 설정하고 시작하세요!</p>
+        
+        <div class="mb-8">
+            <label class="block text-left text-sm font-bold text-gray-600 mb-3 ml-1">참가 인원 설정</label>
+            <div class="flex items-center gap-4">
+                <input type="number" id="player-count-input" min="2" max="20" value="2" 
+                    class="w-full px-4 py-4 border-2 border-gray-100 rounded-2xl focus:border-blue-500 outline-none transition-all text-center text-2xl font-black shadow-inner">
+                <span class="text-xl font-bold text-gray-500 w-12">명</span>
+            </div>
+        </div>
+
+        <button id="start-game-btn" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xl hover:bg-blue-700 shadow-lg active:scale-95 transition-all">
+            조 편성 완료 & 시작
+        </button>
+    </div>
+
+    <!-- 2. 게임 화면 -->
+    <div id="game-screen" class="hidden w-full max-w-4xl flex flex-col items-center animate-in fade-in duration-500">
+        <header id="game-header" class="w-full flex justify-between items-center mb-4">
+            <div class="flex flex-col">
+                <h1 class="text-2xl font-black text-gray-800 tracking-tight">릴레이 이어그리기</h1>
+                <p id="total-info" class="text-gray-400 text-sm font-bold">인원 대기 중...</p>
+            </div>
+            
+            <div id="status-controls" class="flex gap-3">
+                <div class="bg-red-50 text-red-600 px-5 py-2 rounded-2xl border border-red-100 font-black text-lg shadow-sm">
+                    남은 시간: <span id="time-left">5</span>초
+                </div>
+                <div id="turn-display" class="bg-white px-5 py-2 rounded-2xl shadow-sm border border-blue-100 font-black text-blue-600 text-lg">
+                    제 1 주자 준비
+                </div>
+            </div>
+
+            <div id="result-header-actions" class="hidden flex gap-3">
+                <button id="restart-game-btn" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-2xl font-black hover:bg-gray-300 transition-colors">다시 하기</button>
+                <button id="final-save-btn" class="bg-green-600 text-white px-6 py-2 rounded-2xl font-black hover:bg-green-700 shadow-md transition-colors">이미지 저장</button>
+            </div>
+        </header>
+
+        <main class="w-full canvas-container mb-4">
+            <canvas id="drawing-canvas"></canvas>
+            <div id="eraser-cursor"></div>
+            
+            <div id="game-overlay">
+                <h2 id="overlay-title" class="text-5xl font-black mb-6 uppercase">준비 되셨나요?</h2>
+                <p id="overlay-desc" class="text-xl mb-10 font-medium opacity-90 leading-relaxed">
+                    시작 버튼을 누르면 5초 동안 그릴 수 있습니다.
+                </p>
+                <button id="overlay-action-btn" class="bg-white text-blue-700 px-12 py-5 rounded-3xl font-black text-2xl hover:scale-105 active:scale-95 transition-all shadow-2xl">
+                    지금 시작하기
+                </button>
+            </div>
+        </main>
+
+        <div id="toolbar" class="w-full bg-white p-5 rounded-3xl shadow-xl flex flex-wrap gap-4 items-center justify-between">
+            <div class="flex items-center gap-2">
+                <button id="pen-tool" class="tool-btn active-tool bg-gray-50 p-4 rounded-2xl hover:bg-gray-100" title="펜">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                </button>
+                <button id="eraser-tool" class="tool-btn bg-gray-50 p-4 rounded-2xl hover:bg-gray-100" title="지우개">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21Z"/><path d="m22 21-10 0"/><path d="m18 11-4-4"/></svg>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3 bg-gray-50 py-2 px-4 rounded-2xl">
+                <span class="text-xs font-black text-gray-400 uppercase mr-1">색상</span>
+                <button data-color="#000000" class="color-btn active-option w-10 h-10 bg-black rounded-full shadow-sm hover:scale-110 transition-transform"></button>
+                <button data-color="#3b82f6" class="color-btn w-10 h-10 bg-blue-500 rounded-full shadow-sm hover:scale-110 transition-transform"></button>
+                <button data-color="#ef4444" class="color-btn w-10 h-10 bg-red-500 rounded-full shadow-sm hover:scale-110 transition-transform"></button>
+            </div>
+
+            <div class="flex items-center gap-4 bg-gray-50 py-2 px-5 rounded-2xl">
+                <span class="text-xs font-black text-gray-400 uppercase mr-1">굵기</span>
+                <button data-size="4" class="size-btn flex items-center justify-center w-8 h-8 hover:scale-110 transition-transform">
+                    <div class="w-1.5 h-1.5 bg-gray-800 rounded-full"></div>
+                </button>
+                <button data-size="12" class="size-btn active-option flex items-center justify-center w-10 h-10 hover:scale-110 transition-transform">
+                    <div class="w-4 h-4 bg-gray-800 rounded-full"></div>
+                </button>
+                <button data-size="28" class="size-btn flex items-center justify-center w-12 h-12 hover:scale-110 transition-transform">
+                    <div class="w-8 h-8 bg-gray-800 rounded-full"></div>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button id="save-image" class="bg-green-100 text-green-700 p-4 rounded-2xl hover:bg-green-200 transition-colors" title="그림 저장">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="final-msg" class="hidden mt-6 text-center animate-bounce">
+            <h3 class="text-2xl font-black text-gray-800">✨ 멋진 작품이 완성되었습니다! ✨</h3>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl opacity-0 pointer-events-none transition-opacity duration-300 shadow-2xl z-50 font-bold">
+        알림 메시지
+    </div>
+
+    <script>
+        const setupScreen = document.getElementById('setup-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const canvas = document.getElementById('drawing-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const playerCountInput = document.getElementById('player-count-input');
+        const turnDisplay = document.getElementById('turn-display');
+        const timeLeftSpan = document.getElementById('time-left');
+        const gameOverlay = document.getElementById('game-overlay');
+        const overlayTitle = document.getElementById('overlay-title');
+        const overlayDesc = document.getElementById('overlay-desc');
+        const overlayActionBtn = document.getElementById('overlay-action-btn');
+        
+        const toolbar = document.getElementById('toolbar');
+        const statusControls = document.getElementById('status-controls');
+        const resultHeaderActions = document.getElementById('result-header-actions');
+        const finalMsg = document.getElementById('final-msg');
+        
+        const startGameBtn = document.getElementById('start-game-btn');
+        const restartGameBtn = document.getElementById('restart-game-btn');
+        const finalSaveBtn = document.getElementById('final-save-btn');
+        const saveBtn = document.getElementById('save-image');
+        
+        const penTool = document.getElementById('pen-tool');
+        const eraserTool = document.getElementById('eraser-tool');
+        const eraserCursor = document.getElementById('eraser-cursor');
+        const toast = document.getElementById('toast');
+
+        let isDrawing = false;
+        let currentTool = 'pen';
+        let totalPlayers = 2;
+        let currentTurn = 1;
+        let timeLeft = 5;
+        let timerInterval = null;
+        let lastX = 0;
+        let lastY = 0;
+        let isTimerActive = false;
+        
+        let currentColor = "#000000";
+        let currentSize = 12;
+        const ERASER_MULTIPLIER = 10;
+
+        startGameBtn.addEventListener('click', () => {
+            totalPlayers = parseInt(playerCountInput.value);
+            if (isNaN(totalPlayers) || totalPlayers < 2) {
+                showToast("최소 2명 이상의 인원이 필요합니다.");
+                return;
+            }
+            
+            setupScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            document.getElementById('total-info').textContent = `참가 인원: 총 ${totalPlayers}명`;
+            
+            initCanvas();
+            currentTurn = 1;
+            prepareNextTurn();
+        });
+
+        function initCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = window.innerHeight * 0.6;
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function prepareNextTurn() {
+            isTimerActive = false;
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timeLeft = 5;
+            timeLeftSpan.textContent = timeLeft;
+            turnDisplay.innerHTML = `제 ${currentTurn} 주자 준비`;
+            
+            gameOverlay.style.display = 'flex';
+            overlayTitle.textContent = `제 ${currentTurn} 주자`;
+            overlayDesc.textContent = "준비가 되셨다면 아래 버튼을 눌러주세요.\n시작 버튼을 누르면 5초 타이머가 작동합니다!";
+            overlayActionBtn.textContent = "지금 시작하기";
+        }
+
+        overlayActionBtn.addEventListener('click', () => {
+            const text = overlayActionBtn.textContent;
+            
+            if (text === "지금 시작하기") {
+                startTimer();
+            } else if (text === "다음 주자 시작 대기") {
+                currentTurn++;
+                prepareNextTurn();
+            } else if (text === "결과 확인하기") {
+                showResultMode();
+            }
+        });
+
+        function startTimer() {
+            gameOverlay.style.display = 'none';
+            isTimerActive = true;
+            turnDisplay.innerHTML = `제 ${currentTurn} 주자 그리는 중!`;
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timeLeftSpan.textContent = timeLeft;
+                if (timeLeft <= 0) endTurn();
+            }, 1000);
+        }
+
+        function endTurn() {
+            isTimerActive = false;
+            clearInterval(timerInterval);
+            isDrawing = false;
+            gameOverlay.style.display = 'flex';
+            
+            if (currentTurn >= totalPlayers) {
+                overlayTitle.textContent = "모든 순서 종료!";
+                overlayDesc.textContent = "마지막 주자까지 그림을 마쳤습니다.\n완성된 작품을 확인해 볼까요?";
+                overlayActionBtn.textContent = "결과 확인하기";
+            } else {
+                overlayTitle.textContent = "시간 종료!";
+                overlayDesc.textContent = `제 ${currentTurn} 주자의 시간이 끝났습니다.\n다음 주자에게 자리를 넘겨주세요.`;
+                overlayActionBtn.textContent = "다음 주자 시작 대기";
+            }
+        }
+
+        function showResultMode() {
+            gameOverlay.style.display = 'none';
+            statusControls.classList.add('hidden');
+            toolbar.classList.add('hidden');
+            resultHeaderActions.classList.remove('hidden');
+            finalMsg.classList.remove('hidden');
+            canvas.style.cursor = 'default';
+            showToast("그림이 최종 완성되었습니다!");
+        }
+
+        // 다시 하기 기능 개선 (이벤트 중첩 방지 및 확실한 초기화)
+        restartGameBtn.addEventListener('click', () => {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            currentTurn = 1;
+            timeLeft = 5;
+            isTimerActive = false;
+            isDrawing = false;
+            currentTool = 'pen';
+            currentColor = "#000000";
+            currentSize = 12;
+
+            gameScreen.classList.add('hidden');
+            setupScreen.classList.remove('hidden');
+            resultHeaderActions.classList.add('hidden');
+            finalMsg.classList.add('hidden');
+            statusControls.classList.remove('hidden');
+            toolbar.classList.remove('hidden');
+            gameOverlay.style.display = 'none';
+            
+            initCanvas();
+            
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active-option'));
+            const defaultColorBtn = document.querySelector('[data-color="#000000"]');
+            if (defaultColorBtn) defaultColorBtn.classList.add('active-option');
+            
+            document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active-option'));
+            const defaultSizeBtn = document.querySelector('[data-size="12"]');
+            if (defaultSizeBtn) defaultSizeBtn.classList.add('active-option');
+            
+            penTool.classList.add('active-tool');
+            eraserTool.classList.remove('active-tool');
+            canvas.style.cursor = 'crosshair';
+
+            showToast("초기 화면으로 돌아왔습니다.");
+        });
+
+        document.querySelectorAll('.color-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentColor = btn.dataset.color;
+                document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active-option'));
+                btn.classList.add('active-option');
+                currentTool = 'pen';
+                penTool.classList.add('active-tool');
+                eraserTool.classList.remove('active-tool');
+            });
+        });
+
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentSize = parseInt(btn.dataset.size);
+                document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active-option'));
+                btn.classList.add('active-option');
+            });
+        });
+
+        function startDrawing(e) {
+            if (!isTimerActive) return;
+            isDrawing = true;
+            const pos = getMousePos(e);
+            [lastX, lastY] = [pos.x, pos.y];
+        }
+
+        function draw(e) {
+            const pos = getMousePos(e);
+            updateEraserCursor(pos);
+
+            if (!isDrawing || !isTimerActive) return;
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(pos.x, pos.y);
+            
+            if (currentTool === 'eraser') {
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = currentSize * ERASER_MULTIPLIER;
+            } else {
+                ctx.strokeStyle = currentColor;
+                ctx.lineWidth = currentSize;
+            }
+            
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            
+            [lastX, lastY] = [pos.x, pos.y];
+        }
+
+        function stopDrawing() { isDrawing = false; }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+            const clientY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        function updateEraserCursor(pos) {
+            if (currentTool === 'eraser' && isTimerActive) {
+                const size = currentSize * ERASER_MULTIPLIER;
+                eraserCursor.style.width = size + 'px';
+                eraserCursor.style.height = size + 'px';
+                eraserCursor.style.left = pos.x + 'px';
+                eraserCursor.style.top = pos.y + 'px';
+                eraserCursor.style.display = 'block';
+                canvas.style.cursor = 'none';
+            } else {
+                eraserCursor.style.display = 'none';
+                canvas.style.cursor = isTimerActive ? 'crosshair' : 'default';
+            }
+        }
+
+        penTool.addEventListener('click', () => {
+            currentTool = 'pen';
+            penTool.classList.add('active-tool');
+            eraserTool.classList.remove('active-tool');
+        });
+
+        eraserTool.addEventListener('click', () => {
+            currentTool = 'eraser';
+            eraserTool.classList.add('active-tool');
+            penTool.classList.remove('active-tool');
+        });
+
+        const downloadAction = () => {
+            try {
+                const link = document.createElement('a');
+                link.download = `릴레이-그림-완성.png`;
+                link.href = canvas.toDataURL("image/png");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("작품이 저장되었습니다!");
+            } catch (err) {
+                showToast("저장 중 오류가 발생했습니다.");
+            }
+        };
+
+        saveBtn.addEventListener('click', downloadAction);
+        finalSaveBtn.addEventListener('click', downloadAction);
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stopDrawing);
+        
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.target === canvas) e.preventDefault();
+            startDrawing(e);
+        }, { passive: false });
+        canvas.addEventListener('touchmove', (e) => {
+            if (e.target === canvas) e.preventDefault();
+            draw(e);
+        }, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function showToast(message) {
+            toast.textContent = message;
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+        }
+
+        window.addEventListener('resize', () => {
+            if (!gameScreen.classList.contains('hidden')) {
+                const container = canvas.parentElement;
+                const tempImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                canvas.width = container.clientWidth;
+                canvas.height = window.innerHeight * 0.6;
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.putImageData(tempImage, 0, 0);
+            }
+        });
+    </script>
+</body>
+</html>
