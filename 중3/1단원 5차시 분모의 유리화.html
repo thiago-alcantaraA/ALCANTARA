@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>분모의 유리화 - A4 가로형 가이드</title>
+    <title>분모의 유리화 - 학습 가이드</title>
     <style>
         /* A4 가로 비율 및 기본 스타일 */
         body {
-            background-color: #f0f0f0; /* 배경은 연한 회색 */
+            background-color: #f0f0f0;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -74,13 +74,20 @@
             margin-bottom: 20px;
         }
 
+        /* 질문 상자 전용 스타일 */
+        .question-box {
+            border: 1px dashed #fca5a5;
+            background: rgba(252, 165, 165, 0.1);
+            padding: 15px;
+            text-align: center;
+        }
+
         h2 {
             font-size: 22px;
             color: #fef08a;
             margin: 0 0 15px 0;
         }
 
-        /* 텍스트 크기 조정 */
         p, li {
             font-size: 17px;
             line-height: 1.6;
@@ -112,7 +119,7 @@
             font-size: 20px;
             color: #7dd3fc;
             background: rgba(125, 211, 252, 0.05);
-            margin-top: auto;
+            margin-top: 15px;
         }
 
         .condition {
@@ -122,9 +129,15 @@
             margin-bottom: 10px;
         }
 
-        /* 수식 크기 적정화 */
+        /* 수식 크기 조정 */
         .mjx-chtml {
             font-size: 1.15em !important;
+        }
+
+        /* 인쇄 설정 */
+        @media print {
+            body { background: none; }
+            .a4-landscape { box-shadow: none; margin: 0; }
         }
     </style>
 </head>
@@ -148,8 +161,9 @@
 
                 <h2>예시: $1/\sqrt{2}$의 유리화</h2>
                 <div class="content-box">
-                    <p>i) $\sqrt{2}$의 특징 : <span class="highlight-blue">제곱하면 2가 된다.</span></p>
+                    <p>i) $\sqrt{2}$를 유리수로 만드는 법 : <span class="highlight-blue">$\sqrt{2} \times (\text{유리수})$ 를 곱한다.</span></p>
                     <p>ii) 모든 수에는 <span class="highlight-yellow">1</span>이 곱해져 있다.</p>
+                    <p style="font-size: 14px; opacity: 0.8; margin-top: -10px;">(모든 수에는 <span class="highlight-yellow">0</span>이 더해져 있다)</p>
                     
                     <div class="formula-box">
                         <div>
@@ -162,13 +176,20 @@
                 </div>
             </div>
 
-            <!-- 오른쪽: 공식화 -->
+            <!-- 오른쪽: 공식화 및 질문 -->
             <div class="column">
+                <!-- 추가된 질문 상자 -->
+                <div class="content-box question-box">
+                    <p style="margin: 0; font-weight: bold; color: #fca5a5;">
+                        $\sqrt{437}$을 제곱근표를 활용해서 나타낼 수 있을까?
+                    </p>
+                </div>
+
                 <h2>분모의 유리화 (공식화)</h2>
-                <div class="content-box" style="flex: 1; display: flex; flex-direction: column;">
+                <div class="content-box">
                     <div class="condition">($a > 0, b > 0$)</div>
                     
-                    <div class="formula-box" style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 25px;">
+                    <div class="formula-box" style="display: flex; flex-direction: column; gap: 20px;">
                         <div>
                             $$\frac{\sqrt{a}}{\sqrt{b}} = \frac{\sqrt{a}}{\sqrt{b}} \times \frac{\sqrt{b}}{\sqrt{b}} = \frac{\sqrt{a} \times \sqrt{b}}{\sqrt{b} \times \sqrt{b}}$$
                         </div>
@@ -185,7 +206,7 @@
         </main>
     </div>
 
-    <!-- 수식 렌더링 스크립트 -->
+    <!-- 수식 렌더링 설정 -->
     <script>
         window.MathJax = {
             tex: {
