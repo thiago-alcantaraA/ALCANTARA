@@ -16,6 +16,11 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
             background: white;
             border-radius: 20px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
         .word-card:hover:not(.revealed) { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
         .word-card.revealed { cursor: default; }
@@ -25,14 +30,25 @@
             font-weight: 800;
             color: #1e293b;
             word-break: keep-all;
+            z-index: 10;
+            position: relative;
         }
 
-        /* 팀 색상 설정 */
+        /* 팀 색상 설정 (공개 후) */
         .team-red { background-color: #ef4444 !important; color: white !important; }
         .team-blue { background-color: #3b82f6 !important; color: white !important; }
         .neutral { background-color: #e2e8f0 !important; color: #64748b !important; }
         .assassin { background-color: #1e293b !important; color: white !important; }
         
+        /* 정답 확인 모드 (공개 전 스파이마스터용 스타일) */
+        .spy-overlay {
+            position: absolute;
+            inset: 0;
+            border-width: 6px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
         /* 활성화 상태 강조 효과 */
         .active-glow-red { box-shadow: 0 0 30px rgba(239, 68, 68, 0.15); border: 2px solid rgba(239, 68, 68, 0.3); }
         .active-glow-blue { box-shadow: 0 0 30px rgba(59, 130, 246, 0.15); border: 2px solid rgba(59, 130, 246, 0.3); }
@@ -121,16 +137,20 @@
         <main class="flex-1 grid grid-cols-5 gap-5 min-h-0 overflow-y-auto px-2">
             <div v-for="(card, idx) in board" :key="idx" 
                  @click="revealCard(idx)"
-                 class="word-card shadow-sm flex items-center justify-center p-6 text-center"
+                 class="word-card shadow-sm text-center"
                  :class="[getCardClass(card), card.revealed ? 'revealed' : '']">
                 
                 <span class="word-text" :class="card.revealed || isSpyMaster ? '' : 'text-slate-700'">
                     {{ card.word }}
                 </span>
 
+                <!-- 정답 확인 모드에서만 나타나는 강조 스타일 -->
                 <div v-if="isSpyMaster && !card.revealed" 
-                     class="absolute inset-0 rounded-[20px] border-4 opacity-30 pointer-events-none"
-                     :style="{ borderColor: getTeamColor(card.type) }">
+                     class="spy-overlay"
+                     :style="{ 
+                        borderColor: getTeamColor(card.type), 
+                        backgroundColor: getTeamLightColor(card.type)
+                     }">
                 </div>
             </div>
         </main>
@@ -178,7 +198,6 @@
 
         createApp({
             setup() {
-                // 대폭 확장된 단어 풀 (약 300개 이상의 다양한 명사)
                 const wordPool = [
                     "사과", "축구", "바다", "태양", "로봇", "강아지", "치킨", "휴대폰", "영화", "가방",
                     "비행기", "경찰", "코끼리", "수박", "음악", "체육", "수학", "역사", "독도", "지도",
@@ -216,15 +235,12 @@
                 const customTeamNames = ref({ red: "1조", blue: "2조" });
                 const prelimWinners = ref([]);
                 const byeTeam = ref("");
-                const semiFinalTeams = ref([]);
-                
                 const board = ref([]);
                 const isSpyMaster = ref(false);
                 const isGameOver = ref(false);
                 const currentTurn = ref('red');
                 const gameOverReason = ref("");
                 const winnerSide = ref(null);
-
                 const timeLeft = ref(60);
                 const isTimerPaused = ref(false);
                 let timerInterval = null;
@@ -263,10 +279,8 @@
                     winnerSide.value = null;
                     startTimer();
 
-                    // 단어 풀에서 무작위 25개 추출
                     const shuffledWords = [...wordPool].sort(() => Math.random() - 0.5).slice(0, 25);
                     let types = [];
-                    // 레드팀 9개, 블루팀 8개, 암살자(검정) 1개, 중립 7개
                     for(let i=0; i<9; i++) types.push(1);
                     for(let i=0; i<8; i++) types.push(2);
                     types.push(0);
@@ -286,11 +300,20 @@
                     return 'neutral';
                 };
 
+                // 진한 보더 색상
                 const getTeamColor = (type) => {
-                    if (type === 1) return '#ef4444';
-                    if (type === 2) return '#3b82f6';
-                    if (type === 0) return '#1e293b';
-                    return '#cbd5e1';
+                    if (type === 1) return '#ef4444'; // 레드
+                    if (type === 2) return '#3b82f6'; // 블루
+                    if (type === 0) return '#1e293b'; // 암살자
+                    return '#cbd5e1'; // 중립
+                };
+
+                // 연한 배경 색상 (정답 확인 시 가독성 보완)
+                const getTeamLightColor = (type) => {
+                    if (type === 1) return 'rgba(239, 68, 68, 0.15)';
+                    if (type === 2) return 'rgba(59, 130, 246, 0.15)';
+                    if (type === 0) return 'rgba(30, 41, 59, 0.15)';
+                    return 'rgba(203, 213, 225, 0.15)';
                 };
 
                 const revealCard = (idx) => {
@@ -353,7 +376,7 @@
                     board, isSpyMaster, isGameOver, currentTurn, gameOverReason, winnerSide, winnerName,
                     redRemaining, blueRemaining, recordButtonText,
                     timeLeft, isTimerPaused, toggleTimer, resetTimer,
-                    initGame, getCardClass, getTeamColor, revealCard, toggleSpyMaster, passTurn, recordWinner
+                    initGame, getCardClass, getTeamColor, getTeamLightColor, revealCard, toggleSpyMaster, passTurn, recordWinner
                 };
             }
         }).mount('#app');
