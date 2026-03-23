@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중학 수학 스피드 퀴즈</title>
+    <!-- 테일윈드 CSS 및 폰트어썸 아이콘 로드 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
+        body { font-family: 'Pretendard', sans-serif; }
+        /* 가시성 제어를 위한 확실한 클래스 */
+        .view-hidden { display: none !important; }
+        /* 가로형 화면을 위한 스크롤바 최적화 */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col items-center justify-center p-2 text-slate-800">
+
+    <!-- 1. 상단 전광판 (조별 기록 바) -->
+    <div id="scoreboard" class="w-full max-w-6xl mb-3 grid grid-cols-6 gap-2 text-center">
+        <!-- 자바스크립트에서 1~6조 기록 생성 -->
+    </div>
+
+    <!-- 2. 메인 게임 박스 -->
+    <div class="w-full max-w-6xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 flex flex-col">
+        
+        <!-- 상단 헤더 -->
+        <div class="bg-indigo-600 px-8 py-4 text-white flex justify-between items-center shrink-0">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-calculator text-2xl"></i>
+                <h1 class="text-xl font-bold">중학 수학 스피드 퀴즈 <span class="text-indigo-200 text-sm font-normal ml-2">(20문제 도전)</span></h1>
+                <span id="current-group-label" class="bg-indigo-500 px-3 py-1 rounded-full text-xs font-bold view-hidden"></span>
+            </div>
+            <!-- 타이머 영역 -->
+            <div id="timer-area" class="view-hidden flex items-center gap-3 bg-indigo-700 px-5 py-2 rounded-full font-mono text-2xl font-bold shadow-inner">
+                <i class="fas fa-clock"></i>
+                <span id="timer-display">02:00</span>
+            </div>
+        </div>
+
+        <!-- 중앙 콘텐츠 영역 -->
+        <div id="main-content" class="flex-1 p-6 flex flex-col justify-center min-h-[360px]">
+            
+            <!-- [화면 1] 메인 홈 (설정 및 시작) -->
+            <div id="view-home" class="grid grid-cols-2 gap-10 items-center">
+                <div class="space-y-6 border-r border-slate-100 pr-10">
+                    <div class="space-y-3">
+                        <p class="font-bold text-slate-600 flex items-center gap-2 text-base">
+                            <i class="fas fa-users text-indigo-500"></i> 참여할 조를 선택하세요
+                        </p>
+                        <div id="group-selection" class="grid grid-cols-3 gap-3">
+                            <!-- 1~6조 버튼 동적 생성 -->
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-end">
+                            <p class="font-bold text-slate-600 text-base">학년 범위 (가산점 적용)</p>
+                            <span id="bonus-badge" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">학년 3개: +10% 보너스</span>
+                        </div>
+                        <div id="grade-selection" class="flex gap-3">
+                            <button onclick="toggleGrade('1학년')" id="grade-1" class="flex-1 py-3 rounded-xl font-bold border-2 border-slate-700 bg-slate-700 text-white transition-all">1학년</button>
+                            <button onclick="toggleGrade('2학년')" id="grade-2" class="flex-1 py-3 rounded-xl font-bold border-2 border-slate-700 bg-slate-700 text-white transition-all">2학년</button>
+                            <button onclick="toggleGrade('3학년')" id="grade-3" class="flex-1 py-3 rounded-xl font-bold border-2 border-slate-700 bg-slate-700 text-white transition-all">3학년</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-amber-50 p-6 rounded-[1.5rem] border border-amber-100 shadow-sm">
+                        <h3 class="font-bold text-amber-800 mb-2 flex items-center gap-2 text-lg">
+                            <i class="fas fa-star"></i> 도전 규칙
+                        </h3>
+                        <ul class="text-amber-700 space-y-2 font-medium">
+                            <li>• 무작위 <strong>20문제</strong>가 출제됩니다.</li>
+                            <li>• 학년 2개 선택 시 최종 점수 <strong>5%</strong> 가산점</li>
+                            <li>• 학년 3개 선택 시 최종 점수 <strong>10%</strong> 가산점</li>
+                            <li>• 제한 시간은 120초(2분)입니다.</li>
+                        </ul>
+                    </div>
+                    <button id="btn-start" onclick="startGame()" disabled class="w-full py-6 rounded-2xl flex items-center justify-center gap-3 text-3xl font-black transition-all bg-slate-200 text-slate-400 cursor-not-allowed shadow-lg">
+                        <i class="fas fa-play"></i> 조를 선택하세요
+                    </button>
+                </div>
+            </div>
+
+            <!-- [화면 2] 게임 진행 (시작 전에는 view-hidden으로 완벽히 숨김) -->
+            <div id="view-play" class="view-hidden grid grid-cols-4 items-center gap-6 h-full">
+                <!-- 왼쪽: 컨트롤 및 점수 -->
+                <div class="flex flex-col items-center justify-center gap-6 border-r border-slate-100 h-full">
+                    <button id="btn-pause" onclick="togglePause()" class="w-20 h-20 rounded-full flex items-center justify-center bg-slate-100 text-slate-400 hover:text-indigo-600 shadow-md transition-all">
+                        <i id="pause-icon" class="fas fa-pause text-4xl"></i>
+                    </button>
+                    <div class="text-center">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">현재 정답 수</p>
+                        <p id="play-score" class="text-6xl font-black text-indigo-600">0</p>
+                        <p id="play-progress" class="text-sm font-bold text-slate-400 mt-1 italic">문제 1/20</p>
+                    </div>
+                </div>
+
+                <!-- 중앙: 용어 표시 -->
+                <div class="col-span-2 flex flex-col items-center justify-center px-6 text-center">
+                    <div id="pause-message" class="view-hidden text-5xl font-black text-slate-300 animate-pulse">잠시 멈춤</div>
+                    <div id="word-container" class="space-y-4">
+                        <span class="text-sm font-bold text-indigo-400 bg-indigo-50 px-4 py-1 rounded-full inline-block">수학 용어</span>
+                        <h2 id="display-word" class="text-7xl md:text-8xl lg:text-9xl font-black text-slate-900 tracking-tighter leading-tight break-keep">
+                            준비!
+                        </h2>
+                    </div>
+                </div>
+
+                <!-- 오른쪽: 응답 버튼 -->
+                <div class="flex flex-col gap-5 h-full justify-center pl-6 border-l border-slate-100">
+                    <button onclick="handleCorrect()" class="py-12 bg-emerald-500 text-white rounded-[2rem] font-black text-5xl shadow-xl shadow-emerald-100 active:scale-95 hover:bg-emerald-600 transition-all">
+                        정답
+                    </button>
+                    <button onclick="handleSkip()" class="py-6 bg-slate-100 text-slate-500 rounded-[1.5rem] font-bold text-2xl active:scale-95 hover:bg-slate-200 transition-all">
+                        패스
+                    </button>
+                </div>
+            </div>
+
+            <!-- [화면 3] 결과 발표 -->
+            <div id="view-result" class="view-hidden grid grid-cols-12 gap-8 items-center h-full">
+                <!-- 최종 점수 (4칸) -->
+                <div class="col-span-4 text-center bg-indigo-50 p-8 rounded-[2.5rem] border border-indigo-100 h-full flex flex-col justify-center shadow-inner">
+                    <i class="fas fa-trophy text-yellow-400 text-5xl mb-3 drop-shadow-sm"></i>
+                    <h2 id="result-title" class="text-xl font-black text-slate-800">최종 결과</h2>
+                    <div id="result-score" class="text-8xl font-black text-indigo-600 my-2 tracking-tighter">0</div>
+                    <div id="result-detail" class="text-sm font-bold text-slate-500 space-y-1 mt-2"></div>
+                </div>
+
+                <!-- 단어 리스트 (5칸) -->
+                <div class="col-span-5 h-full flex flex-col py-2">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-3 tracking-widest border-b pb-1">도전 기록</h3>
+                    <div id="result-history" class="flex-1 overflow-y-auto custom-scrollbar pr-2 grid grid-cols-2 gap-2 content-start"></div>
+                </div>
+
+                <!-- 버튼 메뉴 (3칸) -->
+                <div class="col-span-3 flex flex-col gap-4 h-full justify-center">
+                    <button onclick="goHome()" class="flex-1 bg-indigo-600 text-white rounded-2xl font-black text-xl shadow-lg hover:bg-indigo-700 active:scale-95 transition-all flex flex-col items-center justify-center gap-2">
+                        <i class="fas fa-redo-alt text-2xl"></i>
+                        <span>다시 하기</span>
+                    </button>
+                    <button onclick="changeGroup()" class="py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold text-base hover:bg-slate-200 transition-all">
+                        조 변경하기
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const mathData = {
+            '1학년': ['소수', '합성수', '거듭제곱', '최대공약수', '최소공배수', '정수', '유리수', '절댓값', '계수', '항', '상수항', '일차식', '방정식', '해', '대입', '좌표평면', '원점', '순서쌍', '사분면', '변수', '그래프', '정비례', '반비례', '도수분포표', '계급', '중앙값', '최빈값'],
+            '2학년': ['유한소수', '순환소수', '순환마디', '지수법칙', '단항식', '다항식', '부등식', '부등호', '연립방정식', '미지수', '함수', '함숫값', '기울기', '절편', '평행이동', '이등변삼각형', '외심', '내심', '평행사변형', '마름모', '닮음', '닮음비', '경우의 수', '확률'],
+            '3학년': ['제곱근', '루트', '실수', '무리수', '유리화', '인수분해', '공통인수', '완전제곱식', '이차방정식', '중근', '근의 공식', '이차함수', '꼭짓점', '포물선', '축의 방정식', '피타고라스 정리', '삼각비', '사인', '코사인', '탄젠트', '원주각', '접선', '현', '분산', '표준편차']
+        };
+
+        let selectedGrades = ['1학년', '2학년', '3학년'];
+        let selectedGroup = null;
+        let groupBestRecords = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+        let quizWords = [];
+        let currentIdx = 0;
+        let baseCount = 0;
+        let timeLeft = 120;
+        let isPaused = false;
+        let historyData = [];
+        let timer = null;
+
+        function init() {
+            renderScoreboard();
+            renderGroupButtons();
+            updateBonusUI();
+        }
+
+        function renderScoreboard() {
+            const container = document.getElementById('scoreboard');
+            container.innerHTML = '';
+            for(let i=1; i<=6; i++) {
+                const isSelected = selectedGroup === i;
+                container.innerHTML += `
+                    <div class="bg-white rounded-xl py-3 px-4 shadow-sm border-b-4 flex flex-col items-center transition-all ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-slate-200'}">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${i}조 최고기록</span>
+                        <span class="text-2xl font-black text-indigo-600">${groupBestRecords[i]}<span class="text-xs ml-0.5">점</span></span>
+                    </div>
+                `;
+            }
+        }
+
+        function renderGroupButtons() {
+            const container = document.getElementById('group-selection');
+            container.innerHTML = '';
+            for(let i=1; i<=6; i++) {
+                const isSelected = selectedGroup === i;
+                container.innerHTML += `
+                    <button onclick="pickGroup(${i})" class="py-3 rounded-xl font-black text-xl border-2 transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg scale-105' : 'bg-white border-slate-100 text-slate-400 hover:border-indigo-200'}">
+                        ${i}조
+                    </button>
+                `;
+            }
+        }
+
+        function pickGroup(num) {
+            selectedGroup = num;
+            renderGroupButtons();
+            renderScoreboard();
+            const startBtn = document.getElementById('btn-start');
+            startBtn.disabled = false;
+            startBtn.classList.replace('bg-slate-200', 'bg-indigo-600');
+            startBtn.classList.replace('text-slate-400', 'text-white');
+            startBtn.classList.remove('cursor-not-allowed');
+            startBtn.innerHTML = `<i class="fas fa-play"></i> ${num}조 도전 시작!`;
+        }
+
+        function toggleGrade(grade) {
+            const idx = selectedGrades.indexOf(grade);
+            if (idx > -1) {
+                if (selectedGrades.length > 1) {
+                    selectedGrades.splice(idx, 1);
+                    setGradeButtonStyle(grade, false);
+                }
+            } else {
+                selectedGrades.push(grade);
+                setGradeButtonStyle(grade, true);
+            }
+            updateBonusUI();
+        }
+
+        function setGradeButtonStyle(grade, isActive) {
+            const btnMap = {'1학년': 'grade-1', '2학년': 'grade-2', '3학년': 'grade-3'};
+            const btn = document.getElementById(btnMap[grade]);
+            if (isActive) {
+                btn.className = "flex-1 py-3 rounded-xl font-bold border-2 border-slate-700 bg-slate-700 text-white transition-all";
+            } else {
+                btn.className = "flex-1 py-3 rounded-xl font-bold border-2 border-slate-100 bg-slate-100 text-slate-400 transition-all";
+            }
+        }
+
+        function updateBonusUI() {
+            const badge = document.getElementById('bonus-badge');
+            const len = selectedGrades.length;
+            if (len === 3) {
+                badge.innerText = "학년 3개: +10% 보너스";
+                badge.className = "text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full";
+            } else if (len === 2) {
+                badge.innerText = "학년 2개: +5% 보너스";
+                badge.className = "text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full";
+            } else {
+                badge.innerText = "보너스 없음";
+                badge.className = "text-xs font-bold text-slate-400 bg-slate-50 px-3 py-1 rounded-full";
+            }
+        }
+
+        function startGame() {
+            let combined = [];
+            selectedGrades.forEach(g => combined = [...combined, ...mathData[g]]);
+            quizWords = combined.sort(() => Math.random() - 0.5).slice(0, 20);
+            
+            currentIdx = 0;
+            baseCount = 0;
+            timeLeft = 120;
+            isPaused = false;
+            historyData = [];
+            
+            switchView('play');
+            document.getElementById('current-group-label').innerText = `${selectedGroup}조`;
+            document.getElementById('current-group-label').classList.remove('view-hidden');
+            document.getElementById('timer-area').classList.remove('view-hidden');
+            
+            updatePlayScreen();
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timer);
+            timer = setInterval(() => {
+                if (!isPaused) {
+                    timeLeft--;
+                    const m = Math.floor(timeLeft / 60);
+                    const s = (timeLeft % 60).toString().padStart(2, '0');
+                    document.getElementById('timer-display').innerText = `${m}:${s}`;
+                    if (timeLeft <= 0) endGame();
+                }
+            }, 1000);
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById('pause-icon').className = isPaused ? "fas fa-play text-4xl" : "fas fa-pause text-4xl";
+            document.getElementById('btn-pause').classList.toggle('bg-indigo-600');
+            document.getElementById('btn-pause').classList.toggle('text-white');
+            document.getElementById('pause-message').classList.toggle('view-hidden');
+            document.getElementById('word-container').classList.toggle('view-hidden');
+        }
+
+        function updatePlayScreen() {
+            document.getElementById('display-word').innerText = quizWords[currentIdx];
+            document.getElementById('play-score').innerText = baseCount;
+            document.getElementById('play-progress').innerText = `문제 ${currentIdx + 1}/20`;
+        }
+
+        function handleCorrect() {
+            if (isPaused) return;
+            historyData.unshift({ word: quizWords[currentIdx], status: '정답' });
+            baseCount++;
+            nextStep();
+        }
+
+        function handleSkip() {
+            if (isPaused) return;
+            historyData.unshift({ word: quizWords[currentIdx], status: '패스' });
+            nextStep();
+        }
+
+        function nextStep() {
+            if (currentIdx < 19) {
+                currentIdx++;
+                updatePlayScreen();
+            } else {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            clearInterval(timer);
+            const bonusRate = selectedGrades.length === 3 ? 0.1 : (selectedGrades.length === 2 ? 0.05 : 0);
+            const finalScore = Math.round(baseCount * (1 + bonusRate));
+            groupBestRecords[selectedGroup] = Math.max(groupBestRecords[selectedGroup], finalScore);
+            renderScoreboard();
+            
+            switchView('result');
+            document.getElementById('result-title').innerText = `${selectedGroup}조 최종 결과`;
+            document.getElementById('result-score').innerText = finalScore;
+            
+            let detailTxt = `기본 정답 수: ${baseCount}개`;
+            if (bonusRate > 0) detailTxt += `<br><span class="text-indigo-600">보너스 점수: +${Math.round(baseCount * bonusRate)}점 (${bonusRate*100}%)</span>`;
+            document.getElementById('result-detail').innerHTML = detailTxt;
+            
+            const historyList = document.getElementById('result-history');
+            historyList.innerHTML = '';
+            historyData.forEach(item => {
+                const isCorrect = item.status === '정답';
+                historyList.innerHTML += `
+                    <div class="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-100 shadow-sm">
+                        <span class="font-bold text-slate-700 text-sm truncate">${item.word}</span>
+                        ${isCorrect ? '<i class="fas fa-check-circle text-emerald-500"></i>' : '<i class="fas fa-times-circle text-slate-200"></i>'}
+                    </div>
+                `;
+            });
+        }
+
+        function switchView(viewName) {
+            ['home', 'play', 'result'].forEach(v => document.getElementById(`view-${v}`).classList.add('view-hidden'));
+            document.getElementById(`view-${viewName}`).classList.remove('view-hidden');
+        }
+
+        function goHome() {
+            switchView('home');
+            document.getElementById('current-group-label').classList.add('view-hidden');
+            document.getElementById('timer-area').classList.add('view-hidden');
+        }
+
+        function changeGroup() {
+            selectedGroup = null;
+            renderGroupButtons();
+            renderScoreboard();
+            const startBtn = document.getElementById('btn-start');
+            startBtn.disabled = true;
+            startBtn.className = "w-full py-6 rounded-2xl flex items-center justify-center gap-3 text-3xl font-black transition-all bg-slate-200 text-slate-400 cursor-not-allowed shadow-lg";
+            startBtn.innerHTML = `<i class="fas fa-play"></i> 조를 선택하세요`;
+            goHome();
+        }
+
+        init();
+    </script>
+</body>
+</html>
