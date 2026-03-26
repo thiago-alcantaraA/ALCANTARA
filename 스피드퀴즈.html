@@ -13,14 +13,22 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 10px; }
-        .semester-btn.active { background-color: #4338ca !important; color: white !important; border-color: #4338ca !important; }
+        .semester-btn.active, .time-btn.active { background-color: #4338ca !important; color: white !important; border-color: #4338ca !important; }
+        /* 왕관 애니메이션 */
+        .crown-animate {
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) translateX(-50%); }
+            50% { transform: translateY(-5px) translateX(-50%); }
+        }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen flex flex-col items-center justify-center p-2 text-slate-800">
 
     <!-- 1. 상단 전광판 -->
-    <div id="scoreboard" class="w-full max-w-6xl mb-3 grid grid-cols-6 gap-2 text-center">
-        <!-- JS에서 동적 생성 -->
+    <div id="scoreboard" class="w-full max-w-6xl mb-6 grid grid-cols-6 gap-2 text-center pt-6">
+        <!-- 자바스크립트에서 동적 생성 -->
     </div>
 
     <!-- 2. 메인 게임 박스 -->
@@ -40,17 +48,20 @@
         </div>
 
         <!-- 중앙 콘텐츠 영역 -->
-        <div id="main-content" class="flex-1 p-6 flex flex-col justify-center min-h-[420px]">
+        <div id="main-content" class="flex-1 p-6 flex flex-col justify-center min-h-[450px]">
             
             <!-- [화면 1] 메인 홈 -->
             <div id="view-home" class="grid grid-cols-2 gap-10 items-center">
                 <div class="space-y-6 border-r border-slate-100 pr-10">
+                    <!-- 조 선택 -->
                     <div class="space-y-3">
                         <p class="font-bold text-slate-600 flex items-center gap-2 text-base">
                             <i class="fas fa-users text-indigo-500"></i> 참여할 조 선택
                         </p>
                         <div id="group-selection" class="grid grid-cols-3 gap-2"></div>
                     </div>
+
+                    <!-- 학기 범위 선택 -->
                     <div class="space-y-3">
                         <div class="flex justify-between items-end">
                             <p class="font-bold text-slate-600 text-base">학기 범위 (학기당 +5% 보너스)</p>
@@ -63,6 +74,17 @@
                             <button onclick="toggleSemester('2-2')" id="sem-2-2" class="semester-btn py-2 rounded-xl font-bold border-2 border-slate-100 bg-slate-50 text-slate-500 hover:border-indigo-200 transition-all text-sm">2학년 2학기</button>
                             <button onclick="toggleSemester('3-1')" id="sem-3-1" class="semester-btn py-2 rounded-xl font-bold border-2 border-slate-100 bg-slate-50 text-slate-500 hover:border-indigo-200 transition-all text-sm">3학년 1학기</button>
                             <button onclick="toggleSemester('3-2')" id="sem-3-2" class="semester-btn py-2 rounded-xl font-bold border-2 border-slate-100 bg-slate-50 text-slate-500 hover:border-indigo-200 transition-all text-sm">3학년 2학기</button>
+                        </div>
+                    </div>
+
+                    <!-- 시간 설정 -->
+                    <div class="space-y-3">
+                        <p class="font-bold text-slate-600 flex items-center gap-2 text-base">
+                            <i class="fas fa-hourglass-half text-indigo-500"></i> 제한 시간 설정
+                        </p>
+                        <div class="flex gap-2">
+                            <button onclick="selectTime(120)" id="time-120" class="time-btn flex-1 py-2 rounded-xl font-bold border-2 border-slate-100 bg-slate-50 text-slate-500 hover:border-indigo-200 transition-all text-sm">2분 (120초)</button>
+                            <button onclick="selectTime(180)" id="time-180" class="time-btn flex-1 py-2 rounded-xl font-bold border-2 border-slate-100 bg-slate-50 text-slate-500 hover:border-indigo-200 transition-all text-sm">3분 (180초)</button>
                         </div>
                     </div>
                 </div>
@@ -152,6 +174,7 @@
         let quizWords = [];
         let currentIdx = 0;
         let baseCount = 0;
+        let selectedTime = 120; 
         let timeLeft = 120;
         let isPaused = false;
         let historyData = [];
@@ -162,15 +185,29 @@
             renderGroupButtons();
             updateSemesterUI();
             updateBonusUI();
+            updateTimeUI();
         }
 
+        // 전광판 렌더링 (왕관 표시 추가)
         function renderScoreboard() {
             const container = document.getElementById('scoreboard');
             container.innerHTML = '';
+            
+            // 최고 점수 계산
+            const scores = Object.values(groupBestRecords);
+            const maxScore = Math.max(...scores);
+
             for(let i=1; i<=6; i++) {
                 const isSelected = selectedGroup === i;
+                const isWinner = maxScore > 0 && groupBestRecords[i] === maxScore;
+
                 container.innerHTML += `
-                    <div class="bg-white rounded-xl py-3 px-4 shadow-sm border-b-4 flex flex-col items-center transition-all ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-slate-200'}">
+                    <div class="relative bg-white rounded-xl py-3 px-4 shadow-sm border-b-4 flex flex-col items-center transition-all ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-slate-200'}">
+                        ${isWinner ? `
+                        <div class="absolute -top-7 left-1/2 crown-animate text-yellow-400 drop-shadow-sm text-2xl">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        ` : ''}
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">${i}조 최고기록</span>
                         <span class="text-2xl font-black text-indigo-600">${groupBestRecords[i]}</span>
                     </div>
@@ -228,10 +265,26 @@
             });
         }
 
+        function selectTime(seconds) {
+            selectedTime = seconds;
+            updateTimeUI();
+        }
+
+        function updateTimeUI() {
+            [120, 180].forEach(t => {
+                const btn = document.getElementById(`time-${t}`);
+                if (selectedTime === t) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
         function updateBonusUI() {
             const badge = document.getElementById('bonus-badge');
             const len = selectedSemesters.length;
-            const currentBonus = len * 5; // 학기당 5%
+            const currentBonus = len * 5; 
             badge.innerText = `가산점: +${currentBonus}%`;
             if (currentBonus > 0) {
                 badge.className = "text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full";
@@ -249,7 +302,7 @@
             
             currentIdx = 0;
             baseCount = 0;
-            timeLeft = 120;
+            timeLeft = selectedTime; 
             isPaused = false;
             historyData = [];
             
@@ -264,6 +317,10 @@
 
         function startTimer() {
             clearInterval(timer);
+            const m = Math.floor(timeLeft / 60);
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${m}:${s}`;
+
             timer = setInterval(() => {
                 if (!isPaused) {
                     timeLeft--;
@@ -324,7 +381,7 @@
         function endGame() {
             clearInterval(timer);
             const len = selectedSemesters.length;
-            const bonusRate = len * 0.05; // 학기당 5%
+            const bonusRate = len * 0.05; 
             const finalScore = Math.round(baseCount * (1 + bonusRate));
             groupBestRecords[selectedGroup] = Math.max(groupBestRecords[selectedGroup], finalScore);
             renderScoreboard();
