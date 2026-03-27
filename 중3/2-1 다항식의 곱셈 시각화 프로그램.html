@@ -8,15 +8,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .rect-box {
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: bold;
-            font-size: 3rem; /* 사각형 내부 문자: 매우 크게 */
+            font-size: 2.5rem;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            border: 2px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.2);
+            overflow: hidden;
         }
         .math-text {
             font-family: 'Times New Roman', serif;
@@ -27,30 +28,32 @@
             vertical-align: super;
             line-height: 0;
         }
-        /* 입력창 포커스 효과 */
         input:focus {
             outline: none;
             border-bottom-width: 6px;
         }
-        /* 홈페이지 본문 폭이 좁아도 옆으로 유지하기 위한 설정 */
         .main-container {
             display: flex;
             flex-direction: column;
         }
-        @media (min-width: 640px) { /* 태블릿 이상의 폭에서 가로 배치 강제 */
+        @media (min-width: 768px) {
             .main-container {
                 flex-direction: row;
                 align-items: stretch;
             }
         }
+        /* 0일 때 부드럽게 사라지는 효과 */
+        .grid-container {
+            display: grid;
+            transition: all 0.4s ease;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col items-center p-2 md:p-6">
     <div class="max-w-[1400px] w-full bg-white rounded-[2rem] shadow-2xl p-6 md:p-12 mt-2">
-        <!-- 제목 -->
-        <h1 class="text-3xl md:text-5xl font-black text-center mb-12 text-gray-800">다항식 곱셈: 동류항 계산 모드</h1>
+        <h1 class="text-3xl md:text-5xl font-black text-center mb-12 text-gray-800">다항식 곱셈 시각화 (단항식 모드 지원)</h1>
         
-        <!-- 입력 영역 (이미지 스타일 적용) -->
+        <!-- 입력 영역 -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16 px-4">
             <div class="text-center">
                 <label class="block text-sm font-bold text-red-500 mb-2">가로 항 1</label>
@@ -70,28 +73,26 @@
             </div>
         </div>
 
-        <!-- 메인 콘텐츠: 좌(사각형) 우(수식) -->
         <div class="main-container gap-12 lg:gap-20">
-            
-            <!-- 왼쪽: 사각형 모델 (폭 조절) -->
-            <div class="w-full sm:w-[45%] flex flex-col items-center justify-center py-6">
+            <!-- 왼쪽: 사각형 모델 -->
+            <div class="w-full md:w-[45%] flex flex-col items-center justify-center py-6">
                 <div class="relative inline-flex flex-col items-center">
-                    <!-- 가로 라벨 -->
-                    <div class="flex w-80 md:w-96 mb-4 border-b-4 border-gray-300 pb-2">
-                        <div id="labA" class="w-1/2 text-center font-bold text-red-600 math-text text-4xl border-r-2 border-gray-100"></div>
-                        <div id="labB" class="w-1/2 text-center font-bold text-orange-600 math-text text-4xl"></div>
+                    <!-- 가로 라벨 영역 -->
+                    <div id="topLabelRow" class="grid w-80 md:w-96 mb-4 border-b-4 border-gray-300 pb-2 transition-all">
+                        <div id="labA" class="text-center font-bold text-red-600 math-text text-4xl border-r-2 border-gray-100 overflow-hidden"></div>
+                        <div id="labB" class="text-center font-bold text-orange-600 math-text text-4xl overflow-hidden"></div>
                     </div>
 
                     <div class="flex items-center">
-                        <!-- 세로 라벨 -->
-                        <div class="flex flex-col h-80 md:h-96 mr-4 border-r-4 border-gray-300 pr-2">
-                            <div id="labC" class="h-1/2 flex items-center justify-end font-bold text-green-600 math-text text-4xl border-b-2 border-gray-100 pr-2"></div>
-                            <div id="labD" class="h-1/2 flex items-center justify-end font-bold text-purple-600 math-text text-4xl pr-2"></div>
+                        <!-- 세로 라벨 영역 -->
+                        <div id="leftLabelCol" class="grid h-80 md:h-96 mr-4 border-r-4 border-gray-300 pr-2 transition-all">
+                            <div id="labC" class="flex items-center justify-end font-bold text-green-600 math-text text-4xl border-b-2 border-gray-100 pr-2 overflow-hidden"></div>
+                            <div id="labD" class="flex items-center justify-end font-bold text-purple-600 math-text text-4xl pr-2 overflow-hidden"></div>
                         </div>
 
                         <!-- 사각형 박스 -->
                         <div class="relative w-80 h-80 md:w-96 md:h-96 border-4 border-gray-200 rounded-2xl overflow-hidden shadow-xl bg-gray-50">
-                            <div class="grid grid-cols-2 grid-rows-2 w-full h-full">
+                            <div id="rectGrid" class="grid-container w-full h-full">
                                 <div id="rectAC" class="rect-box bg-red-400"></div>
                                 <div id="rectBC" class="rect-box bg-orange-400"></div>
                                 <div id="rectAD" class="rect-box bg-green-400"></div>
@@ -100,18 +101,19 @@
                         </div>
                     </div>
                 </div>
+                <p class="mt-8 text-gray-400 text-sm italic">항에 0을 입력하면 해당 칸이 사라집니다.</p>
             </div>
 
-            <!-- 오른쪽: 수식 전개 (글자 크기 제목 수준) -->
-            <div class="w-full sm:w-[55%] bg-blue-50/50 p-8 md:p-12 rounded-[3rem] border-2 border-blue-100 flex flex-col justify-center shadow-inner">
+            <!-- 오른쪽: 수식 전개 -->
+            <div class="w-full md:w-[55%] bg-blue-50/50 p-8 md:p-12 rounded-[3rem] border-2 border-blue-100 flex flex-col justify-center shadow-inner">
                 <div class="space-y-12">
                     <!-- 기본 식 -->
-                    <div class="math-text text-4xl md:text-5xl text-gray-800 font-bold leading-tight">
-                        (<span class="tA"></span> + <span class="tB"></span>)(<span class="tC"></span> + <span class="tD"></span>)
+                    <div id="baseEquation" class="math-text text-4xl md:text-5xl text-gray-800 font-bold leading-tight">
+                        <!-- JS 입력 -->
                     </div>
 
                     <!-- 1단계: 분배법칙 -->
-                    <div class="flex items-center gap-6">
+                    <div id="step1Row" class="flex items-center gap-6">
                         <span class="text-gray-300 text-5xl font-light">=</span>
                         <div id="step1" class="math-text text-4xl md:text-5xl font-bold text-blue-600 leading-tight"></div>
                     </div>
@@ -124,7 +126,7 @@
                         </div>
                     </div>
 
-                    <!-- 3단계: 동류항 정리 (최종) -->
+                    <!-- 3단계: 동류항 정리 -->
                     <div id="simplifiedSection" class="hidden flex items-center gap-8 mt-4 text-5xl md:text-7xl text-indigo-700 border-t-4 border-indigo-200 pt-8">
                         <span class="text-gray-400 text-4xl font-bold">∴</span>
                         <div id="finalResult" class="math-text font-black tracking-tighter leading-none">
@@ -142,7 +144,7 @@
 
             function parseTerm(s) {
                 s = s.trim();
-                if (!s) return { coeff: 0, variable: '' };
+                if (!s || s === '0') return { coeff: 0, variable: '' };
                 const match = s.match(/^([-+]?\d*\.?\d*)(.*)$/);
                 let coeffStr = match[1];
                 let variable = match[2];
@@ -159,6 +161,7 @@
                 const t1 = parseTerm(t1Str);
                 const t2 = parseTerm(t2Str);
                 const resCoeff = t1.coeff * t2.coeff;
+                if (resCoeff === 0) return { coeff: 0, variable: '', rawVar: '' };
                 
                 let varMap = {};
                 let vars = (t1.variable + t2.variable).split('').sort();
@@ -186,49 +189,95 @@
                 return s;
             }
 
-            function update() {
-                const a = document.getElementById('charA').value || 'a';
-                const b = document.getElementById('charB').value || 'b';
-                const c = document.getElementById('charC').value || 'c';
-                const d = document.getElementById('charD').value || 'd';
+            function wrapFactor(val) {
+                const term = parseTerm(val);
+                if (term.coeff === 0) return '';
+                return val;
+            }
 
-                const terms = [
-                    { id: 'AC', color: 'text-red-500', val: multiplyTerms(a, c) },
-                    { id: 'BC', color: 'text-orange-500', val: multiplyTerms(b, c) },
-                    { id: 'AD', color: 'text-green-500', val: multiplyTerms(a, d) },
-                    { id: 'BD', color: 'text-purple-500', val: multiplyTerms(b, d) }
+            function update() {
+                const aVal = document.getElementById('charA').value;
+                const bVal = document.getElementById('charB').value;
+                const cVal = document.getElementById('charC').value;
+                const dVal = document.getElementById('charD').value;
+
+                const a = parseTerm(aVal);
+                const b = parseTerm(bVal);
+                const c = parseTerm(cVal);
+                const d = parseTerm(dVal);
+
+                // 사각형 격자 및 라벨 레이아웃 조정
+                const gridCols = `${a.coeff === 0 ? '0' : '1'}fr ${b.coeff === 0 ? '0' : '1'}fr`;
+                const gridRows = `${c.coeff === 0 ? '0' : '1'}fr ${d.coeff === 0 ? '0' : '1'}fr`;
+
+                document.getElementById('rectGrid').style.gridTemplateColumns = gridCols;
+                document.getElementById('rectGrid').style.gridTemplateRows = gridRows;
+                document.getElementById('topLabelRow').style.gridTemplateColumns = gridCols;
+                document.getElementById('leftLabelCol').style.gridTemplateRows = gridRows;
+
+                // 라벨 텍스트 업데이트
+                document.getElementById('labA').innerText = a.coeff === 0 ? '' : aVal;
+                document.getElementById('labB').innerText = b.coeff === 0 ? '' : bVal;
+                document.getElementById('labC').innerText = c.coeff === 0 ? '' : cVal;
+                document.getElementById('labD').innerText = d.coeff === 0 ? '' : dVal;
+
+                // 사각형 내부 결과 업데이트
+                const rects = [
+                    { id: 'AC', v1: aVal, v2: cVal, color: 'text-red-500' },
+                    { id: 'BC', v1: bVal, v2: cVal, color: 'text-orange-500' },
+                    { id: 'AD', v1: aVal, v2: dVal, color: 'text-green-500' },
+                    { id: 'BD', v1: bVal, v2: dVal, color: 'text-purple-500' }
                 ];
 
-                terms.forEach(t => {
-                    const html = formatTerm(t.val.coeff, t.val.variable, true);
-                    document.getElementById('rect' + t.id).innerHTML = html || '0';
+                const activeTerms = [];
+
+                rects.forEach(r => {
+                    const res = multiplyTerms(r.v1, r.v2);
+                    const el = document.getElementById('rect' + r.id);
+                    if (res.coeff !== 0) {
+                        el.innerHTML = formatTerm(res.coeff, res.variable, true);
+                        activeTerms.push({ val: res, color: r.color });
+                    } else {
+                        el.innerHTML = '';
+                    }
                 });
 
-                document.getElementById('labA').innerText = a;
-                document.getElementById('labB').innerText = b;
-                document.getElementById('labC').innerText = c;
-                document.getElementById('labD').innerText = d;
-                document.querySelectorAll('.tA').forEach(el => el.innerText = a);
-                document.querySelectorAll('.tB').forEach(el => el.innerText = b);
-                document.querySelectorAll('.tC').forEach(el => el.innerText = c);
-                document.querySelectorAll('.tD').forEach(el => el.innerText = d);
+                // 수식 영역 업데이트
+                const factor1 = (a.coeff !== 0 && b.coeff !== 0) ? `(${aVal} + ${bVal})` : (aVal || bVal || '0');
+                const factor2 = (c.coeff !== 0 && d.coeff !== 0) ? `(${cVal} + ${dVal})` : (cVal || dVal || '0');
+                document.getElementById('baseEquation').innerHTML = `${factor1}${factor2}`;
 
-                document.getElementById('step1').innerHTML = `${a}(${c} + ${d}) + ${b}(${c} + ${d})`;
+                // 분배 법칙 단계
+                let step1Html = '';
+                if (a.coeff !== 0) step1Html += `${aVal}(${c.coeff !== 0 && d.coeff !== 0 ? cVal + ' + ' + dVal : (cVal || dVal)})`;
+                if (a.coeff !== 0 && b.coeff !== 0) step1Html += ' + ';
+                if (b.coeff !== 0) step1Html += `${bVal}(${c.coeff !== 0 && d.coeff !== 0 ? cVal + ' + ' + dVal : (cVal || dVal)})`;
+                document.getElementById('step1').innerHTML = step1Html || '0';
+                
+                // 단항식 곱하기 단항식일 경우 분배 단계 숨기기
+                const isMonomialComplex = (a.coeff !== 0 && b.coeff !== 0) || (c.coeff !== 0 && d.coeff !== 0);
+                document.getElementById('step1Row').style.display = isMonomialComplex ? 'flex' : 'none';
 
+                // 전개 결과
                 const expandedEl = document.getElementById('expandedResult');
                 expandedEl.innerHTML = '';
-                terms.forEach((t, idx) => {
-                    const span = document.createElement('span');
-                    span.className = t.color;
-                    span.innerHTML = formatTerm(t.val.coeff, t.val.variable, idx === 0);
-                    expandedEl.appendChild(span);
-                });
+                if (activeTerms.length === 0) {
+                    expandedEl.innerHTML = '0';
+                } else {
+                    activeTerms.forEach((t, idx) => {
+                        const span = document.createElement('span');
+                        span.className = t.color;
+                        span.innerHTML = formatTerm(t.val.coeff, t.val.variable, idx === 0);
+                        expandedEl.appendChild(span);
+                    });
+                }
 
+                // 동류항 정리
                 const sumMap = {};
                 const order = [];
                 const varDisplayMap = {};
 
-                terms.forEach(t => {
+                activeTerms.forEach(t => {
                     const key = t.val.rawVar;
                     if (!(key in sumMap)) {
                         order.push(key);
@@ -250,7 +299,8 @@
                 });
 
                 const simplifiedSection = document.getElementById('simplifiedSection');
-                if (visibleTermsCount < 4 && finalHtml) {
+                // 항이 합쳐졌을 때만(동류항이 있을 때만) 최종 결과 섹션 표시
+                if (visibleTermsCount > 0 && visibleTermsCount < activeTerms.length) {
                     simplifiedSection.classList.remove('hidden');
                     document.getElementById('finalResult').innerHTML = finalHtml;
                 } else {
