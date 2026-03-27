@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>라스베거스 보드게임</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .casino-card {
+            background: linear-gradient(135deg, #2d5a27 0%, #1e3a1a 100%);
+            border: 4px solid #d4af37;
+            transition: transform 0.2s;
+        }
+
+        .dice {
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .player-color-0 { background-color: #ef4444; color: white; } /* 빨강 */
+        .player-color-1 { background-color: #3b82f6; color: white; } /* 파랑 */
+        .player-color-2 { background-color: #10b981; color: white; } /* 초록 */
+        .player-color-3 { background-color: #f59e0b; color: white; } /* 노랑 */
+        .player-color-4 { background-color: #8b5cf6; color: white; } /* 보라 */
+        .player-color-5 { background-color: #ec4899; color: white; } /* 핑크 */
+
+        .title-font {
+            font-family: 'Black Han Sans', sans-serif;
+        }
+
+        .money-bill {
+            background-color: #cfd8dc;
+            color: #1b5e20;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            border: 1px solid #455a64;
+            display: inline-block;
+            margin: 2px;
+        }
+
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(8px);
+        }
+
+        /* 현재 차례인 조 강조 애니메이션 */
+        .active-turn-indicator {
+            outline: 4px solid #fbbf24;
+            animation: pulse-border 1.5s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% { outline-offset: 0px; outline-color: rgba(251, 191, 36, 1); }
+            50% { outline-offset: 4px; outline-color: rgba(251, 191, 36, 0.5); }
+            100% { outline-offset: 0px; outline-color: rgba(251, 191, 36, 1); }
+        }
+    </style>
+</head>
+<body class="p-2 md:p-4">
+
+    <!-- 헤더 -->
+    <div class="max-w-[95%] mx-auto flex justify-between items-center mb-4">
+        <h1 class="text-3xl md:text-5xl title-font text-yellow-500 italic">LAS VEGAS</h1>
+        <div class="text-right">
+            <div id="round-display" class="text-xl font-bold">라운드: 1 / 4</div>
+            <div id="current-player-display" class="text-lg text-yellow-400 font-bold">현재 차례: 1조</div>
+        </div>
+    </div>
+
+    <!-- 모든 조 주사위 현황판 (추가됨) -->
+    <div class="max-w-[95%] mx-auto mb-6 grid grid-cols-6 gap-2">
+        <div id="status-card-0" class="bg-gray-800 p-2 rounded-xl border border-white/10 flex flex-col items-center">
+            <div class="w-6 h-6 rounded-full player-color-0 mb-1"></div>
+            <div class="text-xs font-bold opacity-70">1조</div>
+            <div id="status-dice-0" class="text-xl font-black">8</div>
+        </div>
+        <div id="status-card-1" class="bg-gray-800 p-2 rounded-xl border border-white/10 flex flex-col items-center">
+            <div class="w-6 h-6 rounded-full player-color-1 mb-1"></div>
+            <div class="text-xs font-bold opacity-70">2조</div>
+            <div id="status-dice-1" class="text-xl font-black">8</div>
+        </div>
+        <div id="status-card-2" class="bg-gray-800 p-2 rounded-xl border border-white/10 flex flex-col items-center">
+            <div class="w-6 h-6 rounded-full player-color-2 mb-1"></div>
+            <div class="text-xs font-bold opacity-70">3조</div>
+            <div id="status-dice-2" class="text-xl font-black">8</div>
+        </div>
+        <div id="status-card-3" class="bg-gray-800 p-2 rounded-xl border border-white/10 flex flex-col items-center">
+            <div class="w-6 h-6 rounded-full player-color-3 mb-1"></div>
+            <div class="text-xs font-bold opacity-70">4조</div>
+            <div id="status-dice-3" class="text-xl font-black">8</div>
+        </div>
+        <div id="status-card-4" class="bg-gray-800 p-2 rounded-xl border border-white/10 flex flex-col items-center">
+            <div class="w-6 h-6 rounded-full player-color-4 mb-1"></div>
+            <div class="text-xs font-bold opacity-70">5조</div>
+            <div id="status-dice-4" class="text-xl font-black">8</div>
+        </div>
+        <div id="status-card-5" class="bg-gray-800 p-2 rounded-xl border border-white/10 flex flex-col items-center">
+            <div class="w-6 h-6 rounded-full player-color-5 mb-1"></div>
+            <div class="text-xs font-bold opacity-70">6조</div>
+            <div id="status-dice-5" class="text-xl font-black">8</div>
+        </div>
+    </div>
+
+    <!-- 메인 보드 -->
+    <div id="game-board" class="max-w-[95%] mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-32">
+        <!-- 카지노 카드들이 여기에 생성됨 -->
+    </div>
+
+    <!-- 하단 컨트롤러 -->
+    <div class="fixed bottom-0 left-0 right-0 p-4 bg-gray-900 border-t-2 border-yellow-600 z-10">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <!-- 현재 플레이어 주사위 현황 -->
+            <div id="player-status" class="flex items-center gap-4">
+                <div id="active-player-indicator" class="w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold"></div>
+                <div>
+                    <div id="player-name-label" class="font-bold text-xl">플레이어 명</div>
+                    <div id="dice-count-label" class="text-base opacity-80">남은 주사위: 8개</div>
+                </div>
+            </div>
+
+            <!-- 주사위 굴리기 영역 -->
+            <div id="dice-roll-area" class="flex-1 flex flex-wrap justify-center gap-3 py-2 bg-gray-800 rounded-lg min-h-[80px]">
+                <button id="roll-btn" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 px-12 rounded-full text-xl transition-all transform active:scale-95 shadow-lg">
+                    주사위 굴리기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 라운드 정산 모달 (가로형) -->
+    <div id="settlement-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gray-100 text-black p-6 rounded-3xl w-[98%] max-w-[1600px] shadow-2xl">
+            <h2 id="settlement-title" class="text-4xl font-bold mb-6 text-center title-font text-red-600">라운드 정산 결과</h2>
+            <div id="settlement-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+                <!-- 카지노별 정산 카드가 가로로 배치됨 -->
+            </div>
+            <div class="flex justify-center">
+                <button id="settlement-btn" class="bg-blue-600 text-white font-bold py-4 px-20 rounded-full text-2xl hover:bg-blue-700 transition-colors shadow-xl">다음 라운드 시작</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 최종 결과 모달 (가로형) -->
+    <div id="score-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white text-black p-8 rounded-3xl w-[98%] max-w-[1600px] shadow-2xl">
+            <h2 class="text-5xl font-bold mb-10 text-center title-font text-red-600 underline">최종 스코어보드</h2>
+            <div id="score-list" class="flex flex-row justify-center gap-4 mb-10 overflow-x-auto pb-4">
+                <!-- 최종 점수 카드가 가로로 나열됨 -->
+            </div>
+            <div class="flex justify-center">
+                <button onclick="location.reload()" class="bg-gray-800 text-white font-bold py-5 px-24 rounded-2xl text-2xl hover:bg-black transition-all shadow-xl">새 게임 시작</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 게임 설정
+        const NUM_PLAYERS = 6;
+        const NUM_CASINOS = 6;
+        const MAX_ROUNDS = 4;
+        const INITIAL_DICE = 8;
+        const MONEY_DENOMINATIONS = [10000, 10000, 20000, 20000, 30000, 30000, 40000, 50000, 60000, 70000, 80000, 90000];
+
+        // 게임 상태
+        let state = {
+            round: 1,
+            currentPlayer: 0,
+            players: [], 
+            casinos: [],
+            isRolling: false
+        };
+
+        function initGame() {
+            state.players = Array.from({ length: NUM_PLAYERS }, (_, i) => ({
+                id: i,
+                name: `${i + 1}조`,
+                totalScore: 0,
+                remainingDice: INITIAL_DICE,
+                currentRoll: []
+            }));
+            setupRound();
+        }
+
+        function setupRound() {
+            state.casinos = Array.from({ length: NUM_CASINOS }, (_, i) => {
+                let bills = [];
+                let sum = 0;
+                while (sum < 50000) {
+                    const bill = MONEY_DENOMINATIONS[Math.floor(Math.random() * MONEY_DENOMINATIONS.length)];
+                    bills.push(bill);
+                    sum += bill;
+                }
+                bills.sort((a, b) => b - a);
+                return {
+                    id: i + 1,
+                    bills: bills,
+                    placedDice: Array(NUM_PLAYERS).fill(0)
+                };
+            });
+
+            state.players.forEach(p => {
+                p.remainingDice = INITIAL_DICE;
+                p.currentRoll = [];
+            });
+
+            renderBoard();
+            updateUI();
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+
+            state.casinos.forEach((casino, idx) => {
+                const card = document.createElement('div');
+                card.className = 'casino-card rounded-2xl p-4 flex flex-col items-center relative overflow-hidden shadow-xl min-h-[300px] border-2 border-yellow-500/50';
+                
+                const bgNum = document.createElement('div');
+                bgNum.className = 'absolute -top-4 -right-2 text-9xl font-black text-white opacity-10 italic pointer-events-none';
+                bgNum.innerText = casino.id;
+                card.appendChild(bgNum);
+
+                card.innerHTML += `
+                    <div class="text-3xl font-black mb-3 z-10 text-yellow-400 title-font">CASINO ${casino.id}</div>
+                    <div class="flex flex-wrap justify-center mb-4 z-10">
+                        ${casino.bills.map(b => `<span class="money-bill text-sm md:text-base">$${(b/10000)}만</span>`).join('')}
+                    </div>
+                    <div id="casino-dice-${idx}" class="w-full grid grid-cols-1 gap-1 z-10 bg-black/40 p-2 rounded-xl flex-1 overflow-y-auto">
+                        ${renderCasinoDice(casino)}
+                    </div>
+                `;
+                board.appendChild(card);
+            });
+        }
+
+        function renderCasinoDice(casino) {
+            let html = '';
+            casino.placedDice.forEach((count, pIdx) => {
+                if (count > 0) {
+                    html += `
+                        <div class="flex items-center justify-between gap-1 border-b border-white/10 pb-1 mb-1">
+                            <div class="flex items-center gap-2">
+                                <span class="w-4 h-4 rounded-full player-color-${pIdx} shadow-sm"></span>
+                                <span class="text-sm font-bold">${state.players[pIdx].name}</span>
+                            </div>
+                            <span class="text-yellow-400 font-bold">${count}</span>
+                        </div>
+                    `;
+                }
+            });
+            return html || '<div class="h-full flex items-center justify-center text-xs opacity-40">배치된 주사위 없음</div>';
+        }
+
+        function updateUI() {
+            const cp = state.players[state.currentPlayer];
+            document.getElementById('round-display').innerText = `라운드: ${state.round} / ${MAX_ROUNDS}`;
+            document.getElementById('current-player-display').innerText = `현재 차례: ${cp.name}`;
+            document.getElementById('player-name-label').innerText = cp.name;
+            document.getElementById('dice-count-label').innerText = `남은 주사위: ${cp.remainingDice}개`;
+            
+            const indicator = document.getElementById('active-player-indicator');
+            indicator.className = `w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold player-color-${state.currentPlayer} border-2 border-white/20 shadow-lg`;
+            indicator.innerText = state.currentPlayer + 1;
+
+            // 전체 조 현황판 업데이트
+            state.players.forEach((p, i) => {
+                const statusDice = document.getElementById(`status-dice-${i}`);
+                const statusCard = document.getElementById(`status-card-${i}`);
+                
+                statusDice.innerText = p.remainingDice;
+                
+                // 주사위가 없는 조는 흐릿하게 표시
+                if (p.remainingDice <= 0) {
+                    statusCard.classList.add('opacity-40');
+                } else {
+                    statusCard.classList.remove('opacity-40');
+                }
+
+                // 현재 차례 강조
+                if (i === state.currentPlayer) {
+                    statusCard.classList.add('active-turn-indicator', 'bg-gray-700');
+                    statusCard.classList.remove('bg-gray-800');
+                } else {
+                    statusCard.classList.remove('active-turn-indicator', 'bg-gray-700');
+                    statusCard.classList.add('bg-gray-800');
+                }
+            });
+
+            const rollArea = document.getElementById('dice-roll-area');
+            if (cp.currentRoll.length > 0) {
+                rollArea.innerHTML = '';
+                const counts = {};
+                cp.currentRoll.forEach(v => counts[v] = (counts[v] || 0) + 1);
+                
+                Object.keys(counts).forEach(val => {
+                    const btn = document.createElement('button');
+                    btn.className = `flex flex-col items-center justify-center p-3 rounded-xl bg-white hover:bg-yellow-200 transition-all border-4 border-transparent hover:border-yellow-500 shadow-md transform hover:-translate-y-1`;
+                    btn.onclick = () => placeDice(parseInt(val));
+                    
+                    let diceIcons = '';
+                    for(let i=0; i<counts[val]; i++) {
+                        diceIcons += `<span class="dice player-color-${state.currentPlayer}">${val}</span>`;
+                    }
+
+                    btn.innerHTML = `
+                        <div class="flex flex-wrap justify-center max-w-[150px]">${diceIcons}</div>
+                        <div class="text-sm font-black text-gray-800 mt-2">카지노 ${val}번으로 이동</div>
+                    `;
+                    rollArea.appendChild(btn);
+                });
+            } else {
+                rollArea.innerHTML = `
+                    <button id="roll-btn" onclick="rollDice()" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-5 px-16 rounded-full text-2xl transition-all shadow-lg active:scale-95">
+                        주사위 굴리기
+                    </button>
+                `;
+            }
+        }
+
+        window.rollDice = function() {
+            const cp = state.players[state.currentPlayer];
+            if (cp.remainingDice <= 0) {
+                nextTurn();
+                return;
+            }
+            const results = [];
+            for (let i = 0; i < cp.remainingDice; i++) {
+                results.push(Math.floor(Math.random() * 6) + 1);
+            }
+            cp.currentRoll = results;
+            updateUI();
+        };
+
+        function placeDice(value) {
+            const cp = state.players[state.currentPlayer];
+            const diceToMove = cp.currentRoll.filter(v => v === value).length;
+            state.casinos[value - 1].placedDice[state.currentPlayer] += diceToMove;
+            cp.remainingDice -= diceToMove;
+            cp.currentRoll = [];
+            renderBoard();
+            nextTurn();
+        }
+
+        function nextTurn() {
+            let playersWithDice = state.players.filter(p => p.remainingDice > 0);
+            if (playersWithDice.length === 0) {
+                endRound();
+                return;
+            }
+            let found = false;
+            for (let i = 1; i <= NUM_PLAYERS; i++) {
+                let nextIdx = (state.currentPlayer + i) % NUM_PLAYERS;
+                if (state.players[nextIdx].remainingDice > 0) {
+                    state.currentPlayer = nextIdx;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) endRound();
+            else updateUI();
+        }
+
+        function endRound() {
+            const settlementContainer = document.getElementById('settlement-container');
+            settlementContainer.innerHTML = '';
+            
+            state.casinos.forEach(casino => {
+                const casinoResCard = document.createElement('div');
+                casinoResCard.className = 'bg-white rounded-2xl p-4 shadow-md border-t-8 border-green-600 flex flex-col min-h-[250px]';
+                
+                let resultHtml = `<div class="text-xl font-bold mb-2 text-center border-b pb-1">카지노 ${casino.id}</div>`;
+                
+                let countsMap = casino.placedDice
+                    .map((count, pIdx) => ({ pIdx, count }))
+                    .filter(item => item.count > 0);
+                
+                let frequency = {};
+                countsMap.forEach(item => frequency[item.count] = (frequency[item.count] || 0) + 1);
+                
+                let winners = countsMap.filter(item => frequency[item.count] === 1);
+                winners.sort((a, b) => b.count - a.count);
+
+                resultHtml += '<div class="space-y-2 flex-1 mt-2">';
+                for (let i = 0; i < casino.bills.length && i < winners.length; i++) {
+                    const winner = winners[i];
+                    const amount = casino.bills[i];
+                    state.players[winner.pIdx].totalScore += amount;
+                    resultHtml += `
+                        <div class="flex flex-col bg-green-50 p-2 rounded border border-green-200">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full player-color-${winner.pIdx}"></span>
+                                <span class="font-bold text-sm">${state.players[winner.pIdx].name}</span>
+                            </div>
+                            <div class="text-lg font-black text-green-700">$${amount/10000}만</div>
+                        </div>
+                    `;
+                }
+
+                if (winners.length === 0) {
+                    resultHtml += `<div class="text-center text-gray-400 mt-10 text-sm">획득자 없음<br>(동수 발생)</div>`;
+                }
+                resultHtml += '</div>';
+                
+                casinoResCard.innerHTML = resultHtml;
+                settlementContainer.appendChild(casinoResCard);
+            });
+
+            const isGameOver = state.round >= MAX_ROUNDS;
+            const title = isGameOver ? "게임 종료! 최종 정산" : `제 ${state.round} 라운드 정산 결과`;
+            document.getElementById('settlement-title').innerText = title;
+            document.getElementById('settlement-btn').innerText = isGameOver ? "최종 순위 보기" : "다음 라운드 시작";
+            
+            document.getElementById('settlement-btn').onclick = () => {
+                document.getElementById('settlement-modal').classList.add('hidden');
+                if (isGameOver) {
+                    showFinalScores();
+                } else {
+                    state.round++;
+                    state.currentPlayer = (state.round - 1) % NUM_PLAYERS;
+                    setupRound();
+                }
+            };
+            document.getElementById('settlement-modal').classList.remove('hidden');
+        }
+
+        function showFinalScores() {
+            const scoreList = document.getElementById('score-list');
+            scoreList.innerHTML = '';
+            const sortedPlayers = [...state.players].sort((a, b) => b.totalScore - a.totalScore);
+            
+            sortedPlayers.forEach((p, index) => {
+                const item = document.createElement('div');
+                item.className = `flex flex-col items-center p-6 rounded-3xl border-4 transition-all transform hover:scale-105 min-w-[200px] ${index === 0 ? 'border-yellow-400 bg-yellow-50 shadow-yellow-200 shadow-xl' : 'border-gray-100 bg-gray-50'}`;
+                
+                let rankIcon = index === 0 ? '👑' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}위`;
+                
+                item.innerHTML = `
+                    <div class="text-4xl font-black mb-4 ${index === 0 ? 'text-yellow-600' : 'text-gray-500'}">${rankIcon}</div>
+                    <div class="w-20 h-20 rounded-full player-color-${p.id} mb-4 flex items-center justify-center text-3xl font-bold shadow-md border-4 border-white">${p.id + 1}</div>
+                    <span class="font-black text-2xl mb-2">${p.name}</span>
+                    <div class="text-3xl font-black text-green-700">$${p.totalScore / 10000}만</div>
+                `;
+                scoreList.appendChild(item);
+            });
+
+            document.getElementById('score-modal').classList.remove('hidden');
+        }
+
+        window.onload = initGame;
+    </script>
+</body>
+</html>
