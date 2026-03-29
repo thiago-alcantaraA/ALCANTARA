@@ -14,7 +14,6 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 10px; }
         .semester-btn.active, .time-btn.active { background-color: #4338ca !important; color: white !important; border-color: #4338ca !important; }
-        /* 왕관 애니메이션 */
         .crown-animate {
             animation: bounce 1s infinite;
         }
@@ -28,7 +27,7 @@
 
     <!-- 1. 상단 전광판 -->
     <div id="scoreboard" class="w-full max-w-6xl mb-6 grid grid-cols-6 gap-2 text-center pt-6">
-        <!-- 자바스크립트에서 동적 생성 -->
+        <!-- JS에서 동적 생성 -->
     </div>
 
     <!-- 2. 메인 게임 박스 -->
@@ -38,7 +37,7 @@
         <div class="bg-indigo-600 px-8 py-4 text-white flex justify-between items-center shrink-0">
             <div class="flex items-center gap-3">
                 <i class="fas fa-calculator text-2xl"></i>
-                <h1 class="text-xl font-bold">중학 수학 스피드 퀴즈 <span class="text-indigo-200 text-sm font-normal ml-2">(학기별 대항전)</span></h1>
+                <h1 class="text-xl font-bold">중학 수학 스피드 퀴즈 <span class="text-indigo-200 text-sm font-normal ml-2">(2022 개정 반영)</span></h1>
                 <span id="current-group-label" class="bg-indigo-500 px-3 py-1 rounded-full text-xs font-bold view-hidden"></span>
             </div>
             <div id="timer-area" class="view-hidden flex items-center gap-3 bg-indigo-700 px-5 py-2 rounded-full font-mono text-2xl font-bold shadow-inner">
@@ -53,7 +52,6 @@
             <!-- [화면 1] 메인 홈 -->
             <div id="view-home" class="grid grid-cols-2 gap-10 items-center">
                 <div class="space-y-6 border-r border-slate-100 pr-10">
-                    <!-- 조 선택 -->
                     <div class="space-y-3">
                         <p class="font-bold text-slate-600 flex items-center gap-2 text-base">
                             <i class="fas fa-users text-indigo-500"></i> 참여할 조 선택
@@ -61,7 +59,6 @@
                         <div id="group-selection" class="grid grid-cols-3 gap-2"></div>
                     </div>
 
-                    <!-- 학기 범위 선택 -->
                     <div class="space-y-3">
                         <div class="flex justify-between items-end">
                             <p class="font-bold text-slate-600 text-base">학기 범위 (학기당 +5% 보너스)</p>
@@ -77,27 +74,27 @@
                         </div>
                     </div>
 
-                    <!-- 시간 설정 -->
                     <div class="space-y-3">
                         <p class="font-bold text-slate-600 flex items-center gap-2 text-base">
                             <i class="fas fa-hourglass-half text-indigo-500"></i> 제한 시간 설정
                         </p>
                         <div class="flex gap-2">
-                            <button onclick="selectTime(120)" id="time-120" class="time-btn flex-1 py-2 rounded-xl font-bold border-2 border-slate-100 bg-slate-50 text-slate-500 hover:border-indigo-200 transition-all text-sm">2분 (120초)</button>
-                            <button onclick="selectTime(180)" id="time-180" class="time-btn flex-1 py-2 rounded-xl font-bold border-2 border-slate-100 bg-slate-50 text-slate-500 hover:border-indigo-200 transition-all text-sm">3분 (180초)</button>
+                            <button onclick="selectTime(120)" id="time-120" class="time-btn flex-1 py-2 rounded-xl font-bold border-2 border-slate-100 bg-slate-50 text-slate-500 hover:border-indigo-200 transition-all text-sm">2분</button>
+                            <button onclick="selectTime(180)" id="time-180" class="time-btn flex-1 py-2 rounded-xl font-bold border-2 border-slate-100 bg-slate-50 text-slate-500 hover:border-indigo-200 transition-all text-sm">3분</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="space-y-6">
-                    <div class="bg-amber-50 p-6 rounded-[1.5rem] border border-amber-100 shadow-sm">
+                    <div class="bg-amber-50 p-6 rounded-[1.5rem] border border-amber-100 shadow-sm text-sm">
                         <h3 class="font-bold text-amber-800 mb-2 flex items-center gap-2 text-lg">
-                            <i class="fas fa-star"></i> 가산점 규칙
+                            <i class="fas fa-star"></i> 최신 개정 교육과정 반영
                         </h3>
-                        <ul class="text-amber-700 space-y-2 font-medium text-sm">
-                            <li>• 선택한 학기 1개당 최종 점수에 <strong>5%</strong> 보너스가 합산됩니다.</li>
-                            <li>• 6개 학기 모두 선택 시 최대 <strong>30%</strong> 보너스를 받습니다!</li>
-                            <li>• 어떤 범위든 무작위 <strong>20문제</strong>가 출제됩니다.</li>
+                        <ul class="text-amber-700 space-y-2 font-medium">
+                            <li>• 학기당 <strong>5%</strong> 보너스 (최대 30%)</li>
+                            <li>• '명제' 등 고교 이동 용어 제외</li>
+                            <li>• <strong>'상자 그림', '산점도'</strong> 등 최신 통계 용어 포함</li>
+                            <li>• 어떤 범위든 무작위 <strong>20문제</strong> 출제</li>
                         </ul>
                     </div>
                     <button id="btn-start" onclick="startGame()" disabled class="w-full py-6 rounded-2xl flex items-center justify-center gap-3 text-3xl font-black transition-all bg-slate-200 text-slate-400 cursor-not-allowed shadow-lg">
@@ -158,14 +155,13 @@
     </div>
 
     <script>
-        // 학기별 수학 용어 데이터
         const mathData = {
-            '1-1': ['소수', '합성수', '거듭제곱', '최대공약수', '최소공배수', '정수', '유리수', '절댓값', '계수', '항', '상수항', '일차식', '일차방정식', '좌표평면', '원점', '순서쌍', '정비례', '반비례', '약수', '배수', '소인수분해', '분배법칙', '교환법칙', '결합법칙', '미지수', '변수', '등식', '이항'],
-            '1-2': ['점선면', '맞꼭지각', '평행선', '엇각', '동위각', '작도', '다각형', '부채꼴', '원주율', '다면체', '회전체', '겉넓이', '부피', '도수분포표', '상대도수', '교점', '교선', '수직', '이등분선', '원주', '호', '현', '정다면체', '줄기와 잎 그림', '계급', '도수', '계급값'],
-            '2-1': ['유한소수', '순환소수', '지수법칙', '단항식', '다항식', '부등식', '연립방정식', '미지수', '함수', '함숫값', '기울기', '절편', '평행이동', '순환마디', '무한소수', '전개', '공통인수', '부등호', '연립일차방정식', '가감법', '대입법', '일차함수', 'x절편', 'y절편'],
-            '2-2': ['이등변삼각형', '외심', '내심', '평행사변형', '마름모', '직사각형', '정사각형', '삼각형의 닮음', '닮음비', '피타고라스 정리', '경우의 수', '확률', '명제', '정의', '성질', '사다리꼴', '합동', 'SSS합동', 'SAS합동', 'ASA합동', '무게중심', '중선'],
-            '3-1': ['제곱근', '루트', '실수', '무리수', '유리화', '인수분해', '공통인수', '완전제곱식', '합차공식', '이차방정식', '중근', '근의 공식', '이차함수', '꼭짓점', '포물선', '양의 제곱근', '음의 제곱근', '소수 부분', '정수 부분', '대소 관계', '전개식', '이차항', '판별식', '축의 방정식'],
-            '3-2': ['삼각비', '사인', '코사인', '탄젠트', '원주각', '중심각', '접선', '현', '대푯값', '중앙값', '최빈값', '분산', '표준편차', '직각삼각형', '예각의 삼각비', '접점', '산포도', '편차', '상관관계', '상관도', '상관계수']
+            '1-1': ['소수', '합성수', '소인수분해', '거듭제곱', '최대공약수', '최소공배수', '정수', '유리수', '절댓값', '수직선', '교환법칙', '결합법칙', '분배법칙', '계수', '상수항', '다항식', '항', '일차식', '방정식', '해', '대입', '이항', '일차방정식', '좌표평면', '순서쌍', '사분면', '정비례', '반비례'],
+            '1-2': ['맞꼭지각', '수직이등분선', '엇각', '동위각', '평행선', '작도', '삼각형의 결정조건', '다각형', '내각', '외각', '부채꼴', '원주율', '호', '현', '다면체', '정다면체', '회전체', '겉넓이', '부피', '중앙값', '최빈값', '상자 그림', '사분위수', '도수분포표', '상대도수'],
+            '2-1': ['유한소수', '순환소수', '순환마디', '지수법칙', '단항식', '계산', '전개', '일차부등식', '부등호', '연립방정식', '가감법', '대입법', '일차함수', '함숫값', '기울기', 'x절편', 'y절편', '평행이동', '일차함수의 그래프'],
+            '2-2': ['이등변삼각형', '외심', '내심', '평행사변형', '직사각형', '마름모', '정사각형', '사다리꼴', '삼각형의 닮음', '닮음비', '무게중심', '중선', '피타고라스 정리', '경우의 수', '확률', '합동', '닮음의 위치', '평행선과 선분'],
+            '3-1': ['제곱근', '루트', '실수', '무리수', '유리화', '인수분해', '공통인수', '완전제곱식', '합차공식', '이차방정식', '중근', '근의 공식', '이차함수', '꼭짓점', '포물선', '축의 방정식', '이차식의 전개', '이차항의 계수'],
+            '3-2': ['삼각비', '사인', '코사인', '탄젠트', '특수각', '원주각', '중심각', '접선', '할선', '원과 직선', '대푯값', '분산', '표준편차', '편차', '산포도', '산점도', '상관관계', '양의 상관관계', '음의 상관관계']
         };
 
         let selectedSemesters = ['1-1', '1-2', '2-1', '2-2', '3-1', '3-2'];
@@ -188,12 +184,9 @@
             updateTimeUI();
         }
 
-        // 전광판 렌더링 (왕관 표시 추가)
         function renderScoreboard() {
             const container = document.getElementById('scoreboard');
             container.innerHTML = '';
-            
-            // 최고 점수 계산
             const scores = Object.values(groupBestRecords);
             const maxScore = Math.max(...scores);
 
@@ -286,17 +279,12 @@
             const len = selectedSemesters.length;
             const currentBonus = len * 5; 
             badge.innerText = `가산점: +${currentBonus}%`;
-            if (currentBonus > 0) {
-                badge.className = "text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full";
-            } else {
-                badge.className = "text-xs font-bold text-slate-400 bg-slate-50 px-3 py-1 rounded-full";
-            }
+            badge.className = currentBonus > 0 ? "text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full" : "text-xs font-bold text-slate-400 bg-slate-50 px-3 py-1 rounded-full";
         }
 
         function startGame() {
             let combined = [];
             selectedSemesters.forEach(s => combined = [...combined, ...mathData[s]]);
-            
             combined = Array.from(new Set(combined));
             quizWords = combined.sort(() => Math.random() - 0.5).slice(0, 20);
             
@@ -391,9 +379,7 @@
             document.getElementById('result-score').innerText = finalScore;
             
             let detailTxt = `기본 정답 수: ${baseCount}개`;
-            if (bonusRate > 0) {
-                detailTxt += `<br><span class="text-indigo-600 font-bold">범위 보너스: +${Math.round(baseCount * bonusRate)}점 (학기 ${len}개, ${Math.round(bonusRate*100)}%)</span>`;
-            }
+            if (bonusRate > 0) detailTxt += `<br><span class="text-indigo-600 font-bold">범위 보너스: +${Math.round(baseCount * bonusRate)}점 (학기 ${len}개, ${Math.round(bonusRate*100)}%)</span>`;
             document.getElementById('result-detail').innerHTML = detailTxt;
             
             const historyList = document.getElementById('result-history');
