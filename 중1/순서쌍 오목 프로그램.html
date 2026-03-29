@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>전자칠판용 좌표 스크롤 오목</title>
+    <title>전자칠판용 좌표 입력 오목</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
@@ -23,7 +23,7 @@
 
         /* 피커 스타일 */
         .picker-container {
-            height: 150px; /* 크기 확대 */
+            height: 150px;
             width: 80px;
             overflow-y: scroll;
             scroll-snap-type: y mandatory;
@@ -48,10 +48,9 @@
             transition: all 0.2s;
             color: #475569;
         }
+        /* 활성화된 아이템은 입력창 뒤로 숨김 (입력창이 값을 보여줌) */
         .picker-item.active {
-            color: #3b82f6;
-            font-size: 1.8rem;
-            transform: scale(1.1);
+            opacity: 0;
         }
         
         .picker-highlight {
@@ -62,10 +61,31 @@
             height: 50px;
             border-top: 2px solid #3b82f6;
             border-bottom: 2px solid #3b82f6;
-            pointer-events: none;
-            background: rgba(59, 130, 246, 0.15);
-            z-index: 2;
+            background: rgba(59, 130, 246, 0.2);
+            z-index: 10;
             border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 입력창 스타일 */
+        .coord-input {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            color: #3b82f6;
+            font-size: 1.8rem;
+            font-weight: 900;
+            text-align: center;
+            outline: none;
+        }
+        /* 크롬 등 브라우저 화살표 제거 */
+        .coord-input::-webkit-inner-spin-button,
+        .coord-input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
 
         canvas {
@@ -77,7 +97,7 @@
 
         .player-panel {
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            width: 260px; /* 너비 확대 */
+            width: 260px;
             padding: 2rem;
             border-radius: 2.5rem;
             border: 4px solid transparent;
@@ -114,7 +134,7 @@
 </head>
 <body>
 
-    <!-- 상단 헤더 섹션 -->
+    <!-- 상단 헤더 영역 -->
     <div class="flex items-center gap-6 mb-8">
         <div id="turn-indicator" class="px-12 py-4 rounded-3xl font-black text-3xl bg-white shadow-2xl transition-all text-slate-900 min-w-[280px] text-center">
             흑색 차례
@@ -129,7 +149,7 @@
         </div>
     </div>
 
-    <!-- 메인 대국 섹션 -->
+    <!-- 대국장 섹션 -->
     <div class="flex flex-row items-center justify-center gap-10 w-full max-w-full px-8">
         
         <!-- 왼쪽: 흑색 패널 -->
@@ -140,20 +160,26 @@
             </div>
             
             <div class="flex justify-center gap-5 mb-8">
+                <!-- 흑색 X축 피커 -->
                 <div class="text-center">
                     <span class="text-[14px] font-bold text-slate-500 block mb-2 tracking-wider">X축</span>
                     <div class="relative">
-                        <div class="picker-highlight"></div>
+                        <div class="picker-highlight">
+                            <input type="number" id="input-black-x" class="coord-input" value="0" min="-7" max="7" oninput="syncScrollFromInput('black', 'x')">
+                        </div>
                         <div class="picker-container" id="picker-black-x" onscroll="handleScroll('black', 'x')">
                             <div class="picker-spacer" style="height: 50px;"></div>
                             <div class="picker-spacer" style="height: 50px;"></div>
                         </div>
                     </div>
                 </div>
+                <!-- 흑색 Y축 피커 -->
                 <div class="text-center">
                     <span class="text-[14px] font-bold text-slate-500 block mb-2 tracking-wider">Y축</span>
                     <div class="relative">
-                        <div class="picker-highlight"></div>
+                        <div class="picker-highlight">
+                            <input type="number" id="input-black-y" class="coord-input" value="0" min="-7" max="7" oninput="syncScrollFromInput('black', 'y')">
+                        </div>
                         <div class="picker-container" id="picker-black-y" onscroll="handleScroll('black', 'y')">
                             <div class="picker-spacer" style="height: 50px;"></div>
                             <div class="picker-spacer" style="height: 50px;"></div>
@@ -180,23 +206,29 @@
             </div>
             
             <div class="flex justify-center gap-5 mb-8">
+                <!-- 백색 X축 피커 -->
                 <div class="text-center">
                     <span class="text-[14px] font-bold text-slate-400 block mb-2 tracking-wider">X축</span>
                     <div class="relative">
-                        <div class="picker-highlight"></div>
+                        <div class="picker-highlight">
+                            <input type="number" id="input-white-x" class="coord-input" value="0" min="-7" max="7" oninput="syncScrollFromInput('white', 'x')">
+                        </div>
                         <div class="picker-container" id="picker-white-x" onscroll="handleScroll('white', 'x')">
                             <div class="picker-spacer" style="height: 50px;"></div>
                             <div class="picker-spacer" style="height: 50px;"></div>
                         </div>
                     </div>
                 </div>
+                <!-- 백색 Y축 피커 -->
                 <div class="text-center">
                     <span class="text-[14px] font-bold text-slate-400 block mb-2 tracking-wider">Y축</span>
                     <div class="relative">
-                        <div class="picker-highlight"></div>
+                        <div class="picker-highlight">
+                            <input type="number" id="input-white-y" class="coord-input" value="0" min="-7" max="7" oninput="syncScrollFromInput('white', 'y')">
+                        </div>
                         <div class="picker-container" id="picker-white-y" onscroll="handleScroll('white', 'y')">
-                            <div class="picker-spacer" style="height: 40px;"></div>
-                            <div class="picker-spacer" style="height: 40px;"></div>
+                            <div class="picker-spacer" style="height: 50px;"></div>
+                            <div class="picker-spacer" style="height: 50px;"></div>
                         </div>
                     </div>
                 </div>
@@ -218,6 +250,7 @@
         </div>
     </div>
 
+    <!-- 토스트 알림 -->
     <div id="toast" class="fixed bottom-12 bg-red-600 text-white px-10 py-4 rounded-3xl shadow-2xl opacity-0 transition-opacity pointer-events-none font-black text-xl z-50">
         이미 돌이 있는 자리입니다.
     </div>
@@ -250,6 +283,7 @@
             drawBoard();
             updateUI();
             
+            // 중앙(0)으로 초기 위치 설정
             setTimeout(() => {
                 ['black', 'white'].forEach(p => {
                     ['x', 'y'].forEach(a => {
@@ -260,6 +294,7 @@
             }, 100);
         }
 
+        // 피커 아이템 생성
         function createPickerItems() {
             ['black', 'white'].forEach(p => {
                 ['x', 'y'].forEach(a => {
@@ -276,13 +311,20 @@
             });
         }
 
+        // 스크롤 발생 시 입력창 값 업데이트
         function handleScroll(player, axis) {
             const container = document.getElementById(`picker-${player}-${axis}`);
+            const input = document.getElementById(`input-${player}-${axis}`);
             const index = Math.round(container.scrollTop / 50);
             const value = index - 7;
             
             if (value >= -7 && value <= 7) {
                 selections[player][axis] = value;
+                // 입력창 값 업데이트 (사용자가 타이핑 중이 아닐 때만)
+                if (document.activeElement !== input) {
+                    input.value = value;
+                }
+                
                 const items = container.querySelectorAll('.picker-item');
                 items.forEach((item, idx) => {
                     if (idx === index) item.classList.add('active');
@@ -291,6 +333,24 @@
             }
         }
 
+        // 입력창 값 변경 시 스크롤 위치 업데이트
+        function syncScrollFromInput(player, axis) {
+            const input = document.getElementById(`input-${player}-${axis}`);
+            const container = document.getElementById(`picker-${player}-${axis}`);
+            let val = parseInt(input.value);
+            
+            if (!isNaN(val)) {
+                if (val < -7) val = -7;
+                if (val > 7) val = 7;
+                container.scrollTo({
+                    top: (val + 7) * 50,
+                    behavior: 'smooth'
+                });
+                selections[player][axis] = val;
+            }
+        }
+
+        // 축 화살표 그리기
         function drawArrow(fromx, fromy, tox, toy) {
             const headlen = 15;
             const angle = Math.atan2(toy - fromy, tox - fromx);
@@ -306,12 +366,12 @@
             ctx.fill();
         }
 
+        // 바둑판 그리기
         function drawBoard() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#dcb35c';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 보조 그리드 선
             ctx.strokeStyle = '#4b3621';
             ctx.lineWidth = 1.5;
             ctx.globalAlpha = 0.25;
@@ -329,17 +389,13 @@
             const centerX = PADDING + 7 * CELL_SIZE;
             const centerY = PADDING + 7 * CELL_SIZE;
 
-            // X축, Y축 메인 라인
             ctx.strokeStyle = '#1a0d00';
             ctx.fillStyle = '#1a0d00';
             ctx.lineWidth = 3;
             
-            // X축 화살표
             drawArrow(PADDING - 20, centerY, canvas.width - PADDING + 35, centerY);
-            // Y축 화살표
             drawArrow(centerX, canvas.height - PADDING + 20, centerX, PADDING - 35);
 
-            // 축 라벨 및 눈금
             ctx.font = 'bold 15px Pretendard';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -349,29 +405,23 @@
                 const pos = PADDING + i * CELL_SIZE;
 
                 if (val !== 0) {
-                    // X축 눈금
                     ctx.beginPath();
                     ctx.moveTo(pos, centerY - 6);
                     ctx.lineTo(pos, centerY + 6);
                     ctx.stroke();
-
-                    // Y축 눈금
                     ctx.beginPath();
                     ctx.moveTo(centerX - 6, pos);
                     ctx.lineTo(centerX + 6, pos);
                     ctx.stroke();
                 } else {
-                    // 원점 '0' 표기
                     ctx.fillText('0', centerX - 15, centerY + 15);
                 }
             }
 
-            // 축 이름 표시
             ctx.font = 'bold 18px Pretendard';
             ctx.fillText('x', canvas.width - PADDING + 50, centerY);
             ctx.fillText('y', centerX, PADDING - 55);
 
-            // 화점
             const dots = [3, 7, 11];
             ctx.fillStyle = '#2d1e12';
             dots.forEach(r => dots.forEach(c => {
@@ -380,7 +430,6 @@
                 ctx.fill();
             }));
 
-            // 돌 그리기
             for (let r = 0; r < GRID_SIZE; r++) {
                 for (let c = 0; c < GRID_SIZE; c++) {
                     if (board[r][c] !== 0) drawStone(c, r, board[r][c]);
@@ -388,6 +437,7 @@
             }
         }
 
+        // 돌 렌더링
         function drawStone(col, row, player) {
             const px = PADDING + col * CELL_SIZE;
             const py = PADDING + row * CELL_SIZE;
@@ -408,6 +458,7 @@
             ctx.restore();
         }
 
+        // 돌 놓기 로직
         function placeStone(side) {
             if (gameOver) return;
             const isBlack = side === 'black';
@@ -436,6 +487,7 @@
             }
         }
 
+        // 무르기 기능
         function undoMove() {
             if (moveHistory.length === 0 || gameOver) return;
             const lastMove = moveHistory.pop();
@@ -451,6 +503,7 @@
             updateUI();
         }
 
+        // UI 상태 업데이트
         function updateUI() {
             const blackP = document.getElementById('panel-black');
             const whiteP = document.getElementById('panel-white');
@@ -469,6 +522,7 @@
             }
         }
 
+        // 승리 판정
         function checkWin(c, r) {
             const p = board[r][c];
             const dirs = [[0,1],[1,0],[1,1],[1,-1]];
@@ -485,6 +539,7 @@
             return false;
         }
 
+        // 승리 알림
         function announceWin() {
             gameOver = true;
             const winner = currentPlayer === 1 ? "흑색" : "백색";
@@ -492,12 +547,14 @@
             winModal.classList.remove('hidden');
         }
 
+        // 토스트 표시
         function showToast(msg) {
             toast.textContent = msg;
             toast.style.opacity = '1';
             setTimeout(() => { toast.style.opacity = '0'; }, 2000);
         }
 
+        // 게임 초기화
         function resetGame() {
             board = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0));
             moveHistory = [];
