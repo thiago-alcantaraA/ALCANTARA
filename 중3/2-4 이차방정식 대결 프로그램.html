@@ -52,16 +52,33 @@
             background-color: rgba(153, 27, 27, 0.2);
             color: #f87171;
         }
+        .error-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            color: #f87171;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            max-width: 80%;
+        }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <!-- 로딩 화면 -->
-    <div id="view-loading" class="screen active items-center justify-center bg-slate-950">
-        <div class="text-center">
+    <!-- 로딩 및 오류 화면 -->
+    <div id="view-loading" class="screen active flex-col items-center justify-center bg-slate-950">
+        <div id="loading-spinner" class="text-center">
             <div class="inline-block w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
             <p class="text-xl font-bold">서버 연결 중...</p>
+        </div>
+        <div id="error-display" class="hidden flex-col items-center text-center px-6">
+            <span class="text-5xl mb-4">⚠️</span>
+            <p class="text-xl font-bold text-red-500 mb-2">연결 오류가 발생했습니다</p>
+            <p class="text-slate-400 mb-4">파이어베이스 설정이 없거나 네트워크 상태가 불안정합니다.</p>
+            <div id="error-detail" class="error-box font-mono"></div>
+            <button onclick="location.reload()" class="mt-6 bg-slate-800 hover:bg-slate-700 px-6 py-2 rounded-lg font-bold">다시 시도</button>
         </div>
     </div>
 
@@ -185,16 +202,7 @@
     import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // --- 환경 변수 설정 ---
-    const firebaseConfig = JSON.parse(__firebase_config);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'quadratic-tournament-html';
-    
-    // --- 파이어베이스 초기화 ---
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    // --- 상태 관리 ---
+    // --- 앱 상태 관리 ---
     let user = null;
     let tournament = null;
     let currentMatchIdx = null;
@@ -210,26 +218,55 @@
         animId: null
     };
 
-    // --- 유틸리티 함수 ---
+    const showError = (msg) => {
+        document.getElementById('loading-spinner').classList.add('hidden');
+        document.getElementById('error-display').classList.remove('hidden');
+        document.getElementById('error-detail').innerText = msg;
+    };
+
     const showView = (viewId) => {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(`view-${viewId}`).classList.add('active');
     };
 
-    // --- 초기 실행 ---
+    // --- 초기 실행 (핵심 수정 영역) ---
     const init = async () => {
-        // 1. 인증 (규칙 3 준수)
+        let config;
+        try {
+            // 환경 변수가 없을 경우 대비
+            if (typeof __firebase_config === 'undefined' || !__firebase_config) {
+                throw new Error("파이어베이스 설정(Firebase Config)을 찾을 수 없습니다. 이 파일은 특정 미리보기 환경에서만 정상 작동합니다.");
+            }
+            config = JSON.parse(__firebase_config);
+        } catch (e) {
+            showError(e.message);
+            return;
+        }
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'quadratic-tournament-html';
+        
+        // 파이어베이스 초기화
+        const app = initializeApp(config);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // 1. 인증 프로세스 (Rule 3 준수)
         try {
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                 await signInWithCustomToken(auth, __initial_auth_token);
             } else {
                 await signInAnonymously(auth);
             }
-        } catch (e) { console.error("인증 실패", e); }
+        } catch (e) { 
+            showError("인증 실패: " + e.message); 
+            return;
+        }
 
         onAuthStateChanged(auth, (u) => {
             user = u;
-            if (user) listenTournament();
+            if (user) {
+                listenTournament(db, appId);
+            }
         });
 
         // 설정 화면 입력창 생성
@@ -246,35 +283,35 @@
         });
 
         // 이벤트 바인딩
-        document.getElementById('btn-create-tournament').addEventListener('click', createTournament);
+        document.getElementById('btn-create-tournament').addEventListener('click', () => createTournament(db, appId));
         document.getElementById('btn-reset').addEventListener('click', () => showView('setup'));
         document.getElementById('btn-game-start').addEventListener('click', startGameEngine);
-        document.getElementById('btn-back-to-bracket').addEventListener('click', recordMatchResult);
+        document.getElementById('btn-back-to-bracket').addEventListener('click', () => recordMatchResult(db, appId));
     };
 
-    // --- 토너먼트 관리 ---
-    const listenTournament = () => {
+    // --- 데이터 실시간 감시 (오류 처리 강화) ---
+    const listenTournament = (db, appId) => {
         const tDoc = doc(db, 'artifacts', appId, 'public', 'data', 'tournament_state', 'main');
         onSnapshot(tDoc, (snap) => {
             if (snap.exists()) {
                 tournament = snap.data();
-                renderBracket();
+                renderBracket(db, appId);
                 showView('bracket');
             } else {
                 showView('setup');
             }
-        }, (err) => console.error("데이터 로드 오류", err));
+        }, (err) => {
+            showError("데이터 수신 중 오류: " + err.message);
+        });
     };
 
-    const createTournament = async () => {
+    const createTournament = async (db, appId) => {
         if (!user) return;
         
-        // 팀 이름 업데이트
         document.querySelectorAll('.team-input').forEach(input => {
             teamNames[parseInt(input.dataset.index)] = input.value || `팀 ${parseInt(input.dataset.index) + 1}`;
         });
 
-        // 무작위 셔플
         const indices = [0, 1, 2, 3, 4, 5];
         for (let i = indices.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -293,11 +330,15 @@
             winner: null
         };
 
-        const tDoc = doc(db, 'artifacts', appId, 'public', 'data', 'tournament_state', 'main');
-        await setDoc(tDoc, newState);
+        try {
+            const tDoc = doc(db, 'artifacts', appId, 'public', 'data', 'tournament_state', 'main');
+            await setDoc(tDoc, newState);
+        } catch (e) {
+            alert("대진표 저장 실패: " + e.message);
+        }
     };
 
-    const renderBracket = () => {
+    const renderBracket = (db, appId) => {
         const r1 = document.getElementById('bracket-round-1');
         const r2 = document.getElementById('bracket-round-2');
         const r3 = document.getElementById('bracket-round-3');
@@ -354,7 +395,7 @@
         showView('game');
     };
 
-    const recordMatchResult = async () => {
+    const recordMatchResult = async (db, appId) => {
         if (!user) return;
         const winnerSide = gameData.scores[0] >= gameData.scores[1] ? 0 : 1;
         const winnerTeamId = winnerSide === 0 ? tournament.matches[currentMatchIdx].p1 : tournament.matches[currentMatchIdx].p2;
@@ -371,12 +412,16 @@
             updated.winner = winnerTeamId;
         }
 
-        const tDoc = doc(db, 'artifacts', appId, 'public', 'data', 'tournament_state', 'main');
-        await setDoc(tDoc, updated);
-        showView('bracket');
+        try {
+            const tDoc = doc(db, 'artifacts', appId, 'public', 'data', 'tournament_state', 'main');
+            await setDoc(tDoc, updated);
+            showView('bracket');
+        } catch (e) {
+            alert("결과 저장 실패: " + e.message);
+        }
     };
 
-    // --- 게임 엔진 (캔버스) ---
+    // --- 게임 물리 엔진 ---
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
@@ -397,14 +442,12 @@
         document.getElementById('game-ready-overlay').classList.remove('hidden');
         document.getElementById('game-end-overlay').classList.add('hidden');
 
-        // 바구니 생성
         gameData.baskets = Array.from({ length: 5 }, (_, i) => ({
             eq: generateEquation(),
             y: 110 + i * ((canvas.height - 200) / 5),
             height: ((canvas.height - 200) / 5) - 15
         }));
 
-        // 초기 해답 구슬 생성
         gameData.baskets.forEach(b => {
             spawnNumber(b.eq.roots[0]);
             spawnNumber(b.eq.roots[1]);
@@ -460,11 +503,9 @@
     const gameLoop = (time) => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // 배경 영역 표시
         ctx.fillStyle = 'rgba(59, 130, 246, 0.08)'; ctx.fillRect(0, 0, canvas.width/2, canvas.height);
         ctx.fillStyle = 'rgba(239, 68, 68, 0.08)'; ctx.fillRect(canvas.width/2, 0, canvas.width/2, canvas.height);
 
-        // 바구니 렌더링
         gameData.baskets.forEach(b => {
             const draw = (isLeft) => {
                 const x = isLeft ? 20 : canvas.width - 270, w = 250;
@@ -481,7 +522,6 @@
             draw(true); draw(false);
         });
 
-        // 구슬 렌더링 및 물리
         gameData.numbers.forEach(num => {
             if (!num.dragId && gameData.gameState === 'playing') {
                 num.x += num.vx; num.y += num.vy;
@@ -514,7 +554,7 @@
         document.getElementById('game-end-overlay').classList.remove('hidden');
     };
 
-    // --- 입력 핸들러 ---
+    // --- 입력 제어 ---
     const handleInputStart = (e) => {
         if (gameData.gameState !== 'playing') return;
         const rect = canvas.getBoundingClientRect();
@@ -575,7 +615,8 @@
     window.addEventListener('touchmove', handleInputMove);
     window.addEventListener('touchend', handleInputEnd);
 
-    window.onload = init;
+    // 창이 로드되면 실행
+    window.addEventListener('load', init);
 </script>
 </body>
 </html>
