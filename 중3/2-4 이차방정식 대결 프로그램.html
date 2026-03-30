@@ -32,32 +32,36 @@
         input::placeholder {
             color: #475569;
         }
+        /* 대진표 카드 크기 확대 */
         .match-card {
             background: #0f172a;
-            border: 2px solid #1e293b;
-            border-radius: 1rem;
-            padding: 1rem;
+            border: 3px solid #1e293b;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
             position: relative;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+            transition: all 0.3s ease;
         }
         .match-card.final {
             border-color: #eab308;
-            box-shadow: 0 0 20px rgba(234, 179, 8, 0.2);
+            box-shadow: 0 0 30px rgba(234, 179, 8, 0.3);
         }
         .winner-bg {
-            background-color: rgba(30, 64, 175, 0.2);
+            background-color: rgba(30, 64, 175, 0.3);
             color: #60a5fa;
+            border: 1px solid rgba(96, 165, 250, 0.3);
         }
         .winner-bg-red {
-            background-color: rgba(153, 27, 27, 0.2);
+            background-color: rgba(153, 27, 27, 0.3);
             color: #f87171;
+            border: 1px solid rgba(248, 113, 113, 0.3);
         }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <!-- 초기 설정 화면 (서버 기다리지 않고 바로 표시) -->
+    <!-- 초기 설정 화면 -->
     <div id="view-setup" class="screen flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-y-auto active">
         <div class="bg-slate-900 p-8 md:p-12 rounded-[40px] border-2 border-slate-800 w-full max-w-2xl shadow-2xl">
             <h1 class="text-3xl md:text-4xl font-black mb-8 text-center flex items-center justify-center gap-4">
@@ -75,39 +79,42 @@
         </div>
     </div>
 
-    <!-- 대진표 화면 -->
-    <div id="view-bracket" class="screen flex-col p-4 md:p-8 overflow-y-auto bg-slate-950">
-        <div class="max-w-5xl mx-auto w-full">
-            <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
-                <h1 class="text-3xl md:text-4xl font-bold flex items-center gap-3 text-white">
+    <!-- 대진표 화면 (크기 확대 버전) -->
+    <div id="view-bracket" class="screen flex-col p-4 md:p-12 overflow-y-auto bg-slate-950">
+        <div class="max-w-[1440px] mx-auto w-full h-full flex flex-col">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+                <h1 class="text-4xl md:text-6xl font-bold flex items-center gap-4 text-white">
                     <span class="text-yellow-400">🏆</span> 이차방정식 토너먼트
                 </h1>
-                <button id="btn-reset" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-5 py-2.5 rounded-xl transition shadow-lg text-white">
+                <button id="btn-reset" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-8 py-3 rounded-2xl transition shadow-lg text-white text-xl">
                     🔄 초기화 및 재설정
                 </button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-                <div class="space-y-8">
-                    <h2 class="text-center text-slate-400 font-bold text-sm border-b border-slate-800 pb-2 uppercase">예선 라운드</h2>
-                    <div id="bracket-round-1" class="space-y-6"></div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 items-start flex-grow">
+                <!-- 예선 라운드 -->
+                <div class="space-y-12">
+                    <h2 class="text-center text-slate-400 font-bold text-xl border-b-2 border-slate-800 pb-3 uppercase tracking-wider">예선 라운드</h2>
+                    <div id="bracket-round-1" class="space-y-10"></div>
                 </div>
 
-                <div class="space-y-8 md:pt-24">
-                    <h2 class="text-center text-slate-400 font-bold text-sm border-b border-slate-800 pb-2 uppercase">준결승전</h2>
-                    <div id="bracket-round-2" class="space-y-32"></div>
-                    <div class="text-center text-xs text-slate-500 italic px-4">
+                <!-- 준결승 라운드 -->
+                <div class="space-y-12 md:pt-48">
+                    <h2 class="text-center text-slate-400 font-bold text-xl border-b-2 border-slate-800 pb-3 uppercase tracking-wider">준결승전</h2>
+                    <div id="bracket-round-2" class="space-y-64"></div>
+                    <div class="text-center text-sm text-slate-500 italic px-4 mt-8">
                         예선 3경기 승리 팀은 결승으로 직행합니다.
                     </div>
                 </div>
 
-                <div class="space-y-8">
-                    <h2 class="text-center text-yellow-400 font-bold text-sm border-b border-yellow-900 pb-2 uppercase">최종 결승</h2>
+                <!-- 최종 결승 -->
+                <div class="space-y-12 md:pt-24">
+                    <h2 class="text-center text-yellow-400 font-bold text-xl border-b-2 border-yellow-900 pb-3 uppercase tracking-wider">최종 결승</h2>
                     <div id="bracket-round-3"></div>
-                    <div id="champion-display" class="hidden mt-8 p-8 bg-yellow-500/20 border-2 border-yellow-500 rounded-3xl text-center animate-bounce shadow-2xl">
-                        <span class="text-5xl block mb-2">🥇</span>
-                        <p class="text-xs font-bold text-yellow-500">Tournament Winner</p>
-                        <p id="champion-name" class="text-3xl font-black text-white mt-1"></p>
+                    <div id="champion-display" class="hidden mt-12 p-12 bg-yellow-500/20 border-4 border-yellow-500 rounded-[3rem] text-center animate-bounce shadow-2xl shadow-yellow-500/20">
+                        <span class="text-7xl block mb-4">🥇</span>
+                        <p class="text-sm font-bold text-yellow-500 uppercase tracking-widest">Tournament Winner</p>
+                        <p id="champion-name" class="text-5xl font-black text-white mt-2"></p>
                     </div>
                 </div>
             </div>
@@ -148,27 +155,22 @@
 </div>
 
 <script type="module">
-    // 파이어베이스 모듈 (서버 모드용)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // --- 글로벌 상태 ---
     let db = null, auth = null, user = null, isOffline = true;
     let tournament = null, currentMatchIdx = null;
     let teamNames = ['팀 A', '팀 B', '팀 C', '팀 D', '팀 E', '팀 F'];
     let gameData = { scores: [0, 0], timeLeft: 45, gameState: 'ready', baskets: [], numbers: [], touches: {}, lastSpawn: 0, animId: null };
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'quadratic-tournament-global';
 
-    // 화면 전환
     const showView = (id) => {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(`view-${id}`).classList.add('active');
     };
 
-    // --- 초기화 로직 ---
     const init = async () => {
-        // 1. 파이어베이스 설정 확인 (깃허브 등 외부 환경 체크)
         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
             try {
                 const config = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
@@ -189,12 +191,10 @@
                     if (user) listenTournament();
                 });
             } catch (e) {
-                console.warn("서버 모드 초기화 실패, 로컬 모드로 전환합니다.", e);
                 isOffline = true;
             }
         } else {
             isOffline = true;
-            // 로컬 모드일 때 기존 데이터가 있으면 불러오기
             const saved = localStorage.getItem('local_tournament_data');
             if (saved) {
                 tournament = JSON.parse(saved);
@@ -203,7 +203,6 @@
             }
         }
 
-        // 입력창 생성
         const inputContainer = document.getElementById('team-inputs');
         inputContainer.innerHTML = '';
         teamNames.forEach((name, i) => {
@@ -220,7 +219,6 @@
         document.getElementById('btn-back-to-bracket').addEventListener('click', recordMatchResult);
     };
 
-    // 데이터 실시간 감시
     const listenTournament = () => {
         if (!db || isOffline) return;
         const tDoc = doc(db, 'artifacts', appId, 'public', 'data', 'tournament_state', 'main');
@@ -233,7 +231,6 @@
         }, (err) => console.error(err));
     };
 
-    // 저장 함수 (모드 통합)
     const saveData = async (data) => {
         tournament = data;
         if (!isOffline && db && user) {
@@ -273,11 +270,17 @@
             const p1 = tournament.teams.find(t => t.id === m.p1), p2 = tournament.teams.find(t => t.id === m.p2);
             const card = document.createElement('div');
             card.className = `match-card ${idx === 4 ? 'final' : ''}`;
-            card.innerHTML = `<div class='text-[10px] text-slate-500 mb-2 font-bold uppercase'>${m.round}</div>
-                <div class='flex justify-between items-center p-2 rounded-lg mb-1 ${m.winner === m.p1 ? 'winner-bg font-bold' : 'bg-slate-950/50'}'><span>${p1?p1.name:'대기 중'}</span> ${m.winner===m.p1?'🏅':''}</div>
-                <div class='text-center text-[8px] py-0.5 opacity-50 text-slate-700'>VS</div>
-                <div class='flex justify-between items-center p-2 rounded-lg ${m.winner === m.p2 ? 'winner-bg-red font-bold' : 'bg-slate-950/50'}'><span>${p2?p2.name:'대기 중'}</span> ${m.winner===m.p2?'🏅':''}</div>
-                ${(p1 && p2 && m.winner === null) ? `<button class='btn-play absolute -right-4 top-1/2 -translate-y-1/2 bg-emerald-500 w-10 h-10 rounded-full flex items-center justify-center ring-4 ring-slate-950 text-white' data-index='${idx}'>▶</button>` : ''}`;
+            card.innerHTML = `<div class='text-sm text-slate-500 mb-4 font-bold uppercase tracking-widest'>${m.round}</div>
+                <div class='flex justify-between items-center p-4 rounded-2xl mb-2 transition-colors ${m.winner === m.p1 ? 'winner-bg font-bold' : 'bg-slate-950/50'}'>
+                    <span class='text-2xl truncate max-w-[200px]'>${p1?p1.name:'대기 중'}</span> 
+                    ${m.winner===m.p1?'<span class="text-2xl">🏅</span>':''}
+                </div>
+                <div class='text-center text-xs py-1 font-bold text-slate-700 opacity-50'>VS</div>
+                <div class='flex justify-between items-center p-4 rounded-2xl transition-colors ${m.winner === m.p2 ? 'winner-bg-red font-bold' : 'bg-slate-950/50'}'>
+                    <span class='text-2xl truncate max-w-[200px]'>${p2?p2.name:'대기 중'}</span> 
+                    ${m.winner===m.p2?'<span class="text-2xl">🏅</span>':''}
+                </div>
+                ${(p1 && p2 && m.winner === null) ? `<button class='btn-play absolute -right-7 top-1/2 -translate-y-1/2 bg-emerald-500 hover:bg-emerald-600 w-16 h-16 rounded-full flex items-center justify-center ring-8 ring-slate-950 text-white text-2xl shadow-2xl transition-transform hover:scale-110 active:scale-90' data-index='${idx}'>▶</button>` : ''}`;
             if (idx < 3) rounds[0].appendChild(card); else if (idx === 3) rounds[1].appendChild(card); else rounds[2].appendChild(card);
         });
         if (tournament.winner !== null) {
@@ -309,7 +312,7 @@
         showView('bracket');
     };
 
-    // --- 게임 물리 엔진 ---
+    // --- 게임 물리 엔진 (이전과 동일) ---
     const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
     const generateEquation = () => {
         let r1, r2; do { r1 = Math.floor(Math.random() * 11) - 5; r2 = Math.floor(Math.random() * 11) - 5; } while (r1 === r2);
