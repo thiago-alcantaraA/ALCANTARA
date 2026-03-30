@@ -48,7 +48,6 @@
             transition: all 0.2s;
             color: #475569;
         }
-        /* 활성화된 아이템은 입력창 뒤로 숨김 (입력창이 값을 보여줌) */
         .picker-item.active {
             opacity: 0;
         }
@@ -69,7 +68,6 @@
             justify-content: center;
         }
 
-        /* 입력창 스타일 */
         .coord-input {
             width: 100%;
             height: 100%;
@@ -81,7 +79,6 @@
             text-align: center;
             outline: none;
         }
-        /* 크롬 등 브라우저 화살표 제거 */
         .coord-input::-webkit-inner-spin-button,
         .coord-input::-webkit-outer-spin-button {
             -webkit-appearance: none;
@@ -101,6 +98,7 @@
             padding: 2rem;
             border-radius: 2.5rem;
             border: 4px solid transparent;
+            position: relative;
         }
         .active-player {
             transform: scale(1.05);
@@ -130,16 +128,40 @@
             transform: scale(0.95);
             background: #2563eb;
         }
+
+        .hard-mode-btn {
+            transition: all 0.3s;
+            font-weight: 900;
+        }
+        .hard-mode-btn.active {
+            background-color: #ef4444;
+            color: white;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+
+        .timer-display {
+            font-family: monospace;
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            color: #ef4444;
+            display: none; /* 하드모드 전용 */
+        }
+        .hard-mode-active .timer-display {
+            display: block;
+        }
     </style>
 </head>
-<body>
+<body class="">
 
-    <!-- 상단 헤더 영역 -->
     <div class="flex items-center gap-6 mb-8">
         <div id="turn-indicator" class="px-12 py-4 rounded-3xl font-black text-3xl bg-white shadow-2xl transition-all text-slate-900 min-w-[280px] text-center">
             흑색 차례
         </div>
         <div class="flex gap-3">
+            <button id="hard-mode-toggle" onclick="toggleHardMode()" title="하드 모드 (중복 착수 금지 및 타이머)" class="hard-mode-btn bg-slate-700/50 text-slate-400 px-6 py-4 rounded-full transition-all shadow-lg backdrop-blur-sm border-2 border-transparent">
+                하드 모드 OFF
+            </button>
             <button onclick="undoMove()" title="무르기" class="bg-slate-700/50 text-white p-4 rounded-full hover:bg-amber-600 transition-colors shadow-lg backdrop-blur-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
             </button>
@@ -149,18 +171,18 @@
         </div>
     </div>
 
-    <!-- 대국장 섹션 -->
-    <div class="flex flex-row items-center justify-center gap-10 w-full max-w-full px-8">
+    <div id="game-container" class="flex flex-row items-center justify-center gap-10 w-full max-w-full px-8 transition-all">
         
         <!-- 왼쪽: 흑색 패널 -->
         <div id="panel-black" class="player-panel bg-slate-800/80 text-white border-2 border-slate-700 shadow-2xl backdrop-blur-md">
-            <div class="text-center mb-8">
+            <div class="text-center mb-4">
                 <div class="w-16 h-16 bg-black border-2 border-slate-600 rounded-full mx-auto mb-3 shadow-xl"></div>
                 <span class="text-2xl font-black tracking-tighter text-blue-400">흑색</span>
             </div>
             
+            <div id="timer-black" class="timer-display text-center">05:00</div>
+            
             <div class="flex justify-center gap-5 mb-8">
-                <!-- 흑색 X축 피커 -->
                 <div class="text-center">
                     <span class="text-[14px] font-bold text-slate-500 block mb-2 tracking-wider">X축</span>
                     <div class="relative">
@@ -173,7 +195,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- 흑색 Y축 피커 -->
                 <div class="text-center">
                     <span class="text-[14px] font-bold text-slate-500 block mb-2 tracking-wider">Y축</span>
                     <div class="relative">
@@ -200,13 +221,14 @@
 
         <!-- 오른쪽: 백색 패널 -->
         <div id="panel-white" class="player-panel bg-white/10 text-slate-100 border-2 border-white/20 shadow-2xl backdrop-blur-md">
-            <div class="text-center mb-8">
+            <div class="text-center mb-4">
                 <div class="w-16 h-16 bg-white border-2 border-slate-200 rounded-full mx-auto mb-3 shadow-xl"></div>
                 <span class="text-2xl font-black tracking-tighter text-blue-400">백색</span>
             </div>
+
+            <div id="timer-white" class="timer-display text-center">05:00</div>
             
             <div class="flex justify-center gap-5 mb-8">
-                <!-- 백색 X축 피커 -->
                 <div class="text-center">
                     <span class="text-[14px] font-bold text-slate-400 block mb-2 tracking-wider">X축</span>
                     <div class="relative">
@@ -219,7 +241,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- 백색 Y축 피커 -->
                 <div class="text-center">
                     <span class="text-[14px] font-bold text-slate-400 block mb-2 tracking-wider">Y축</span>
                     <div class="relative">
@@ -238,19 +259,17 @@
 
     </div>
 
-    <!-- 승리 모달 -->
     <div id="winModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl hidden flex items-center justify-center z-[100]">
         <div class="bg-white p-12 rounded-[50px] text-center shadow-2xl max-w-md w-full mx-6">
             <div class="text-8xl mb-6">🏆</div>
             <h2 id="winTitle" class="text-5xl font-black mb-4 text-slate-900">승리!</h2>
-            <p class="text-slate-500 text-xl font-bold mb-10">환상적인 전략이었습니다.</p>
+            <p id="winReason" class="text-slate-500 text-xl font-bold mb-10">환상적인 전략이었습니다.</p>
             <button onclick="closeModal()" class="w-full bg-blue-600 text-white py-6 rounded-3xl font-black text-2xl hover:bg-blue-700 active:scale-95 shadow-2xl shadow-blue-300 transition-all">
                 한 판 더 하기
             </button>
         </div>
     </div>
 
-    <!-- 토스트 알림 -->
     <div id="toast" class="fixed bottom-12 bg-red-600 text-white px-10 py-4 rounded-3xl shadow-2xl opacity-0 transition-opacity pointer-events-none font-black text-xl z-50">
         이미 돌이 있는 자리입니다.
     </div>
@@ -262,16 +281,25 @@
         const turnIndicator = document.getElementById('turn-indicator');
         const lastMoveLabel = document.getElementById('last-move');
         const toast = document.getElementById('toast');
+        const hardModeBtn = document.getElementById('hard-mode-toggle');
+        const gameContainer = document.getElementById('game-container');
 
         const GRID_SIZE = 15;
         const PADDING = 60; 
         const CELL_SIZE = (canvas.width - PADDING * 2) / (GRID_SIZE - 1);
         const STONE_RADIUS = CELL_SIZE * 0.44;
+        const INITIAL_SECONDS = 300; // 5분
 
         let board = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0));
         let currentPlayer = 1; 
         let gameOver = false;
+        let isHardMode = false;
         let moveHistory = [];
+
+        // 타이머 변수
+        let blackTime = INITIAL_SECONDS;
+        let whiteTime = INITIAL_SECONDS;
+        let timerInterval = null;
 
         let selections = {
             black: { x: 0, y: 0 },
@@ -283,22 +311,21 @@
             drawBoard();
             updateUI();
             
-            // 중앙(0)으로 초기 위치 설정
             setTimeout(() => {
                 ['black', 'white'].forEach(p => {
                     ['x', 'y'].forEach(a => {
                         const container = document.getElementById(`picker-${p}-${a}`);
-                        container.scrollTop = 7 * 50; 
+                        if (container) container.scrollTop = 7 * 50; 
                     });
                 });
             }, 100);
         }
 
-        // 피커 아이템 생성
         function createPickerItems() {
             ['black', 'white'].forEach(p => {
                 ['x', 'y'].forEach(a => {
                     const container = document.getElementById(`picker-${p}-${a}`);
+                    if (!container) return;
                     const spacerEnd = container.lastElementChild;
                     for (let i = -7; i <= 7; i++) {
                         const item = document.createElement('div');
@@ -311,7 +338,6 @@
             });
         }
 
-        // 스크롤 발생 시 입력창 값 업데이트
         function handleScroll(player, axis) {
             const container = document.getElementById(`picker-${player}-${axis}`);
             const input = document.getElementById(`input-${player}-${axis}`);
@@ -320,7 +346,6 @@
             
             if (value >= -7 && value <= 7) {
                 selections[player][axis] = value;
-                // 입력창 값 업데이트 (사용자가 타이핑 중이 아닐 때만)
                 if (document.activeElement !== input) {
                     input.value = value;
                 }
@@ -333,7 +358,6 @@
             }
         }
 
-        // 입력창 값 변경 시 스크롤 위치 업데이트
         function syncScrollFromInput(player, axis) {
             const input = document.getElementById(`input-${player}-${axis}`);
             const container = document.getElementById(`picker-${player}-${axis}`);
@@ -350,7 +374,6 @@
             }
         }
 
-        // 축 화살표 그리기
         function drawArrow(fromx, fromy, tox, toy) {
             const headlen = 15;
             const angle = Math.atan2(toy - fromy, tox - fromx);
@@ -366,7 +389,6 @@
             ctx.fill();
         }
 
-        // 바둑판 그리기
         function drawBoard() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#dcb35c';
@@ -437,7 +459,6 @@
             }
         }
 
-        // 돌 렌더링
         function drawStone(col, row, player) {
             const px = PADDING + col * CELL_SIZE;
             const py = PADDING + row * CELL_SIZE;
@@ -458,7 +479,58 @@
             ctx.restore();
         }
 
-        // 돌 놓기 로직
+        // 타이머 로직
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (gameOver || !isHardMode) return;
+
+                if (currentPlayer === 1) {
+                    blackTime--;
+                    if (blackTime <= 0) endGameByTimeout(1);
+                } else {
+                    whiteTime--;
+                    if (whiteTime <= 0) endGameByTimeout(2);
+                }
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const formatTime = (seconds) => {
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            };
+            document.getElementById('timer-black').textContent = formatTime(blackTime);
+            document.getElementById('timer-white').textContent = formatTime(whiteTime);
+        }
+
+        function endGameByTimeout(loser) {
+            gameOver = true;
+            clearInterval(timerInterval);
+            const winnerName = loser === 1 ? "백색" : "흑색";
+            document.getElementById('winTitle').textContent = `${winnerName} 승리!`;
+            document.getElementById('winReason').textContent = "시간 초과로 인한 승리입니다.";
+            winModal.classList.remove('hidden');
+        }
+
+        function toggleHardMode() {
+            isHardMode = !isHardMode;
+            if (isHardMode) {
+                hardModeBtn.classList.add('active');
+                hardModeBtn.textContent = '하드 모드 ON';
+                gameContainer.classList.add('hard-mode-active');
+                showToast("하드 모드: 각 플레이어 5분의 제한 시간!");
+                startTimer();
+            } else {
+                hardModeBtn.classList.remove('active');
+                hardModeBtn.textContent = '하드 모드 OFF';
+                gameContainer.classList.remove('hard-mode-active');
+                if (timerInterval) clearInterval(timerInterval);
+            }
+        }
+
         function placeStone(side) {
             if (gameOver) return;
             const isBlack = side === 'black';
@@ -470,7 +542,13 @@
             const row = 7 - uy;
 
             if (board[row][col] !== 0) {
-                showToast(`(${ux}, ${uy})는 이미 돌이 있습니다.`);
+                if (isHardMode) {
+                    showToast(`패널티! 이미 돌이 있어 턴이 넘어갑니다.`);
+                    currentPlayer = currentPlayer === 1 ? 2 : 1;
+                    updateUI();
+                } else {
+                    showToast(`(${ux}, ${uy})는 이미 돌이 있습니다.`);
+                }
                 return;
             }
 
@@ -487,7 +565,6 @@
             }
         }
 
-        // 무르기 기능
         function undoMove() {
             if (moveHistory.length === 0 || gameOver) return;
             const lastMove = moveHistory.pop();
@@ -503,7 +580,6 @@
             updateUI();
         }
 
-        // UI 상태 업데이트
         function updateUI() {
             const blackP = document.getElementById('panel-black');
             const whiteP = document.getElementById('panel-white');
@@ -511,7 +587,7 @@
                 blackP.className = 'player-panel bg-slate-800/80 text-white border-2 border-slate-700 shadow-2xl active-player';
                 whiteP.className = 'player-panel bg-white/10 text-slate-100 border-2 border-white/20 shadow-2xl inactive-player';
                 turnIndicator.textContent = "흑색 차례";
-                turnIndicator.classList.add('bg-white');
+                turnIndicator.classList.add('bg-white', 'text-slate-900');
                 turnIndicator.classList.remove('bg-blue-600', 'text-white');
             } else {
                 whiteP.className = 'player-panel bg-white/10 text-slate-100 border-2 border-white/20 shadow-2xl active-player';
@@ -522,7 +598,6 @@
             }
         }
 
-        // 승리 판정
         function checkWin(c, r) {
             const p = board[r][c];
             const dirs = [[0,1],[1,0],[1,1],[1,-1]];
@@ -539,30 +614,33 @@
             return false;
         }
 
-        // 승리 알림
         function announceWin() {
             gameOver = true;
+            if (timerInterval) clearInterval(timerInterval);
             const winner = currentPlayer === 1 ? "흑색" : "백색";
             document.getElementById('winTitle').textContent = `${winner} 승리!`;
+            document.getElementById('winReason').textContent = "환상적인 전략이었습니다.";
             winModal.classList.remove('hidden');
         }
 
-        // 토스트 표시
         function showToast(msg) {
             toast.textContent = msg;
             toast.style.opacity = '1';
             setTimeout(() => { toast.style.opacity = '0'; }, 2000);
         }
 
-        // 게임 초기화
         function resetGame() {
             board = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0));
             moveHistory = [];
             currentPlayer = 1;
             gameOver = false;
+            blackTime = INITIAL_SECONDS;
+            whiteTime = INITIAL_SECONDS;
             lastMoveLabel.textContent = "마지막 수: 없음";
+            updateTimerDisplay();
             drawBoard();
             updateUI();
+            if (isHardMode) startTimer();
         }
 
         function closeModal() {
