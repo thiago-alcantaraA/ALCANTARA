@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>이차방정식 토너먼트 배틀</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+        body {
+            font-family: 'Jua', sans-serif;
+            background-color: #020617;
+            color: #f1f5f9;
+            overflow: hidden;
+            margin: 0;
+            user-select: none;
+            touch-action: none;
+        }
+        canvas {
+            display: block;
+        }
+        .screen {
+            display: none;
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .screen.active {
+            display: flex;
+        }
+        input::placeholder {
+            color: #475569;
+        }
+        .match-card {
+            background: #0f172a;
+            border: 2px solid #1e293b;
+            border-radius: 1rem;
+            padding: 1rem;
+            position: relative;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+        .match-card.final {
+            border-color: #eab308;
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.2);
+        }
+        .winner-bg {
+            background-color: rgba(30, 64, 175, 0.2);
+            color: #60a5fa;
+        }
+        .winner-bg-red {
+            background-color: rgba(153, 27, 27, 0.2);
+            color: #f87171;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- 로딩 화면 -->
+    <div id="view-loading" class="screen active items-center justify-center bg-slate-950">
+        <div class="text-center">
+            <div class="inline-block w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-xl font-bold">서버 연결 중...</p>
+        </div>
+    </div>
+
+    <!-- 초기 설정 화면 -->
+    <div id="view-setup" class="screen flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-y-auto">
+        <div class="bg-slate-900 p-8 md:p-12 rounded-[40px] border-2 border-slate-800 w-full max-w-2xl shadow-2xl">
+            <h1 class="text-3xl md:text-4xl font-black mb-8 text-center flex items-center justify-center gap-4">
+                <span class="text-blue-500">👥</span> 참가 팀 이름 설정
+            </h1>
+            <div id="team-inputs" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                <!-- 자바스크립트에서 입력창 생성 -->
+            </div>
+            <button id="btn-create-tournament" class="w-full bg-blue-600 hover:bg-blue-700 py-5 rounded-2xl text-2xl font-black transition-all flex items-center justify-center gap-2 shadow-xl">
+                무작위 대진표 생성 및 시작 ➔
+            </button>
+            <p class="text-center mt-6 text-slate-500 text-sm">대진표 생성 시 결승 직행 팀이 무작위로 선정됩니다.</p>
+        </div>
+    </div>
+
+    <!-- 대진표 화면 -->
+    <div id="view-bracket" class="screen flex-col p-4 md:p-8 overflow-y-auto bg-slate-950">
+        <div class="max-w-5xl mx-auto w-full">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+                <h1 class="text-3xl md:text-4xl font-bold flex items-center gap-3">
+                    <span class="text-yellow-400">🏆</span> 이차방정식 토너먼트
+                </h1>
+                <button id="btn-reset" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-5 py-2.5 rounded-xl transition shadow-lg">
+                    🔄 초기화 및 재설정
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                <!-- 예선 라운드 -->
+                <div class="space-y-8">
+                    <h2 class="text-center text-slate-400 font-bold text-sm border-b border-slate-800 pb-2">예선 라운드</h2>
+                    <div id="bracket-round-1" class="space-y-6"></div>
+                </div>
+
+                <!-- 준결승 라운드 -->
+                <div class="space-y-8 md:pt-24">
+                    <h2 class="text-center text-slate-400 font-bold text-sm border-b border-slate-800 pb-2">준결승전</h2>
+                    <div id="bracket-round-2" class="space-y-32"></div>
+                    <div class="text-center text-xs text-slate-500 italic px-4">
+                        예선 3경기 승리 팀은<br><span class="text-yellow-500/80 font-bold">결승전으로 직행</span>합니다.
+                    </div>
+                </div>
+
+                <!-- 결승전 라운드 -->
+                <div class="space-y-8">
+                    <h2 class="text-center text-yellow-400 font-bold text-sm border-b border-yellow-900 pb-2">최종 결승</h2>
+                    <div id="bracket-round-3"></div>
+                    <div id="champion-display" class="hidden mt-8 p-8 bg-yellow-500/20 border-2 border-yellow-500 rounded-3xl text-center animate-bounce shadow-2xl">
+                        <span class="text-5xl block mb-2">🥇</span>
+                        <p class="text-xs font-bold text-yellow-500 uppercase">최종 우승팀</p>
+                        <p id="champion-name" class="text-3xl font-black text-white mt-1"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게임 화면 -->
+    <div id="view-game" class="screen flex-col overflow-hidden bg-slate-950">
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- 게임 UI (HUD) -->
+        <div class="absolute top-0 left-0 w-full p-4 md:p-6 flex justify-between items-start pointer-events-none z-10">
+            <div class="bg-blue-600/90 px-4 py-2 md:px-6 md:py-3 rounded-2xl border-2 border-white/50 text-white shadow-2xl backdrop-blur-sm">
+                <p class="text-[10px] font-bold opacity-70">플레이어 1</p>
+                <p id="hud-p1-name" class="text-lg md:text-xl font-bold truncate max-w-[120px]">팀 A</p>
+                <p id="hud-p1-score" class="text-2xl md:text-3xl font-black text-yellow-300">0</p>
+            </div>
+            <div class="text-center">
+                <div id="hud-timer" class="bg-slate-900/90 px-6 py-2 md:px-10 md:py-3 rounded-full border-2 border-yellow-500 text-3xl md:text-4xl font-black text-white shadow-2xl backdrop-blur-sm">
+                    45
+                </div>
+            </div>
+            <div class="bg-red-600/90 px-4 py-2 md:px-6 md:py-3 rounded-2xl border-2 border-white/50 text-white shadow-2xl backdrop-blur-sm text-right">
+                <p class="text-[10px] font-bold opacity-70">플레이어 2</p>
+                <p id="hud-p2-name" class="text-lg md:text-xl font-bold truncate max-w-[120px]">팀 B</p>
+                <p id="hud-p2-score" class="text-2xl md:text-3xl font-black text-yellow-300">0</p>
+            </div>
+        </div>
+
+        <!-- 게임 준비/시작 오버레이 -->
+        <div id="game-ready-overlay" class="absolute inset-0 bg-black/70 flex items-center justify-center backdrop-blur-md z-40">
+            <div class="text-center">
+                <h2 class="text-5xl md:text-6xl font-black text-white mb-10">배틀 준비!</h2>
+                <button id="btn-game-start" class="bg-emerald-500 hover:bg-emerald-600 text-white px-12 py-4 md:px-16 md:py-6 rounded-full text-3xl md:text-4xl font-black shadow-2xl transition-all hover:scale-110 active:scale-95 pointer-events-auto">
+                    경기 시작
+                </button>
+            </div>
+        </div>
+
+        <!-- 게임 종료 오버레이 -->
+        <div id="game-end-overlay" class="hidden absolute inset-0 bg-black/90 flex items-center justify-center backdrop-blur-xl z-50">
+            <div class="text-center p-8 md:p-12 bg-slate-900 rounded-[40px] border-2 border-slate-700 shadow-2xl max-w-lg w-full m-4">
+                <h2 class="text-5xl md:text-6xl font-black text-yellow-500 mb-8 italic">FINISH!</h2>
+                <div class="flex gap-8 md:gap-16 mb-12 justify-center items-center">
+                    <div id="end-p1-box" class="text-center">
+                        <p id="end-p1-score" class="text-5xl md:text-6xl font-black text-white">0</p>
+                        <p id="end-p1-name" class="font-bold text-sm mt-2">플레이어 1</p>
+                    </div>
+                    <div class="text-4xl font-bold text-slate-700">:</div>
+                    <div id="end-p2-box" class="text-center">
+                        <p id="end-p2-score" class="text-5xl md:text-6xl font-black text-white">0</p>
+                        <p id="end-p2-name" class="font-bold text-sm mt-2">플레이어 2</p>
+                    </div>
+                </div>
+                <button id="btn-back-to-bracket" class="w-full bg-white text-slate-950 px-10 py-5 rounded-2xl text-2xl font-black hover:bg-slate-200 transition-colors pointer-events-auto">
+                    승패 기록 후 대진표로
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    // --- 파이어베이스 임포트 ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // --- 환경 변수 설정 ---
+    const firebaseConfig = JSON.parse(__firebase_config);
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'quadratic-tournament-html';
+    
+    // --- 파이어베이스 초기화 ---
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // --- 상태 관리 ---
+    let user = null;
+    let tournament = null;
+    let currentMatchIdx = null;
+    let teamNames = ['팀 A', '팀 B', '팀 C', '팀 D', '팀 E', '팀 F'];
+    let gameData = {
+        scores: [0, 0],
+        timeLeft: 45,
+        gameState: 'ready',
+        baskets: [],
+        numbers: [],
+        touches: {},
+        lastSpawn: 0,
+        animId: null
+    };
+
+    // --- 유틸리티 함수 ---
+    const showView = (viewId) => {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(`view-${viewId}`).classList.add('active');
+    };
+
+    // --- 초기 실행 ---
+    const init = async () => {
+        // 1. 인증 (규칙 3 준수)
+        try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        } catch (e) { console.error("인증 실패", e); }
+
+        onAuthStateChanged(auth, (u) => {
+            user = u;
+            if (user) listenTournament();
+        });
+
+        // 설정 화면 입력창 생성
+        const inputContainer = document.getElementById('team-inputs');
+        teamNames.forEach((name, i) => {
+            const div = document.createElement('div');
+            div.className = 'flex flex-col';
+            div.innerHTML = `
+                <label class="text-[10px] font-bold text-slate-500 mb-1 ml-1">참가 팀 ${i + 1}</label>
+                <input type="text" data-index="${i}" value="${name}" 
+                    class="team-input bg-slate-950 border-2 border-slate-800 rounded-xl px-4 py-3 focus:border-blue-500 outline-none transition text-white font-bold">
+            `;
+            inputContainer.appendChild(div);
+        });
+
+        // 이벤트 바인딩
+        document.getElementById('btn-create-tournament').addEventListener('click', createTournament);
+        document.getElementById('btn-reset').addEventListener('click', () => showView('setup'));
+        document.getElementById('btn-game-start').addEventListener('click', startGameEngine);
+        document.getElementById('btn-back-to-bracket').addEventListener('click', recordMatchResult);
+    };
+
+    // --- 토너먼트 관리 ---
+    const listenTournament = () => {
+        const tDoc = doc(db, 'artifacts', appId, 'public', 'data', 'tournament_state', 'main');
+        onSnapshot(tDoc, (snap) => {
+            if (snap.exists()) {
+                tournament = snap.data();
+                renderBracket();
+                showView('bracket');
+            } else {
+                showView('setup');
+            }
+        }, (err) => console.error("데이터 로드 오류", err));
+    };
+
+    const createTournament = async () => {
+        if (!user) return;
+        
+        // 팀 이름 업데이트
+        document.querySelectorAll('.team-input').forEach(input => {
+            teamNames[parseInt(input.dataset.index)] = input.value || `팀 ${parseInt(input.dataset.index) + 1}`;
+        });
+
+        // 무작위 셔플
+        const indices = [0, 1, 2, 3, 4, 5];
+        for (let i = indices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+
+        const newState = {
+            teams: teamNames.map((name, i) => ({ id: i, name })),
+            matches: [
+                { id: 0, round: '예선 1경기', p1: indices[0], p2: indices[1], winner: null, nextMatch: 3, nextSlot: 'p1' },
+                { id: 1, round: '예선 2경기', p1: indices[2], p2: indices[3], winner: null, nextMatch: 3, nextSlot: 'p2' },
+                { id: 2, round: '예선 3경기', p1: indices[4], p2: indices[5], winner: null, nextMatch: 4, nextSlot: 'p2' },
+                { id: 3, round: '준결승전', p1: null, p2: null, winner: null, nextMatch: 4, nextSlot: 'p1' },
+                { id: 4, round: '최종 결승', p1: null, p2: null, winner: null, nextMatch: null }
+            ],
+            winner: null
+        };
+
+        const tDoc = doc(db, 'artifacts', appId, 'public', 'data', 'tournament_state', 'main');
+        await setDoc(tDoc, newState);
+    };
+
+    const renderBracket = () => {
+        const r1 = document.getElementById('bracket-round-1');
+        const r2 = document.getElementById('bracket-round-2');
+        const r3 = document.getElementById('bracket-round-3');
+        const champDisplay = document.getElementById('champion-display');
+        const champName = document.getElementById('champion-name');
+
+        r1.innerHTML = ''; r2.innerHTML = ''; r3.innerHTML = '';
+
+        tournament.matches.forEach((m, idx) => {
+            const p1 = m.p1 !== null ? tournament.teams.find(t => t.id === m.p1) : null;
+            const p2 = m.p2 !== null ? tournament.teams.find(t => t.id === m.p2) : null;
+            const isPlayable = p1 && p2 && m.winner === null;
+
+            const card = document.createElement('div');
+            card.className = `match-card ${idx === 4 ? 'final' : ''}`;
+            card.innerHTML = `
+                <div class="text-[10px] text-slate-500 mb-2 font-bold uppercase tracking-widest">${m.round}</div>
+                <div class="flex justify-between items-center p-2 rounded-lg mb-1 ${m.winner === m.p1 ? 'winner-bg font-bold' : 'bg-slate-950/50'}">
+                    <span class="truncate max-w-[120px]">${p1 ? p1.name : '대기 중'}</span>
+                    ${m.winner === m.p1 ? '🏅' : ''}
+                </div>
+                <div class="flex justify-center text-[8px] text-slate-700 font-bold py-0.5">VS</div>
+                <div class="flex justify-between items-center p-2 rounded-lg ${m.winner === m.p2 ? 'winner-bg-red font-bold' : 'bg-slate-950/50'}">
+                    <span class="truncate max-w-[120px]">${p2 ? p2.name : '대기 중'}</span>
+                    ${m.winner === m.p2 ? '🏅' : ''}
+                </div>
+                ${isPlayable ? `<button class="btn-play absolute -right-4 top-1/2 -translate-y-1/2 bg-emerald-500 hover:bg-emerald-600 w-10 h-10 rounded-full shadow-lg transition flex items-center justify-center text-white ring-4 ring-slate-950" data-index="${idx}">▶</button>` : ''}
+            `;
+            
+            if (idx < 3) r1.appendChild(card);
+            else if (idx === 3) r2.appendChild(card);
+            else r3.appendChild(card);
+        });
+
+        if (tournament.winner !== null) {
+            const winTeam = tournament.teams.find(t => t.id === tournament.winner);
+            champDisplay.classList.remove('hidden');
+            champName.innerText = winTeam.name;
+        } else {
+            champDisplay.classList.add('hidden');
+        }
+
+        document.querySelectorAll('.btn-play').forEach(btn => {
+            btn.onclick = () => startMatch(parseInt(btn.dataset.index));
+        });
+    };
+
+    const startMatch = (idx) => {
+        currentMatchIdx = idx;
+        const match = tournament.matches[idx];
+        document.getElementById('hud-p1-name').innerText = tournament.teams.find(t => t.id === match.p1).name;
+        document.getElementById('hud-p2-name').innerText = tournament.teams.find(t => t.id === match.p2).name;
+        initGameEngine();
+        showView('game');
+    };
+
+    const recordMatchResult = async () => {
+        if (!user) return;
+        const winnerSide = gameData.scores[0] >= gameData.scores[1] ? 0 : 1;
+        const winnerTeamId = winnerSide === 0 ? tournament.matches[currentMatchIdx].p1 : tournament.matches[currentMatchIdx].p2;
+        
+        const updated = JSON.parse(JSON.stringify(tournament));
+        const match = updated.matches[currentMatchIdx];
+        match.winner = winnerTeamId;
+
+        if (match.nextMatch !== null) {
+            const next = updated.matches[match.nextMatch];
+            if (match.nextSlot === 'p1') next.p1 = winnerTeamId;
+            else next.p2 = winnerTeamId;
+        } else {
+            updated.winner = winnerTeamId;
+        }
+
+        const tDoc = doc(db, 'artifacts', appId, 'public', 'data', 'tournament_state', 'main');
+        await setDoc(tDoc, updated);
+        showView('bracket');
+    };
+
+    // --- 게임 엔진 (캔버스) ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const initGameEngine = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        gameData.scores = [0, 0];
+        gameData.timeLeft = 45;
+        gameData.gameState = 'ready';
+        gameData.numbers = [];
+        gameData.touches = {};
+        gameData.lastSpawn = 0;
+        
+        document.getElementById('hud-p1-score').innerText = '0';
+        document.getElementById('hud-p2-score').innerText = '0';
+        document.getElementById('hud-timer').innerText = '45';
+        document.getElementById('game-ready-overlay').classList.remove('hidden');
+        document.getElementById('game-end-overlay').classList.add('hidden');
+
+        // 바구니 생성
+        gameData.baskets = Array.from({ length: 5 }, (_, i) => ({
+            eq: generateEquation(),
+            y: 110 + i * ((canvas.height - 200) / 5),
+            height: ((canvas.height - 200) / 5) - 15
+        }));
+
+        // 초기 해답 구슬 생성
+        gameData.baskets.forEach(b => {
+            spawnNumber(b.eq.roots[0]);
+            spawnNumber(b.eq.roots[1]);
+        });
+
+        if (gameData.animId) cancelAnimationFrame(gameData.animId);
+        gameData.animId = requestAnimationFrame(gameLoop);
+    };
+
+    const startGameEngine = () => {
+        gameData.gameState = 'playing';
+        document.getElementById('game-ready-overlay').classList.add('hidden');
+        
+        const timer = setInterval(() => {
+            if (gameData.gameState !== 'playing') { clearInterval(timer); return; }
+            gameData.timeLeft--;
+            document.getElementById('hud-timer').innerText = gameData.timeLeft;
+            if (gameData.timeLeft <= 0) {
+                gameData.gameState = 'ended';
+                showGameResult();
+                clearInterval(timer);
+            }
+        }, 1000);
+    };
+
+    const generateEquation = () => {
+        let r1, r2;
+        do {
+            r1 = Math.floor(Math.random() * 13) - 6;
+            r2 = Math.floor(Math.random() * 13) - 6;
+        } while (r1 === r2);
+        const sum = r1 + r2, prod = r1 * r2;
+        let t2 = sum === 0 ? "" : (sum > 0 ? ` - ${sum}x` : ` + ${Math.abs(sum)}x`);
+        if (sum === 1) t2 = " - x"; if (sum === -1) t2 = " + x";
+        let t3 = prod === 0 ? "" : (prod > 0 ? ` + ${prod}` : ` - ${Math.abs(prod)}`);
+        return { str: `x²${t2}${t3} = 0`, roots: [r1, r2], found: [] };
+    };
+
+    const spawnNumber = (val = null) => {
+        const value = val !== null ? val : Math.floor(Math.random() * 17) - 8;
+        gameData.numbers.push({
+            x: canvas.width / 2 + (Math.random() - 0.5) * 100,
+            y: Math.random() * (canvas.height - 300) + 150,
+            val: value,
+            radius: 32,
+            color: `hsl(${Math.random() * 360}, 70%, 65%)`,
+            vx: (Math.random() - 0.5) * 4,
+            vy: (Math.random() - 0.5) * 4,
+            dragId: null
+        });
+    };
+
+    const gameLoop = (time) => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 배경 영역 표시
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.08)'; ctx.fillRect(0, 0, canvas.width/2, canvas.height);
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.08)'; ctx.fillRect(canvas.width/2, 0, canvas.width/2, canvas.height);
+
+        // 바구니 렌더링
+        gameData.baskets.forEach(b => {
+            const draw = (isLeft) => {
+                const x = isLeft ? 20 : canvas.width - 270, w = 250;
+                ctx.fillStyle = isLeft ? '#1e40af' : '#991b1b';
+                ctx.beginPath(); ctx.roundRect(x, b.y, w, b.height, 12); ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = '#fff'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+                ctx.fillText(b.eq.str, x + w/2, b.y + b.height/2 + 5);
+                for(let i=0; i<2; i++) {
+                    ctx.beginPath(); ctx.arc(x + w/2 - 25 + i*50, b.y + b.height - 18, 7, 0, Math.PI*2);
+                    ctx.fillStyle = b.eq.found.length > i ? '#fbbf24' : 'rgba(0,0,0,0.3)'; ctx.fill();
+                }
+            };
+            draw(true); draw(false);
+        });
+
+        // 구슬 렌더링 및 물리
+        gameData.numbers.forEach(num => {
+            if (!num.dragId && gameData.gameState === 'playing') {
+                num.x += num.vx; num.y += num.vy;
+                if (num.x < 300 || num.x > canvas.width - 300) num.vx *= -1;
+                if (num.y < 100 || num.y > canvas.height - 100) num.vy *= -1;
+            }
+            ctx.fillStyle = num.color; ctx.beginPath(); ctx.arc(num.x, num.y, num.radius, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(num.val, num.x, num.y);
+        });
+
+        if (gameData.gameState === 'playing' && time - gameData.lastSpawn > 1500) {
+            spawnNumber(); gameData.lastSpawn = time;
+        }
+
+        gameData.animId = requestAnimationFrame(gameLoop);
+    };
+
+    const showGameResult = () => {
+        const match = tournament.matches[currentMatchIdx];
+        document.getElementById('end-p1-name').innerText = tournament.teams.find(t => t.id === match.p1).name;
+        document.getElementById('end-p2-name').innerText = tournament.teams.find(t => t.id === match.p2).name;
+        document.getElementById('end-p1-score').innerText = gameData.scores[0];
+        document.getElementById('end-p2-score').innerText = gameData.scores[1];
+        
+        document.getElementById('end-p1-box').className = gameData.scores[0] >= gameData.scores[1] ? 'text-blue-400 scale-110' : 'opacity-30';
+        document.getElementById('end-p2-box').className = gameData.scores[1] >= gameData.scores[0] ? 'text-red-400 scale-110' : 'opacity-30';
+        
+        document.getElementById('game-end-overlay').classList.remove('hidden');
+    };
+
+    // --- 입력 핸들러 ---
+    const handleInputStart = (e) => {
+        if (gameData.gameState !== 'playing') return;
+        const rect = canvas.getBoundingClientRect();
+        const touches = e.touches ? Array.from(e.touches) : [e];
+        touches.forEach(t => {
+            const x = (t.clientX || t.pageX) - rect.left, y = (t.clientY || t.pageY) - rect.top;
+            const id = t.identifier || 'mouse';
+            const target = gameData.numbers.find(n => !n.dragId && Math.sqrt((n.x-x)**2+(n.y-y)**2) < n.radius);
+            if (target) { target.dragId = id; gameData.touches[id] = target; }
+        });
+    };
+
+    const handleInputMove = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const touches = e.touches ? Array.from(e.touches) : [e];
+        touches.forEach(t => {
+            const id = t.identifier || 'mouse', target = gameData.touches[id];
+            if (target) { target.x = (t.clientX || t.pageX) - rect.left; target.y = (t.clientY || t.pageY) - rect.top; }
+        });
+    };
+
+    const handleInputEnd = (e) => {
+        const ids = e.changedTouches ? Array.from(e.changedTouches).map(t => t.identifier) : ['mouse'];
+        ids.forEach(id => {
+            const num = gameData.touches[id];
+            if (num) {
+                let caught = false;
+                gameData.baskets.forEach(b => {
+                    const side = num.x < canvas.width / 2 ? 0 : 1;
+                    const bx = side === 0 ? 20 : canvas.width - 270;
+                    if (num.x > bx && num.x < bx + 250 && num.y > b.y && num.y < b.y + b.height) {
+                        if (b.eq.roots.includes(num.val) && !b.eq.found.includes(num.val)) {
+                            b.eq.found.push(num.val);
+                            gameData.scores[side] += 20;
+                            if (b.eq.found.length === 2) {
+                                gameData.scores[side] += 30;
+                                setTimeout(() => { b.eq = generateEquation(); spawnNumber(b.eq.roots[0]); spawnNumber(b.eq.roots[1]); }, 200);
+                            }
+                            caught = true;
+                        } else {
+                            gameData.scores[side] = Math.max(0, gameData.scores[side] - 10);
+                        }
+                    }
+                });
+                document.getElementById('hud-p1-score').innerText = gameData.scores[0];
+                document.getElementById('hud-p2-score').innerText = gameData.scores[1];
+                if (caught) { gameData.numbers = gameData.numbers.filter(n => n !== num); spawnNumber(); }
+                else num.dragId = null;
+                delete gameData.touches[id];
+            }
+        });
+    };
+
+    canvas.addEventListener('mousedown', handleInputStart);
+    window.addEventListener('mousemove', handleInputMove);
+    window.addEventListener('mouseup', handleInputEnd);
+    canvas.addEventListener('touchstart', handleInputStart);
+    window.addEventListener('touchmove', handleInputMove);
+    window.addEventListener('touchend', handleInputEnd);
+
+    window.onload = init;
+</script>
+</body>
+</html>
