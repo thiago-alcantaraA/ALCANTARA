@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>고도에 따른 단열 팽창 시뮬레이션</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; background-color: #0c4a6e; color: white; overflow: hidden; font-family: sans-serif; }
+        canvas { display: block; }
+        .ui-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 260px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 100;
+        }
+        .mode-switch {
+            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            font-size: 0.875rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .mode-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+        #popEffect {
+            position: absolute;
+            display: none;
+            color: #ffeb3b;
+            font-size: 6rem;
+            font-weight: 900;
+            text-shadow: 0 0 30px rgba(255,0,0,0.8);
+            z-index: 50;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            animation: shake 0.2s ease-in-out infinite;
+        }
+        @keyframes shake {
+            0% { transform: translate(-52%, -50%); }
+            50% { transform: translate(-48%, -50%); }
+            100% { transform: translate(-50%, -52%); }
+        }
+        .guide-text {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(0,0,0,0.6);
+            padding: 12px 18px;
+            border-radius: 10px;
+            pointer-events: none;
+            border-left: 5px solid #facc15;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ui-container">
+        <div class="mode-switch">
+            <div id="balloonMode" class="mode-btn active" onclick="setMode('balloon')">풍선</div>
+            <div id="airMode" class="mode-btn" onclick="setMode('air')">공기덩이</div>
+        </div>
+
+        <label class="block text-sm font-bold mb-3 flex justify-between">
+            <span>고도 조절 (상승)</span>
+            <span id="rangeVal" class="text-blue-400">0%</span>
+        </label>
+        <input type="range" id="altRange" min="0" max="100" value="0" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+        
+        <div class="mt-4">
+            <button id="resetBtn" class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-bold transition shadow-lg">실험 초기화</button>
+        </div>
+    </div>
+
+    <div class="guide-text">
+        ※ <span class="text-yellow-400 font-bold">노란 대형 화살표</span>는 외부 기압을 나타냅니다.<br>
+        <span class="text-blue-300">이슬점 도달:</span> 온도가 <span class="text-white font-bold">10°C</span> 이하가 되면 수증기가 응결되어 구름이 생깁니다.
+    </div>
+
+    <div id="popEffect">POP!</div>
+
+    <canvas id="simCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const altRange = document.getElementById('altRange');
+        const popEffect = document.getElementById('popEffect');
+        const resetBtn = document.getElementById('resetBtn');
+
+        let width, height;
+        let currentMode = 'balloon'; 
+        let dashOffset = 0; 
+        const DEW_POINT = 10.0; // 이슬점 설정
+
+        let object = {
+            x: 0,
+            y: 0,
+            baseRadius: 45,
+            currentRadius: 45,
+            temp: 25.0 // 초기 온도 (섭씨)
+        };
+
+        let particles = [];
+        let clouds = [];
+        let debris = []; 
+        let isPopped = false;
+        
+        const MAX_PARTICLES = 400; 
+        const PARTICLE_RADIUS = 4;
+
+        function setMode(mode) {
+            if (isPopped) reset();
+            currentMode = mode;
+            document.getElementById('balloonMode').classList.toggle('active', mode === 'balloon');
+            document.getElementById('airMode').classList.toggle('active', mode === 'air');
+        }
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 6;
+                this.vy = (Math.random() - 0.5) * 6;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+
+                if (!isPopped) {
+                    const dx = this.x - object.x;
+                    const dy = this.y - object.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < object.currentRadius + PARTICLE_RADIUS) {
+                        const nx = dx / dist;
+                        const ny = dy / dist;
+                        const dot = this.vx * nx + this.vy * ny;
+                        
+                        this.vx -= 2 * dot * nx;
+                        this.vy -= 2 * dot * ny;
+                        this.x = object.x + nx * (object.currentRadius + PARTICLE_RADIUS + 2);
+                        this.y = object.y + ny * (object.currentRadius + PARTICLE_RADIUS + 2);
+                    }
+                }
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, PARTICLE_RADIUS, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(186, 230, 253, 0.7)';
+                ctx.fill();
+            }
+        }
+
+        class Debris {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 4 + Math.random() * 18;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.size = 6 + Math.random() * 20;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotV = (Math.random() - 0.5) * 0.6;
+                this.life = 1.0;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.25; 
+                this.rotation += this.rotV;
+                this.life -= 0.008;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.fillStyle = currentMode === 'balloon' ? `rgba(239, 68, 68, ${this.life})` : `rgba(255, 255, 255, ${this.life})`;
+                ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size/3);
+                ctx.restore();
+            }
+        }
+
+        class Cloud {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = 70 + Math.random() * 130;
+            }
+            draw() {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.arc(this.x + this.size * 0.5, this.y - this.size * 0.2, this.size * 0.7, 0, Math.PI * 2);
+                ctx.arc(this.x - this.size * 0.5, this.y - this.size * 0.2, this.size * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            update(altitudeVelocity) {
+                this.y += altitudeVelocity + 0.35;
+                if (this.y - this.size > height) {
+                    this.y = -this.size * 2;
+                    this.x = Math.random() * width;
+                }
+            }
+        }
+
+        function setup() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            object.x = width / 2;
+            object.y = height * 0.8;
+            particles = Array.from({ length: MAX_PARTICLES }, () => new Particle());
+            clouds = Array.from({ length: 10 }, () => new Cloud());
+            debris = [];
+        }
+
+        function drawPressureArrows(altitudeFactor) {
+            const arrowCount = 9; 
+            const baseDist = object.currentRadius + 20; 
+            const maxArrowLength = 85; 
+            const minArrowLength = 15; 
+            
+            const currentArrowLength = minArrowLength + (maxArrowLength - minArrowLength) * altitudeFactor;
+            const headSize = 14 * (0.5 + altitudeFactor * 0.5);
+
+            for (let i = 0; i < arrowCount; i++) {
+                const angle = (i / arrowCount) * Math.PI * 2;
+                const startX = object.x + Math.cos(angle) * (baseDist + currentArrowLength);
+                const startY = object.y + Math.sin(angle) * (baseDist + currentArrowLength);
+                const endX = object.x + Math.cos(angle) * baseDist;
+                const endY = object.y + Math.sin(angle) * baseDist;
+
+                ctx.save();
+                ctx.strokeStyle = `rgba(255, 235, 59, ${0.5 + altitudeFactor * 0.5})`;
+                ctx.lineWidth = 7 * (0.6 + altitudeFactor * 0.4);
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = "rgba(0,0,0,0.5)";
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+
+                const headAngle = Math.atan2(endY - startY, endX - startX);
+                ctx.beginPath();
+                ctx.moveTo(endX, endY);
+                ctx.lineTo(endX - headSize * Math.cos(headAngle - Math.PI/6), endY - headSize * Math.sin(headAngle - Math.PI/6));
+                ctx.moveTo(endX, endY);
+                ctx.lineTo(endX - headSize * Math.cos(headAngle + Math.PI/6), endY - headSize * Math.sin(headAngle + Math.PI/6));
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function draw() {
+            const val = parseInt(altRange.value);
+            const altitudeFactor = (100 - val) / 100; 
+            
+            const gradient = ctx.createLinearGradient(0, 0, 0, height);
+            const topColor = `hsl(210, 100%, ${Math.max(1, 35 - val * 0.4)}%)`;
+            const bottomColor = `hsl(200, 100%, ${Math.max(12, 65 - val * 0.55)}%)`;
+            gradient.addColorStop(0, topColor);
+            gradient.addColorStop(1, bottomColor);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+
+            clouds.forEach(c => {
+                c.update(val * 0.12);
+                c.draw();
+            });
+
+            const density = Math.pow(altitudeFactor, 2); 
+            const activeCount = Math.floor(MAX_PARTICLES * density);
+            for(let i=0; i<activeCount; i++) {
+                particles[i].update();
+                particles[i].draw();
+            }
+
+            for (let i = debris.length - 1; i >= 0; i--) {
+                debris[i].update();
+                debris[i].draw();
+                if (debris[i].life <= 0) debris.splice(i, 1);
+            }
+
+            if (!isPopped) {
+                updateObject(val);
+                drawPressureArrows(altitudeFactor);
+                if (currentMode === 'balloon') {
+                    drawBalloon();
+                } else {
+                    drawAirParcel();
+                }
+            }
+
+            dashOffset -= 0.5;
+            requestAnimationFrame(draw);
+        }
+
+        function updateObject(val) {
+            const targetY = height * 0.85 - (val / 100) * (height * 0.7);
+            object.y += (targetY - object.y) * 0.1;
+
+            const targetRadius = object.baseRadius * (1 + val / 30);
+            object.currentRadius += (targetRadius - object.currentRadius) * 0.1;
+
+            // 단열 냉각 계산
+            const targetTemp = 25.0 - (val * 0.4);
+            object.temp += (targetTemp - object.temp) * 0.1;
+
+            if (val > 98 && !isPopped) {
+                pop();
+            }
+        }
+
+        function drawBalloon() {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(object.x, object.y + object.currentRadius);
+            ctx.quadraticCurveTo(object.x + 10, object.y + object.currentRadius + 30, object.x, object.y + object.currentRadius + 80);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            const grad = ctx.createRadialGradient(
+                object.x - object.currentRadius * 0.3, 
+                object.y - object.currentRadius * 0.3, 
+                object.currentRadius * 0.1,
+                object.x, object.y, object.currentRadius
+            );
+            grad.addColorStop(0, '#ff8a8a');
+            grad.addColorStop(1, '#e11d48');
+            
+            ctx.beginPath();
+            ctx.ellipse(object.x, object.y, object.currentRadius, object.currentRadius * 1.15, 0, 0, Math.PI * 2);
+            ctx.fillStyle = grad;
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.ellipse(object.x - object.currentRadius*0.35, object.y - object.currentRadius*0.45, object.currentRadius*0.25, object.currentRadius*0.12, Math.PI/4, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(255,255,255,0.45)';
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawAirParcel() {
+            ctx.save();
+            
+            // 응결 강도 계산: 이슬점(10도) 이하일 때만 하얗게 변함
+            let condensationFactor = 0;
+            if (object.temp <= DEW_POINT) {
+                condensationFactor = Math.min(1, (DEW_POINT - object.temp) / 20);
+            }
+
+            const airOpacity = 0.05 + condensationFactor * 0.75;
+            const coreOpacity = 0.1 + condensationFactor * 0.8;
+
+            const grad = ctx.createRadialGradient(
+                object.x, object.y, 0,
+                object.x, object.y, object.currentRadius
+            );
+            
+            grad.addColorStop(0, `rgba(255, 255, 255, ${coreOpacity})`);
+            grad.addColorStop(0.6, `rgba(186, 230, 253, ${airOpacity})`);
+            grad.addColorStop(1, `rgba(56, 189, 248, 0)`);
+            
+            ctx.beginPath();
+            ctx.arc(object.x, object.y, object.currentRadius, 0, Math.PI * 2);
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            // 외곽 점선 테두리
+            ctx.setLineDash([8, 8]); 
+            ctx.lineDashOffset = dashOffset;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.15 + condensationFactor * 0.5})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(object.x, object.y, object.currentRadius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // 온도 텍스트 표시
+            const tempVal = object.temp.toFixed(1);
+            ctx.font = `bold ${Math.max(16, object.currentRadius * 0.35)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            const red = Math.min(255, Math.max(100, 150 + object.temp * 4));
+            const blue = Math.min(255, Math.max(100, 255 - object.temp * 4));
+            ctx.fillStyle = `rgb(${red}, ${200}, ${blue})`;
+            
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = 'black';
+            ctx.fillText(`${tempVal} °C`, object.x, object.y);
+            
+            ctx.restore();
+        }
+
+        function pop() {
+            isPopped = true;
+            popEffect.innerText = currentMode === 'balloon' ? "POP!" : "CLOUD!";
+            popEffect.style.left = object.x + 'px';
+            popEffect.style.top = object.y + 'px';
+            popEffect.style.display = 'block';
+            
+            const count = currentMode === 'balloon' ? 100 : 150;
+            for(let i=0; i<count; i++) {
+                debris.push(new Debris(object.x, object.y));
+            }
+
+            setTimeout(() => { popEffect.style.display = 'none'; }, 2000);
+        }
+
+        function reset() {
+            isPopped = false;
+            altRange.value = 0;
+            document.getElementById('rangeVal').innerText = "0%";
+            object.currentRadius = object.baseRadius;
+            object.y = height * 0.85;
+            object.temp = 25.0;
+            debris = [];
+            setup();
+        }
+
+        altRange.addEventListener('input', (e) => {
+            document.getElementById('rangeVal').innerText = e.target.value + "%";
+        });
+
+        resetBtn.addEventListener('click', reset);
+        window.addEventListener('resize', setup);
+
+        setup();
+        draw();
+    </script>
+</body>
+</html>
