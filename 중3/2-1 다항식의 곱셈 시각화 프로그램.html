@@ -18,15 +18,19 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
             border: 1px solid rgba(255,255,255,0.1);
             overflow: hidden;
+            text-align: center;
         }
+        /* 수학 기호 스타일 강화 */
         .math-text {
             font-family: 'Times New Roman', serif;
             font-style: italic;
         }
+        /* 제곱(윗첨자)이 아래로 내려가지 않도록 강제 설정 */
         sup {
             font-size: 0.6em;
-            vertical-align: super;
             line-height: 0;
+            vertical-align: 0.5em; /* 위로 확실히 올림 */
+            margin-left: 1px;
         }
         input:focus {
             outline: none;
@@ -42,17 +46,15 @@
                 align-items: stretch;
             }
         }
-        /* 0일 때 부드럽게 사라지는 효과 */
         .grid-container {
             display: grid;
             transition: all 0.4s ease;
         }
 
-        /* 라벨과 사각형의 정렬을 위한 외부 그리드 */
         .model-layout {
             display: inline-grid;
-            grid-template-columns: auto 320px; /* 세로라벨너비 사각형너비 */
-            grid-template-rows: auto 320px;    /* 가로라벨높이 사각형높이 */
+            grid-template-columns: auto 320px;
+            grid-template-rows: auto 320px;
             align-items: stretch;
         }
         @media (min-width: 768px) {
@@ -70,7 +72,6 @@
             color: white;
         }
 
-        /* 네모 기호 강조 스타일 */
         .square-symbol {
             display: inline-block;
             font-size: 1.2em;
@@ -84,25 +85,25 @@
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col items-center p-2 md:p-6">
     <div class="max-w-[1400px] w-full bg-white rounded-[2rem] shadow-2xl p-6 md:p-12 mt-2">
-        <h1 class="text-3xl md:text-5xl font-black text-center mb-12 text-gray-800">다항식 곱셈 시각화 도구</h1>
+        <h1 class="text-3xl md:text-5xl font-black text-center mb-12 text-gray-800 border-b-4 border-gray-100 pb-8">다항식 곱셈 시각화 도구</h1>
         
         <!-- 입력 영역 -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16 px-4">
             <div class="text-center">
-                <label class="block text-sm font-bold text-red-500 mb-2">가로 항 1</label>
+                <label class="block text-sm font-bold text-red-500 mb-2 tracking-tighter">가로 항 1</label>
                 <input type="text" id="charA" value="a" maxlength="8" class="w-full border-b-4 border-red-200 p-2 text-center text-4xl font-bold math-text bg-transparent transition-all">
             </div>
             <div class="text-center">
-                <label class="block text-sm font-bold text-orange-500 mb-2">가로 항 2</label>
-                <input type="text" id="charB" value="0" maxlength="8" class="w-full border-b-4 border-orange-200 p-2 text-center text-4xl font-bold math-text bg-transparent transition-all">
+                <label class="block text-sm font-bold text-orange-500 mb-2 tracking-tighter">가로 항 2</label>
+                <input type="text" id="charB" value="b" maxlength="8" class="w-full border-b-4 border-orange-200 p-2 text-center text-4xl font-bold math-text bg-transparent transition-all">
             </div>
             <div class="text-center">
-                <label class="block text-sm font-bold text-green-500 mb-2">세로 항 1</label>
-                <input type="text" id="charC" value="b" maxlength="8" class="w-full border-b-4 border-green-200 p-2 text-center text-4xl font-bold math-text bg-transparent transition-all">
+                <label class="block text-sm font-bold text-green-500 mb-2 tracking-tighter">세로 항 1</label>
+                <input type="text" id="charC" value="a" maxlength="8" class="w-full border-b-4 border-green-200 p-2 text-center text-4xl font-bold math-text bg-transparent transition-all">
             </div>
             <div class="text-center">
-                <label class="block text-sm font-bold text-purple-500 mb-2">세로 항 2</label>
-                <input type="text" id="charD" value="0" maxlength="8" class="w-full border-b-4 border-purple-200 p-2 text-center text-4xl font-bold math-text bg-transparent transition-all">
+                <label class="block text-sm font-bold text-purple-500 mb-2 tracking-tighter">세로 항 2</label>
+                <input type="text" id="charD" value="b" maxlength="8" class="w-full border-b-4 border-purple-200 p-2 text-center text-4xl font-bold math-text bg-transparent transition-all">
             </div>
         </div>
 
@@ -110,78 +111,65 @@
             <!-- 왼쪽: 사각형 모델 -->
             <div class="w-full lg:w-[45%] flex flex-col items-center justify-center py-6">
                 <div class="model-layout">
-                    <!-- 1행 1열: 빈 공간 -->
                     <div></div>
-
-                    <!-- 1행 2열: 가로 라벨 영역 -->
                     <div id="topLabelRow" class="grid mb-4 border-b-4 border-gray-300 pb-2 transition-all">
                         <div id="labA" class="text-center font-bold text-red-600 math-text text-4xl border-r-2 border-gray-100 overflow-hidden"></div>
                         <div id="labB" class="text-center font-bold text-orange-600 math-text text-4xl overflow-hidden"></div>
                     </div>
-
-                    <!-- 2행 1열: 세로 라벨 영역 -->
                     <div id="leftLabelCol" class="grid mr-4 border-r-4 border-gray-300 pr-2 transition-all">
                         <div id="labC" class="flex items-center justify-end font-bold text-green-600 math-text text-4xl border-b-2 border-gray-100 pr-2 overflow-hidden"></div>
                         <div id="labD" class="flex items-center justify-end font-bold text-purple-600 math-text text-4xl pr-2 overflow-hidden"></div>
                     </div>
-
-                    <!-- 2행 2열: 사각형 박스 -->
                     <div class="relative border-4 border-gray-200 rounded-2xl overflow-hidden shadow-xl bg-gray-50">
                         <div id="rectGrid" class="grid-container w-full h-full">
-                            <div id="rectAC" class="rect-box bg-red-400"></div>
-                            <div id="rectBC" class="rect-box bg-orange-400"></div>
-                            <div id="rectAD" class="rect-box bg-green-400"></div>
-                            <div id="rectBD" class="rect-box bg-purple-400"></div>
+                            <div id="rectAC" class="rect-box bg-red-400"><span></span></div>
+                            <div id="rectBC" class="rect-box bg-orange-400"><span></span></div>
+                            <div id="rectAD" class="rect-box bg-green-400"><span></span></div>
+                            <div id="rectBD" class="rect-box bg-purple-400"><span></span></div>
                         </div>
                     </div>
                 </div>
-                <p class="mt-8 text-gray-400 text-sm italic">항에 0을 입력하면 해당 칸이 사라집니다.</p>
+                <div class="mt-8 text-center bg-gray-100 p-4 rounded-xl">
+                    <p class="text-gray-600 text-sm font-bold">💡 교환법칙 설명</p>
+                    <p class="text-gray-400 text-xs mt-1">$ab$와 $ba$는 곱하는 순서만 다를 뿐 면적(값)은 같습니다.</p>
+                </div>
             </div>
 
             <!-- 오른쪽: 수식 전개 -->
             <div class="w-full lg:w-[55%] bg-blue-50/50 p-8 md:p-12 rounded-[3rem] border-2 border-blue-100 flex flex-col justify-center shadow-inner relative">
                 <!-- 치환 버튼 -->
                 <div class="absolute top-6 right-8 flex items-center gap-3">
-                    <span class="text-xs font-bold text-blue-400 uppercase tracking-wider">Substitution Mode</span>
-                    <button id="substitutionToggle" class="toggle-btn px-4 py-2 rounded-full border-2 border-indigo-200 bg-white text-indigo-500 font-bold text-sm hover:border-indigo-400">
-                        치환하기 (□)
+                    <span class="text-xs font-bold text-indigo-300 uppercase tracking-wider">치환 설정</span>
+                    <button id="substitutionToggle" class="toggle-btn px-4 py-2 rounded-full border-2 border-indigo-200 bg-white text-indigo-500 font-bold text-sm hover:border-indigo-400 shadow-sm">
+                        치환 모드 (□)
                     </button>
                 </div>
 
-                <div class="space-y-12 mt-4">
-                    <!-- 기본 식 및 치환 설명 -->
-                    <div class="flex flex-wrap items-center gap-x-8 gap-y-4">
-                        <div id="baseEquation" class="math-text text-4xl md:text-5xl text-gray-800 font-bold leading-tight">
-                            <!-- JS 입력 -->
-                        </div>
-                        <!-- 첫 줄 오른쪽 치환 설명 -->
-                        <div id="topSubstitutionLegend" class="hidden px-4 py-2 bg-indigo-100 rounded-2xl border-2 border-indigo-200 text-indigo-600 font-bold text-xl md:text-2xl italic animate-pulse">
+                <div class="space-y-10 mt-4">
+                    <!-- 기본 식 -->
+                    <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+                        <div id="baseEquation" class="math-text text-4xl md:text-5xl text-gray-800 font-bold leading-tight"></div>
+                        <div id="topSubstitutionLegend" class="hidden px-4 py-2 bg-indigo-100 rounded-2xl border-2 border-indigo-200 text-indigo-600 font-bold text-xl md:text-2xl italic">
                             (□ = <span id="topSubstitutionTarget"></span>)
                         </div>
                     </div>
 
                     <!-- 1단계: 분배법칙 -->
-                    <div id="step1Row" class="flex flex-col gap-2">
-                        <div class="flex items-center gap-6">
-                            <span class="text-gray-300 text-5xl font-light">=</span>
-                            <div id="step1" class="math-text text-4xl md:text-5xl font-bold text-blue-600 leading-tight"></div>
-                        </div>
+                    <div id="step1Row" class="flex items-start gap-6">
+                        <span class="text-gray-300 text-5xl font-light">=</span>
+                        <div id="step1" class="math-text text-4xl md:text-5xl font-bold text-blue-600 leading-tight"></div>
                     </div>
                     
-                    <!-- 2단계: 전개 완료 -->
+                    <!-- 2단계: 전개 완료 (교환법칙 표시) -->
                     <div class="flex items-start gap-6 border-t-2 border-blue-100 pt-10">
                         <span class="text-gray-300 text-5xl font-light">=</span>
-                        <div id="expandedResult" class="math-text text-4xl md:text-5xl font-bold tracking-tight flex flex-wrap gap-x-6 gap-y-4">
-                            <!-- JS 입력 -->
-                        </div>
+                        <div id="expandedResult" class="math-text text-4xl md:text-5xl font-bold tracking-tight flex flex-wrap gap-x-6 gap-y-4"></div>
                     </div>
 
                     <!-- 3단계: 동류항 정리 -->
                     <div id="simplifiedSection" class="hidden flex items-center gap-8 mt-4 text-5xl md:text-7xl text-indigo-700 border-t-4 border-indigo-200 pt-8">
                         <span class="text-gray-400 text-4xl font-bold">∴</span>
-                        <div id="finalResult" class="math-text font-black tracking-tighter leading-none">
-                            <!-- JS 입력 -->
-                        </div>
+                        <div id="finalResult" class="math-text font-black tracking-tighter leading-none"></div>
                     </div>
                 </div>
             </div>
@@ -196,13 +184,8 @@
             const toggleBtn = document.getElementById('substitutionToggle');
             toggleBtn.addEventListener('click', () => {
                 substitutionMode = !substitutionMode;
-                if (substitutionMode) {
-                    toggleBtn.classList.add('toggle-active');
-                    toggleBtn.innerText = '치환 해제';
-                } else {
-                    toggleBtn.classList.remove('toggle-active');
-                    toggleBtn.innerText = '치환하기 (□)';
-                }
+                toggleBtn.classList.toggle('toggle-active', substitutionMode);
+                toggleBtn.innerText = substitutionMode ? '치환 해제' : '치환 모드 (□)';
                 update();
             });
 
@@ -223,24 +206,31 @@
                 return { coeff, variable };
             }
 
-            function multiplyTerms(t1Str, t2Str) {
+            function multiplyTerms(t1Str, t2Str, preserveOrder = false) {
                 const t1 = parseTerm(t1Str);
                 const t2 = parseTerm(t2Str);
                 const resCoeff = t1.coeff * t2.coeff;
                 if (resCoeff === 0) return { coeff: 0, variable: '', rawVar: '' };
                 
-                let varMap = {};
-                let vars = (t1.variable + t2.variable).split('').sort();
-                vars.forEach(v => {
-                    if (v.trim()) varMap[v] = (varMap[v] || 0) + 1;
-                });
-
                 let resVar = '';
-                for (let v in varMap) {
-                    resVar += v + (varMap[v] > 1 ? `<sup>${varMap[v]}</sup>` : '');
+                let varMap = {};
+                
+                let sortedVars = (t1.variable + t2.variable).split('').sort();
+                sortedVars.forEach(v => { if (v.trim()) varMap[v] = (varMap[v] || 0) + 1; });
+                const rawVarKey = Object.keys(varMap).sort().map(v => v + varMap[v]).join('');
+
+                if (preserveOrder && t1.variable && t2.variable) {
+                    if (t1.variable === t2.variable) {
+                        resVar = t1.variable + `<sup>2</sup>`;
+                    } else {
+                        resVar = t1.variable + t2.variable; // ba, ab 등을 그대로 노출
+                    }
+                } else {
+                    for (let v in varMap) {
+                        resVar += v + (varMap[v] > 1 ? `<sup>${varMap[v]}</sup>` : '');
+                    }
                 }
 
-                const rawVarKey = Object.keys(varMap).sort().map(v => v + varMap[v]).join('');
                 return { coeff: resCoeff, variable: resVar, rawVar: rawVarKey };
             }
 
@@ -279,7 +269,7 @@
                 document.getElementById('labC').innerText = c.coeff === 0 ? '' : cVal;
                 document.getElementById('labD').innerText = d.coeff === 0 ? '' : dVal;
 
-                const rects = [
+                const rectConfigs = [
                     { id: 'AC', v1: aVal, v2: cVal, color: 'text-red-500' },
                     { id: 'BC', v1: bVal, v2: cVal, color: 'text-orange-500' },
                     { id: 'AD', v1: aVal, v2: dVal, color: 'text-green-500' },
@@ -288,9 +278,9 @@
 
                 const activeTerms = [];
 
-                rects.forEach(r => {
-                    const res = multiplyTerms(r.v1, r.v2);
-                    const el = document.getElementById('rect' + r.id);
+                rectConfigs.forEach(r => {
+                    const res = multiplyTerms(r.v1, r.v2, true);
+                    const el = document.querySelector('#rect' + r.id + ' span');
                     if (res.coeff !== 0) {
                         el.innerHTML = formatTerm(res.coeff, res.variable, true);
                         activeTerms.push({ val: res, color: r.color });
@@ -299,18 +289,14 @@
                     }
                 });
 
-                // 공통 인수 (치환 대상) 구성
                 let commonPart = (c.coeff !== 0 && d.coeff !== 0) ? `(${cVal} + ${dVal})` : (c.coeff !== 0 ? cVal : dVal);
                 let squareHtml = '<span class="square-symbol">□</span>';
                 let displayPart = substitutionMode ? squareHtml : commonPart;
 
-                // 기본 식 업데이트 (여기서도 치환 적용)
                 let factor1 = (a.coeff !== 0 && b.coeff !== 0) ? `(${aVal} + ${bVal})` : (a.coeff !== 0 ? aVal : (b.coeff !== 0 ? bVal : '0'));
                 if (a.coeff < 0 && b.coeff === 0) factor1 = `(${aVal})`;
-                
                 document.getElementById('baseEquation').innerHTML = `${factor1}${displayPart}`;
 
-                // 상단 치환 설명 업데이트
                 const topLegendEl = document.getElementById('topSubstitutionLegend');
                 const topTargetEl = document.getElementById('topSubstitutionTarget');
                 if (substitutionMode && (a.coeff !== 0 || b.coeff !== 0)) {
@@ -320,21 +306,15 @@
                     topLegendEl.classList.add('hidden');
                 }
 
-                // 1단계 분배법칙 업데이트
                 let step1Html = '';
-                if (a.coeff !== 0) {
-                    step1Html += `${aVal}${displayPart}`;
-                }
+                if (a.coeff !== 0) step1Html += `${aVal}${displayPart}`;
                 if (a.coeff !== 0 && b.coeff !== 0) step1Html += ' + ';
-                if (b.coeff !== 0) {
-                    step1Html += `${bVal}${displayPart}`;
-                }
+                if (b.coeff !== 0) step1Html += `${bVal}${displayPart}`;
                 document.getElementById('step1').innerHTML = step1Html || '0';
                 
                 const isComplex = (a.coeff !== 0 && b.coeff !== 0) || (c.coeff !== 0 && d.coeff !== 0);
                 document.getElementById('step1Row').style.display = isComplex ? 'flex' : 'none';
 
-                // 2단계 전개 결과 업데이트
                 const expandedEl = document.getElementById('expandedResult');
                 expandedEl.innerHTML = '';
                 if (activeTerms.length === 0) {
@@ -348,7 +328,6 @@
                     });
                 }
 
-                // 최종 정리 (동류항) 업데이트
                 const sumMap = {};
                 const order = [];
                 const varDisplayMap = {};
@@ -357,7 +336,8 @@
                     const key = t.val.rawVar;
                     if (!(key in sumMap)) {
                         order.push(key);
-                        varDisplayMap[key] = t.val.variable;
+                        const finalFormat = multiplyTerms(key.replace(/[0-9]/g, ''), "1");
+                        varDisplayMap[key] = finalFormat.variable;
                     }
                     sumMap[key] = (sumMap[key] || 0) + t.val.coeff;
                 });
@@ -375,7 +355,7 @@
                 });
 
                 const simplifiedSection = document.getElementById('simplifiedSection');
-                if (visibleTermsCount > 0 && visibleTermsCount < activeTerms.length) {
+                if (visibleTermsCount > 0 && (visibleTermsCount < activeTerms.length || Object.values(sumMap).some(v => Math.abs(v) > 1))) {
                     simplifiedSection.classList.remove('hidden');
                     document.getElementById('finalResult').innerHTML = finalHtml;
                 } else {
@@ -383,10 +363,7 @@
                 }
             }
 
-            inputs.forEach(id => {
-                document.getElementById(id).addEventListener('input', update);
-            });
-
+            inputs.forEach(id => document.getElementById(id).addEventListener('input', update));
             update();
         });
     </script>
