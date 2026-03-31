@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>범교과 게시판</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 py-12 px-6">
+    <div class="max-w-4xl mx-auto">
+        <a href="index.html" class="text-gray-400 hover:text-purple-600 mb-8 inline-block font-bold transition-colors">
+            <i class="fa-solid fa-arrow-left mr-2"></i> 메인으로 돌아가기
+        </a>
+        
+        <div class="bg-white p-10 rounded-[2.5rem] shadow-sm border border-gray-100">
+            <div class="flex items-center mb-2">
+                <div class="bg-purple-100 w-12 h-12 rounded-2xl flex items-center justify-center mr-4">
+                    <i class="fa-solid fa-clipboard-list text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">범교과 게시판</h1>
+                    <p class="text-gray-400 italic text-sm">Cross-curricular Learning Materials</p>
+                </div>
+            </div>
+            
+            <hr class="my-8 border-gray-100">
+            
+            <div id="file-list" class="grid grid-cols-1 gap-4">
+                <!-- 로딩 표시 -->
+                <div class="text-center py-10 text-gray-300">
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-4"></i>
+                    <p>자료를 불러오고 있습니다...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadFiles() {
+            try {
+                // GitHub API를 통해 전체 파일 트리 가져오기
+                const res = await fetch(`https://api.github.com/repos/thiago-alcantaraA/ALCANTARA/git/trees/main?recursive=1`);
+                const data = await res.json();
+                const container = document.getElementById('file-list');
+                
+                // '범교과' 폴더 내의 .html 파일만 필터링
+                const files = data.tree.filter(f => 
+                    f.path.startsWith('범교과/') && 
+                    f.path.endsWith('.html')
+                );
+
+                if (files.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-300 py-10">등록된 범교과 자료가 없습니다.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                files.forEach(file => {
+                    // 파일명에서 경로와 확장자 제거하여 제목 추출
+                    const fileName = file.path.split('/').pop().replace('.html', '');
+                    
+                    container.innerHTML += `
+                        <a href="https://thiago-alcantaraa.github.io/ALCANTARA/${encodeURI(file.path)}" 
+                           target="_blank"
+                           class="flex items-center justify-between p-6 bg-gray-50 rounded-2xl hover:bg-purple-50 transition-all border border-transparent hover:border-purple-100 group">
+                            <div class="flex items-center">
+                                <i class="fa-solid fa-file-signature mr-4 text-purple-400 group-hover:scale-110 transition-transform"></i>
+                                <span class="font-bold text-gray-700">${fileName}</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-gray-300 group-hover:text-purple-400 transition-colors"></i>
+                        </a>`;
+                });
+            } catch (error) {
+                document.getElementById('file-list').innerHTML = '<p class="text-center text-red-400">자료를 불러오는 중 오류가 발생했습니다.</p>';
+            }
+        }
+        loadFiles();
+    </script>
+</body>
+</html>
