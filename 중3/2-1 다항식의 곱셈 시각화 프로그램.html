@@ -3,173 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>다항식 곱셈 시각화 도구</title>
-    <!-- Tailwind CSS CDN -->
+    <title>다항식 곱셈 시각화 도구 Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc;
+        }
+
         .rect-box {
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: bold;
-            font-size: 2.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
-            overflow: hidden;
-            text-align: center;
+            font-weight: 800;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 2px solid rgba(255,255,255,0.2);
         }
-        /* 수학 기호 스타일 강화 */
+
         .math-text {
             font-family: 'Times New Roman', serif;
             font-style: italic;
         }
-        /* 제곱(윗첨자)이 아래로 내려가지 않도록 강제 설정 */
+
         sup {
-            font-size: 0.6em;
+            font-size: 0.55em;
             line-height: 0;
-            vertical-align: 0.5em; /* 위로 확실히 올림 */
+            vertical-align: 0.4em;
             margin-left: 1px;
+            font-style: normal;
         }
-        input:focus {
-            outline: none;
-            border-bottom-width: 6px;
-        }
-        .main-container {
-            display: flex;
-            flex-direction: column;
-        }
-        @media (min-width: 1024px) {
-            .main-container {
-                flex-direction: row;
-                align-items: stretch;
-            }
-        }
+
         .grid-container {
             display: grid;
-            transition: all 0.4s ease;
+            transition: all 0.5s ease;
         }
 
         .model-layout {
             display: inline-grid;
-            grid-template-columns: auto 320px;
-            grid-template-rows: auto 320px;
-            align-items: stretch;
-        }
-        @media (min-width: 768px) {
-            .model-layout {
-                grid-template-columns: auto 384px;
-                grid-template-rows: auto 384px;
-            }
+            grid-template-columns: auto 1fr;
+            grid-template-rows: auto 1fr;
+            gap: 0.5rem;
         }
 
-        .toggle-btn {
-            transition: all 0.3s ease;
+        .equation-step {
+            transition: all 0.4s ease;
+            opacity: 0;
+            transform: translateY(10px);
         }
-        .toggle-active {
-            background-color: #4f46e5;
-            color: white;
+
+        .equation-step.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .input-focus-effect:focus {
+            box-shadow: 0 4px 0 -1px #6366f1;
         }
 
         .square-symbol {
             display: inline-block;
-            font-size: 1.2em;
-            font-weight: 900;
-            color: #4f46e5;
-            margin: 0 0.1em;
-            vertical-align: middle;
-            line-height: 1;
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 0 0.4rem;
+            border-radius: 0.4rem;
+            font-style: normal;
+            border: 1px solid #c7d2fe;
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col items-center p-2 md:p-6">
-    <div class="max-w-[1400px] w-full bg-white rounded-[2rem] shadow-2xl p-6 md:p-12 mt-2">
-        <h1 class="text-3xl md:text-5xl font-black text-center mb-12 text-gray-800 border-b-4 border-gray-100 pb-8">다항식 곱셈 시각화 도구</h1>
-        
-        <!-- 입력 영역 -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16 px-4">
-            <div class="text-center">
-                <label class="block text-sm font-bold text-red-500 mb-2 tracking-tighter">가로 항 1</label>
-                <input type="text" id="charA" value="a" maxlength="8" class="w-full border-b-4 border-red-200 p-2 text-center text-4xl font-bold math-text bg-transparent transition-all">
-            </div>
-            <div class="text-center">
-                <label class="block text-sm font-bold text-orange-500 mb-2 tracking-tighter">가로 항 2</label>
-                <input type="text" id="charB" value="b" maxlength="8" class="w-full border-b-4 border-orange-200 p-2 text-center text-4xl font-bold math-text bg-transparent transition-all">
-            </div>
-            <div class="text-center">
-                <label class="block text-sm font-bold text-green-500 mb-2 tracking-tighter">세로 항 1</label>
-                <input type="text" id="charC" value="a" maxlength="8" class="w-full border-b-4 border-green-200 p-2 text-center text-4xl font-bold math-text bg-transparent transition-all">
-            </div>
-            <div class="text-center">
-                <label class="block text-sm font-bold text-purple-500 mb-2 tracking-tighter">세로 항 2</label>
-                <input type="text" id="charD" value="b" maxlength="8" class="w-full border-b-4 border-purple-200 p-2 text-center text-4xl font-bold math-text bg-transparent transition-all">
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+        <!-- 헤더 -->
+        <div class="bg-indigo-600 p-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-black text-white mb-2">다항식 곱셈 시각화 도구</h1>
+            <p class="text-indigo-100 opacity-80">사각형의 면적과 교환법칙($ab=ba$)을 시각적으로 체험하세요.</p>
+        </div>
+
+        <!-- 입력 섹션 -->
+        <div class="p-6 md:p-10 border-b border-gray-100 bg-gray-50/50">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-red-500 uppercase tracking-widest">가로 항 1 (A)</label>
+                    <input type="text" id="charA" value="a" placeholder="예: a" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-red-100 bg-white input-focus-effect math-text outline-none">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-orange-500 uppercase tracking-widest">가로 항 2 (B)</label>
+                    <input type="text" id="charB" value="" placeholder="예: b" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-orange-100 bg-white input-focus-effect math-text outline-none">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-emerald-500 uppercase tracking-widest">세로 항 1 (C)</label>
+                    <input type="text" id="charC" value="b" placeholder="예: a" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-emerald-100 bg-white input-focus-effect math-text outline-none">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-purple-500 uppercase tracking-widest">세로 항 2 (D)</label>
+                    <input type="text" id="charD" value="" placeholder="예: b" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-purple-100 bg-white input-focus-effect math-text outline-none">
+                </div>
             </div>
         </div>
 
-        <div class="main-container gap-12 lg:gap-20">
-            <!-- 왼쪽: 사각형 모델 -->
-            <div class="w-full lg:w-[45%] flex flex-col items-center justify-center py-6">
-                <div class="model-layout">
+        <!-- 메인 콘텐츠 영역 -->
+        <div class="flex flex-col lg:flex-row p-6 md:p-10 gap-10">
+            
+            <!-- 왼쪽: 시각화 모델 -->
+            <div class="w-full lg:w-1/2 flex flex-col items-center">
+                <div class="model-layout w-full max-w-[400px]">
                     <div></div>
-                    <div id="topLabelRow" class="grid mb-4 border-b-4 border-gray-300 pb-2 transition-all">
-                        <div id="labA" class="text-center font-bold text-red-600 math-text text-4xl border-r-2 border-gray-100 overflow-hidden"></div>
-                        <div id="labB" class="text-center font-bold text-orange-600 math-text text-4xl overflow-hidden"></div>
+                    <div id="topLabelRow" class="grid items-end pb-2">
+                        <div id="labA" class="text-center font-bold text-red-600 math-text text-2xl"></div>
+                        <div id="labB" class="text-center font-bold text-orange-600 math-text text-2xl border-l-2 border-gray-200"></div>
                     </div>
-                    <div id="leftLabelCol" class="grid mr-4 border-r-4 border-gray-300 pr-2 transition-all">
-                        <div id="labC" class="flex items-center justify-end font-bold text-green-600 math-text text-4xl border-b-2 border-gray-100 pr-2 overflow-hidden"></div>
-                        <div id="labD" class="flex items-center justify-end font-bold text-purple-600 math-text text-4xl pr-2 overflow-hidden"></div>
+                    <div id="leftLabelCol" class="grid items-stretch pr-2">
+                        <div id="labC" class="flex items-center justify-end font-bold text-emerald-600 math-text text-2xl"></div>
+                        <div id="labD" class="flex items-center justify-end font-bold text-purple-600 math-text text-2xl border-t-2 border-gray-200"></div>
                     </div>
-                    <div class="relative border-4 border-gray-200 rounded-2xl overflow-hidden shadow-xl bg-gray-50">
+                    <div class="aspect-square bg-gray-100 rounded-2xl overflow-hidden border-4 border-gray-200 shadow-inner">
                         <div id="rectGrid" class="grid-container w-full h-full">
-                            <div id="rectAC" class="rect-box bg-red-400"><span></span></div>
-                            <div id="rectBC" class="rect-box bg-orange-400"><span></span></div>
-                            <div id="rectAD" class="rect-box bg-green-400"><span></span></div>
-                            <div id="rectBD" class="rect-box bg-purple-400"><span></span></div>
+                            <div id="rectAC" class="rect-box bg-red-400 text-xl md:text-3xl"><span></span></div>
+                            <div id="rectBC" class="rect-box bg-orange-400 text-xl md:text-3xl"><span></span></div>
+                            <div id="rectAD" class="rect-box bg-emerald-400 text-xl md:text-3xl"><span></span></div>
+                            <div id="rectBD" class="rect-box bg-purple-400 text-xl md:text-3xl"><span></span></div>
                         </div>
                     </div>
                 </div>
-                <div class="mt-8 text-center bg-gray-100 p-4 rounded-xl">
-                    <p class="text-gray-600 text-sm font-bold">💡 교환법칙 설명</p>
-                    <p class="text-gray-400 text-xs mt-1">$ab$와 $ba$는 곱하는 순서만 다를 뿐 면적(값)은 같습니다.</p>
+                <div class="mt-8 p-4 bg-blue-50 rounded-2xl border border-blue-100 text-center w-full max-w-[400px]">
+                    <p class="text-blue-800 text-sm font-bold">💡 시각화 안내</p>
+                    <p class="text-blue-600 text-xs mt-1">입력된 각 항이 사각형의 가로와 세로 길이가 됩니다.</p>
                 </div>
             </div>
 
             <!-- 오른쪽: 수식 전개 -->
-            <div class="w-full lg:w-[55%] bg-blue-50/50 p-8 md:p-12 rounded-[3rem] border-2 border-blue-100 flex flex-col justify-center shadow-inner relative">
-                <!-- 치환 버튼 -->
-                <div class="absolute top-6 right-8 flex items-center gap-3">
-                    <span class="text-xs font-bold text-indigo-300 uppercase tracking-wider">치환 설정</span>
-                    <button id="substitutionToggle" class="toggle-btn px-4 py-2 rounded-full border-2 border-indigo-200 bg-white text-indigo-500 font-bold text-sm hover:border-indigo-400 shadow-sm">
-                        치환 모드 (□)
+            <div class="w-full lg:w-1/2 flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-gray-700">전개 과정</h3>
+                    <button id="subToggle" class="px-4 py-2 bg-white border-2 border-indigo-100 text-indigo-600 rounded-xl text-sm font-bold hover:bg-indigo-50 transition-colors shadow-sm">
+                        치환 모드 (□) ON/OFF
                     </button>
                 </div>
 
-                <div class="space-y-10 mt-4">
-                    <!-- 기본 식 -->
-                    <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
-                        <div id="baseEquation" class="math-text text-4xl md:text-5xl text-gray-800 font-bold leading-tight"></div>
-                        <div id="topSubstitutionLegend" class="hidden px-4 py-2 bg-indigo-100 rounded-2xl border-2 border-indigo-200 text-indigo-600 font-bold text-xl md:text-2xl italic">
-                            (□ = <span id="topSubstitutionTarget"></span>)
-                        </div>
+                <div class="space-y-8 bg-slate-50 p-6 md:p-8 rounded-3xl border border-gray-100 min-h-[350px] flex flex-col justify-center text-center lg:text-left">
+                    <!-- 기본 수식 -->
+                    <div class="math-text text-3xl md:text-4xl text-gray-800 font-bold flex items-center justify-center lg:justify-start flex-wrap gap-2">
+                        <span id="baseEquation"></span>
+                        <span id="subLegend" class="hidden text-base font-normal bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full not-italic">
+                            (□ = <span id="subTarget"></span>)
+                        </span>
                     </div>
 
                     <!-- 1단계: 분배법칙 -->
-                    <div id="step1Row" class="flex items-start gap-6">
-                        <span class="text-gray-300 text-5xl font-light">=</span>
-                        <div id="step1" class="math-text text-4xl md:text-5xl font-bold text-blue-600 leading-tight"></div>
-                    </div>
-                    
-                    <!-- 2단계: 전개 완료 (교환법칙 표시) -->
-                    <div class="flex items-start gap-6 border-t-2 border-blue-100 pt-10">
-                        <span class="text-gray-300 text-5xl font-light">=</span>
-                        <div id="expandedResult" class="math-text text-4xl md:text-5xl font-bold tracking-tight flex flex-wrap gap-x-6 gap-y-4"></div>
+                    <div id="step1Row" class="equation-step flex items-start justify-center lg:justify-start gap-4">
+                        <span class="text-gray-400 text-3xl">=</span>
+                        <div id="step1Content" class="math-text text-2xl md:text-3xl text-indigo-600 font-semibold leading-relaxed"></div>
                     </div>
 
-                    <!-- 3단계: 동류항 정리 -->
-                    <div id="simplifiedSection" class="hidden flex items-center gap-8 mt-4 text-5xl md:text-7xl text-indigo-700 border-t-4 border-indigo-200 pt-8">
-                        <span class="text-gray-400 text-4xl font-bold">∴</span>
-                        <div id="finalResult" class="math-text font-black tracking-tighter leading-none"></div>
+                    <!-- 2단계: 곱셈 결과 (순서 유지) -->
+                    <div id="step2Row" class="equation-step flex items-start justify-center lg:justify-start gap-4 border-t border-gray-200 pt-6">
+                        <span class="text-gray-400 text-3xl">=</span>
+                        <div id="step2Content" class="math-text text-2xl md:text-3xl text-gray-700 font-semibold flex flex-wrap gap-x-4"></div>
+                    </div>
+
+                    <!-- 3단계: 동류항 정리 (내림차순 정렬 적용) -->
+                    <div id="step3Row" class="equation-step flex items-center justify-center lg:justify-start gap-4 bg-indigo-600 p-6 rounded-2xl shadow-lg shadow-indigo-200">
+                        <span class="text-white text-3xl font-black">∴</span>
+                        <div id="step3Content" class="math-text text-3xl md:text-4xl text-white font-black tracking-tight"></div>
                     </div>
                 </div>
             </div>
@@ -177,190 +176,228 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', () => {
             const inputs = ['charA', 'charB', 'charC', 'charD'];
-            let substitutionMode = false;
+            let subMode = false;
 
-            const toggleBtn = document.getElementById('substitutionToggle');
-            toggleBtn.addEventListener('click', () => {
-                substitutionMode = !substitutionMode;
-                toggleBtn.classList.toggle('toggle-active', substitutionMode);
-                toggleBtn.innerText = substitutionMode ? '치환 해제' : '치환 모드 (□)';
+            const subToggle = document.getElementById('subToggle');
+            subToggle.addEventListener('click', () => {
+                subMode = !subMode;
+                subToggle.classList.toggle('bg-indigo-600', subMode);
+                subToggle.classList.toggle('text-white', subMode);
                 update();
             });
 
             function parseTerm(s) {
-                s = s.trim();
-                if (!s || s === '0') return { coeff: 0, variable: '' };
-                const match = s.match(/^([-+]?\d*\.?\d*)(.*)$/);
-                if (!match) return { coeff: 0, variable: '' };
+                s = s.trim().replace(/\s+/g, '');
+                if (!s || s === '0') return { coeff: 0, vars: {} };
                 
+                const match = s.match(/^([-+]?\d*\.?\d*)(.*)$/);
                 let coeffStr = match[1];
-                let variable = match[2];
+                let varStr = match[2];
 
                 let coeff = 1;
                 if (coeffStr === '-') coeff = -1;
                 else if (coeffStr === '+') coeff = 1;
                 else if (coeffStr !== '') coeff = parseFloat(coeffStr);
 
-                return { coeff, variable };
+                const vars = {};
+                if (varStr) {
+                    const tokens = varStr.match(/[a-z][0-9]*/g) || [varStr];
+                    tokens.forEach(t => {
+                        const vMatch = t.match(/([a-z])([0-9]*)/);
+                        if (vMatch) {
+                            const vName = vMatch[1];
+                            const vExp = vMatch[2] ? parseInt(vMatch[2]) : 1;
+                            vars[vName] = (vars[vName] || 0) + vExp;
+                        }
+                    });
+                }
+                return { coeff, vars };
             }
 
-            function multiplyTerms(t1Str, t2Str, preserveOrder = false) {
-                const t1 = parseTerm(t1Str);
-                const t2 = parseTerm(t2Str);
-                const resCoeff = t1.coeff * t2.coeff;
-                if (resCoeff === 0) return { coeff: 0, variable: '', rawVar: '' };
-                
-                let resVar = '';
-                let varMap = {};
-                
-                let sortedVars = (t1.variable + t2.variable).split('').sort();
-                sortedVars.forEach(v => { if (v.trim()) varMap[v] = (varMap[v] || 0) + 1; });
-                const rawVarKey = Object.keys(varMap).sort().map(v => v + varMap[v]).join('');
+            function getVarStr(vars) {
+                const sorted = Object.keys(vars).sort();
+                return sorted.map(v => v + (vars[v] > 1 ? `<sup>${vars[v]}</sup>` : "")).join("");
+            }
 
-                if (preserveOrder && t1.variable && t2.variable) {
-                    if (t1.variable === t2.variable) {
-                        resVar = t1.variable + `<sup>2</sup>`;
-                    } else {
-                        resVar = t1.variable + t2.variable; // ba, ab 등을 그대로 노출
-                    }
-                } else {
-                    for (let v in varMap) {
-                        resVar += v + (varMap[v] > 1 ? `<sup>${varMap[v]}</sup>` : '');
-                    }
+            function multiply(t1Raw, t2Raw) {
+                const t1 = parseTerm(t1Raw);
+                const t2 = parseTerm(t2Raw);
+                const resCoeff = t1.coeff * t2.coeff;
+                
+                if (resCoeff === 0) return null;
+
+                const stdVars = { ...t1.vars };
+                for (let v in t2.vars) {
+                    stdVars[v] = (stdVars[v] || 0) + t2.vars[v];
                 }
 
-                return { coeff: resCoeff, variable: resVar, rawVar: rawVarKey };
+                let rawVarStr = "";
+                const v1Keys = Object.keys(t1.vars);
+                const v2Keys = Object.keys(t2.vars);
+                
+                if (v1Keys.length === 1 && v2Keys.length === 1 && v1Keys[0] === v2Keys[0]) {
+                    const vName = v1Keys[0];
+                    const totalExp = t1.vars[vName] + t2.vars[vName];
+                    rawVarStr = vName + `<sup>${totalExp}</sup>`;
+                } else {
+                    rawVarStr = getVarStr(t1.vars) + getVarStr(t2.vars);
+                }
+
+                return { coeff: resCoeff, vars: stdVars, rawVar: rawVarStr };
             }
 
-            function formatTerm(coeff, variable, isFirst = false) {
-                if (coeff === 0) return '';
-                let s = '';
-                if (coeff > 0 && !isFirst) s += ' + ';
-                if (coeff < 0) s += isFirst ? '-' : ' - ';
-                let absCoeff = Math.abs(coeff);
-                if (absCoeff !== 1 || variable === '') s += absCoeff;
-                s += variable;
+            function formatTerm(term, isFirst = false, useRaw = false) {
+                if (!term || term.coeff === 0) return "";
+                let s = "";
+                
+                if (term.coeff > 0 && !isFirst) s += " + ";
+                if (term.coeff < 0) s += isFirst ? "-" : " - ";
+                
+                const absCoeff = Math.abs(term.coeff);
+                const varPart = useRaw ? term.rawVar : getVarStr(term.vars);
+                const hasVars = varPart.length > 0;
+                
+                if (absCoeff !== 1 || !hasVars) s += absCoeff;
+                s += varPart;
+
                 return s;
             }
 
+            function getVarKey(vars) {
+                return Object.keys(vars).sort().map(v => v + vars[v]).join('|');
+            }
+
             function update() {
-                const aVal = document.getElementById('charA').value;
-                const bVal = document.getElementById('charB').value;
-                const cVal = document.getElementById('charC').value;
-                const dVal = document.getElementById('charD').value;
+                const v = {
+                    a: document.getElementById('charA').value,
+                    b: document.getElementById('charB').value,
+                    c: document.getElementById('charC').value,
+                    d: document.getElementById('charD').value
+                };
 
-                const a = parseTerm(aVal);
-                const b = parseTerm(bVal);
-                const c = parseTerm(cVal);
-                const d = parseTerm(dVal);
+                const p = {
+                    a: parseTerm(v.a), b: parseTerm(v.b),
+                    c: parseTerm(v.c), d: parseTerm(v.d)
+                };
 
-                const gridCols = `${a.coeff === 0 ? '0' : '1'}fr ${b.coeff === 0 ? '0' : '1'}fr`;
-                const gridRows = `${c.coeff === 0 ? '0' : '1'}fr ${d.coeff === 0 ? '0' : '1'}fr`;
+                const colStyle = `${p.a.coeff === 0 ? '0' : '1'}fr ${p.b.coeff === 0 ? '0' : '1'}fr`;
+                const rowStyle = `${p.c.coeff === 0 ? '0' : '1'}fr ${p.d.coeff === 0 ? '0' : '1'}fr`;
+                document.getElementById('rectGrid').style.gridTemplateColumns = colStyle;
+                document.getElementById('rectGrid').style.gridTemplateRows = rowStyle;
+                document.getElementById('topLabelRow').style.gridTemplateColumns = colStyle;
+                document.getElementById('leftLabelCol').style.gridTemplateRows = rowStyle;
 
-                document.getElementById('rectGrid').style.gridTemplateColumns = gridCols;
-                document.getElementById('rectGrid').style.gridTemplateRows = gridRows;
-                document.getElementById('topLabelRow').style.gridTemplateColumns = gridCols;
-                document.getElementById('leftLabelCol').style.gridTemplateRows = gridRows;
-
-                document.getElementById('labA').innerText = a.coeff === 0 ? '' : aVal;
-                document.getElementById('labB').innerText = b.coeff === 0 ? '' : bVal;
-                document.getElementById('labC').innerText = c.coeff === 0 ? '' : cVal;
-                document.getElementById('labD').innerText = d.coeff === 0 ? '' : dVal;
+                document.getElementById('labA').innerText = p.a.coeff !== 0 ? v.a : "";
+                document.getElementById('labB').innerText = p.b.coeff !== 0 ? v.b : "";
+                document.getElementById('labC').innerText = p.c.coeff !== 0 ? v.c : "";
+                document.getElementById('labD').innerText = p.d.coeff !== 0 ? v.d : "";
 
                 const rectConfigs = [
-                    { id: 'AC', v1: aVal, v2: cVal, color: 'text-red-500' },
-                    { id: 'BC', v1: bVal, v2: cVal, color: 'text-orange-500' },
-                    { id: 'AD', v1: aVal, v2: dVal, color: 'text-green-500' },
-                    { id: 'BD', v1: bVal, v2: dVal, color: 'text-purple-500' }
+                    { id: 'AC', t1: v.a, t2: v.c },
+                    { id: 'BC', t1: v.b, t2: v.c },
+                    { id: 'AD', t1: v.a, t2: v.d },
+                    { id: 'BD', t1: v.b, t2: v.d }
                 ];
 
-                const activeTerms = [];
-
+                const activeResults = [];
                 rectConfigs.forEach(r => {
-                    const res = multiplyTerms(r.v1, r.v2, true);
-                    const el = document.querySelector('#rect' + r.id + ' span');
-                    if (res.coeff !== 0) {
-                        el.innerHTML = formatTerm(res.coeff, res.variable, true);
-                        activeTerms.push({ val: res, color: r.color });
+                    const res = multiply(r.t1, r.t2);
+                    const el = document.querySelector(`#rect${r.id} span`);
+                    if (res) {
+                        el.innerHTML = formatTerm(res, true, true);
+                        activeResults.push(res);
                     } else {
-                        el.innerHTML = '';
+                        el.innerHTML = "";
                     }
                 });
 
-                let commonPart = (c.coeff !== 0 && d.coeff !== 0) ? `(${cVal} + ${dVal})` : (c.coeff !== 0 ? cVal : dVal);
-                let squareHtml = '<span class="square-symbol">□</span>';
-                let displayPart = substitutionMode ? squareHtml : commonPart;
+                const formatGroup = (term1, term2, raw1, raw2) => {
+                    if (term1.coeff !== 0 && term2.coeff !== 0) return `(${raw1} + ${raw2})`;
+                    if (term1.coeff !== 0) return raw1;
+                    if (term2.coeff !== 0) return raw2;
+                    return '0';
+                };
 
-                let factor1 = (a.coeff !== 0 && b.coeff !== 0) ? `(${aVal} + ${bVal})` : (a.coeff !== 0 ? aVal : (b.coeff !== 0 ? bVal : '0'));
-                if (a.coeff < 0 && b.coeff === 0) factor1 = `(${aVal})`;
-                document.getElementById('baseEquation').innerHTML = `${factor1}${displayPart}`;
+                const groupAB = formatGroup(p.a, p.b, v.a, v.b);
+                const groupCD = formatGroup(p.c, p.d, v.c, v.d);
+                const displayCD = subMode ? `<span class="square-symbol">□</span>` : groupCD;
 
-                const topLegendEl = document.getElementById('topSubstitutionLegend');
-                const topTargetEl = document.getElementById('topSubstitutionTarget');
-                if (substitutionMode && (a.coeff !== 0 || b.coeff !== 0)) {
-                    topLegendEl.classList.remove('hidden');
-                    topTargetEl.innerText = commonPart;
+                const isBothMonomial = (p.a.coeff !== 0 ^ p.b.coeff !== 0) && (p.c.coeff !== 0 ^ p.d.coeff !== 0);
+                const equationHtml = isBothMonomial ? `${groupAB} × ${displayCD}` : `${groupAB}${displayCD}`;
+                document.getElementById('baseEquation').innerHTML = equationHtml;
+                
+                const subLegend = document.getElementById('subLegend');
+                if (subMode) {
+                    subLegend.classList.remove('hidden');
+                    document.getElementById('subTarget').innerText = groupCD;
                 } else {
-                    topLegendEl.classList.add('hidden');
+                    subLegend.classList.add('hidden');
                 }
 
-                let step1Html = '';
-                if (a.coeff !== 0) step1Html += `${aVal}${displayPart}`;
-                if (a.coeff !== 0 && b.coeff !== 0) step1Html += ' + ';
-                if (b.coeff !== 0) step1Html += `${bVal}${displayPart}`;
-                document.getElementById('step1').innerHTML = step1Html || '0';
+                const step1 = document.getElementById('step1Content');
+                let step1Html = "";
+                if (p.a.coeff !== 0) step1Html += `${v.a}${displayCD}`;
+                if (p.a.coeff !== 0 && p.b.coeff !== 0) step1Html += " + ";
+                if (p.b.coeff !== 0) step1Html += `${v.b}${displayCD}`;
+                step1.innerHTML = step1Html || "0";
                 
-                const isComplex = (a.coeff !== 0 && b.coeff !== 0) || (c.coeff !== 0 && d.coeff !== 0);
+                const isComplex = (p.a.coeff !== 0 && p.b.coeff !== 0) || (p.c.coeff !== 0 && p.d.coeff !== 0);
                 document.getElementById('step1Row').style.display = isComplex ? 'flex' : 'none';
+                if (isComplex) setTimeout(() => document.getElementById('step1Row').classList.add('visible'), 50);
 
-                const expandedEl = document.getElementById('expandedResult');
-                expandedEl.innerHTML = '';
-                if (activeTerms.length === 0) {
-                    expandedEl.innerHTML = '0';
-                } else {
-                    activeTerms.forEach((t, idx) => {
-                        const span = document.createElement('span');
-                        span.className = t.color;
-                        span.innerHTML = formatTerm(t.val.coeff, t.val.variable, idx === 0);
-                        expandedEl.appendChild(span);
-                    });
-                }
+                const step2 = document.getElementById('step2Content');
+                step2.innerHTML = "";
+                activeResults.forEach((res, idx) => {
+                    const span = document.createElement('span');
+                    span.innerHTML = formatTerm(res, idx === 0, true);
+                    step2.appendChild(span);
+                });
+                if (activeResults.length > 0) setTimeout(() => document.getElementById('step2Row').classList.add('visible'), 150);
+                else document.getElementById('step2Row').classList.remove('visible');
 
+                // 동류항 정리 및 내림차순 정렬 로직
                 const sumMap = {};
-                const order = [];
-                const varDisplayMap = {};
-
-                activeTerms.forEach(t => {
-                    const key = t.val.rawVar;
-                    if (!(key in sumMap)) {
-                        order.push(key);
-                        const finalFormat = multiplyTerms(key.replace(/[0-9]/g, ''), "1");
-                        varDisplayMap[key] = finalFormat.variable;
+                activeResults.forEach(res => {
+                    const key = getVarKey(res.vars);
+                    if (!sumMap[key]) {
+                        sumMap[key] = { coeff: 0, vars: res.vars };
                     }
-                    sumMap[key] = (sumMap[key] || 0) + t.val.coeff;
+                    sumMap[key].coeff += res.coeff;
                 });
 
-                let finalHtml = '';
+                const step3 = document.getElementById('step3Content');
+                let finalHtml = "";
                 let first = true;
-                let visibleTermsCount = 0;
                 
-                order.forEach(key => {
-                    if (sumMap[key] !== 0) {
-                        finalHtml += formatTerm(sumMap[key], varDisplayMap[key], first);
+                // 가로 첫 항(A)의 첫 번째 문자를 기준으로 내림차순 정렬
+                const primaryVar = Object.keys(p.a.vars)[0] || Object.keys(p.c.vars)[0] || '';
+                const sortedKeys = Object.keys(sumMap).sort((keyA, keyB) => {
+                    const termA = sumMap[keyA];
+                    const termB = sumMap[keyB];
+                    
+                    const expA = termA.vars[primaryVar] || 0;
+                    const expB = termB.vars[primaryVar] || 0;
+                    
+                    // 1순위: 기준 문자의 지수가 높은 순서
+                    if (expB !== expA) return expB - expA;
+                    
+                    // 2순위: 문자열 키 길이 (복잡한 항 우선)
+                    return keyB.length - keyA.length;
+                });
+
+                sortedKeys.forEach(key => {
+                    const term = sumMap[key];
+                    if (term.coeff !== 0) {
+                        finalHtml += formatTerm(term, first, false);
                         first = false;
-                        visibleTermsCount++;
                     }
                 });
 
-                const simplifiedSection = document.getElementById('simplifiedSection');
-                if (visibleTermsCount > 0 && (visibleTermsCount < activeTerms.length || Object.values(sumMap).some(v => Math.abs(v) > 1))) {
-                    simplifiedSection.classList.remove('hidden');
-                    document.getElementById('finalResult').innerHTML = finalHtml;
-                } else {
-                    simplifiedSection.classList.add('hidden');
-                }
+                step3.innerHTML = finalHtml || "0";
+                if (finalHtml) setTimeout(() => document.getElementById('step3Row').classList.add('visible'), 250);
+                else document.getElementById('step3Row').classList.remove('visible');
             }
 
             inputs.forEach(id => document.getElementById(id).addEventListener('input', update));
