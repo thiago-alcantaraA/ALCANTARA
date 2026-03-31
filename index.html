@@ -1,192 +1,202 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>수학 수업 자료실</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap');
-        body { 
-            font-family: 'Noto Sans KR', sans-serif; 
-            background-color: #f3f4f6; 
-            color: #1f2937;
-        }
-        .menu-content { 
-            max-height: 0; 
-            overflow: hidden; 
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-            opacity: 0; 
-            transform: translateY(-10px);
-        }
-        .menu-content.open { 
-            max-height: 300px; 
-            margin-top: 1.5rem; 
-            opacity: 1; 
-            transform: translateY(0);
-        }
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수학 수업 자료실</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap');
+        body { 
+            font-family: 'Noto Sans KR', sans-serif; 
+            background-color: #f3f4f6; 
+            color: #1f2937;
+        }
+        .menu-content { 
+            max-height: 0; 
+            overflow: hidden; 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            opacity: 0; 
+            transform: translateY(-10px);
+        }
+        .menu-content.open { 
+            max-height: 300px; 
+            margin-top: 1.5rem; 
+            opacity: 1; 
+            transform: translateY(0);
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
 <body class="py-12 px-4 md:px-6">
-    <div class="max-w-6xl mx-auto">
-        <!-- 상단 헤더 -->
-        <header class="text-center mb-16">
-            <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-500 mb-4">
-                수학 수업 자료실
-            </h1>
-            <p class="text-gray-500 text-lg">즐거운 수학 수업을 위한 자료와 도구 모음</p>
-        </header>
+    <div class="max-w-6xl mx-auto">
+        <!-- 상단 헤더 -->
+        <header class="text-center mb-16">
+            <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-500 mb-4">
+                수학 수업 자료실
+            </h1>
+            <p class="text-gray-500 text-lg font-medium">즐거운 수학 수업을 위한 자료와 도구 모음</p>
+        </header>
 
-        <!-- 학년별 교육과정 섹션 -->
-        <section class="mb-20">
-            <h2 class="text-3xl font-bold text-gray-800 mb-10 flex items-center">
-                <i class="fa-solid fa-graduation-cap text-purple-600 mr-4"></i> 학년별 교육과정
-            </h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- 1학년 -->
-                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 card-hover transition-all duration-300">
-                    <div class="bg-blue-50 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 text-blue-600 font-bold text-2xl shadow-inner">1</div>
-                    <h3 class="text-2xl font-bold mb-4 text-gray-800">중학교 1학년</h3>
-                    <p class="text-gray-500 text-sm mb-6">기초 개념과 수학적 사고의 시작</p>
-                    <button onclick="toggleMenu(1)" class="w-full py-3 bg-blue-50 text-blue-600 rounded-xl font-bold text-sm flex items-center justify-center group hover:bg-blue-600 hover:text-white transition-colors">
-                        자료 보기 <i id="arrow-1" class="fa-solid fa-chevron-down ml-2 text-xs transition-transform"></i>
-                    </button>
-                    <div id="menu-1" class="menu-content space-y-3">
-                        <a href="grade1_materials.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-blue-100 transition font-bold text-gray-700 text-sm">
-                            <span class="mr-3 text-xl">📚</span> 수업자료
-                        </a>
-                        <a href="grade1_programs.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-blue-100 transition font-bold text-gray-700 text-sm">
-                            <span class="mr-3 text-xl">💻</span> 프로그램
-                        </a>
-                    </div>
-                </div>
+        <!-- 학년별 교육과정 섹션 -->
+        <section class="mb-20">
+            <h2 class="text-3xl font-bold text-gray-800 mb-10 flex items-center">
+                <i class="fa-solid fa-graduation-cap text-purple-600 mr-4"></i> 학년별 교육과정
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- 중학교 1학년 -->
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 card-hover transition-all duration-300">
+                    <div class="bg-blue-50 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 text-blue-600 font-bold text-2xl shadow-inner">1</div>
+                    <h3 class="text-2xl font-bold mb-4 text-gray-800">중학교 1학년</h3>
+                    <p class="text-gray-500 text-sm mb-6 font-medium">기초 개념과 수학적 사고의 시작</p>
+                    <button onclick="toggleMenu(1)" class="w-full py-3 bg-blue-50 text-blue-600 rounded-xl font-bold text-sm flex items-center justify-center group hover:bg-blue-600 hover:text-white transition-colors">
+                        자료 보기 <i id="arrow-1" class="fa-solid fa-chevron-down ml-2 text-xs transition-transform"></i>
+                    </button>
+                    <div id="menu-1" class="menu-content space-y-3">
+                        <a href="grade1_materials.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-blue-100 transition font-bold text-gray-700 text-sm">
+                            <span class="mr-3 text-xl">📚</span> 수업자료
+                        </a>
+                        <a href="grade1_programs.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-blue-100 transition font-bold text-gray-700 text-sm">
+                            <span class="mr-3 text-xl">💻</span> 프로그램
+                        </a>
+                    </div>
+                </div>
 
-                <!-- 2학년 -->
-                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 card-hover transition-all duration-300">
-                    <div class="bg-green-50 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 text-green-600 font-bold text-2xl shadow-inner">2</div>
-                    <h3 class="text-2xl font-bold mb-4 text-gray-800">중학교 2학년</h3>
-                    <p class="text-gray-500 text-sm mb-6">수학적 증명과 논리력의 향상</p>
-                    <button onclick="toggleMenu(2)" class="w-full py-3 bg-green-50 text-green-600 rounded-xl font-bold text-sm flex items-center justify-center group hover:bg-green-600 hover:text-white transition-colors">
-                        자료 보기 <i id="arrow-2" class="fa-solid fa-chevron-down ml-2 text-xs transition-transform"></i>
-                    </button>
-                    <div id="menu-2" class="menu-content space-y-3">
-                        <a href="grade2_materials.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-green-100 transition font-bold text-gray-700 text-sm">
-                            <span class="mr-3 text-xl">📚</span> 수업자료
-                        </a>
-                        <a href="grade2_programs.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-green-100 transition font-bold text-gray-700 text-sm">
-                            <span class="mr-3 text-xl">💻</span> 프로그램
-                        </a>
-                    </div>
-                </div>
+                <!-- 중학교 2학년 -->
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 card-hover transition-all duration-300">
+                    <div class="bg-green-50 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 text-green-600 font-bold text-2xl shadow-inner">2</div>
+                    <h3 class="text-2xl font-bold mb-4 text-gray-800">중학교 2학년</h3>
+                    <p class="text-gray-500 text-sm mb-6 font-medium">수학적 증명과 논리력의 향상</p>
+                    <button onclick="toggleMenu(2)" class="w-full py-3 bg-green-50 text-green-600 rounded-xl font-bold text-sm flex items-center justify-center group hover:bg-green-600 hover:text-white transition-colors">
+                        자료 보기 <i id="arrow-2" class="fa-solid fa-chevron-down ml-2 text-xs transition-transform"></i>
+                    </button>
+                    <div id="menu-2" class="menu-content space-y-3">
+                        <a href="grade2_materials.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-green-100 transition font-bold text-gray-700 text-sm">
+                            <span class="mr-3 text-xl">📚</span> 수업자료
+                        </a>
+                        <a href="grade2_programs.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-green-100 transition font-bold text-gray-700 text-sm">
+                            <span class="mr-3 text-xl">💻</span> 프로그램
+                        </a>
+                    </div>
+                </div>
 
-                <!-- 3학년 -->
-                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-purple-100 ring-2 ring-purple-50 card-hover transition-all duration-300">
-                    <div class="bg-purple-50 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 text-purple-600 font-bold text-2xl shadow-inner">3</div>
-                    <h3 class="text-2xl font-bold mb-4 text-gray-800">중학교 3학년</h3>
-                    <p class="text-gray-500 text-sm mb-6">중학 수학의 완성 및 고교 연계</p>
-                    <button onclick="toggleMenu(3)" class="w-full py-3 bg-purple-50 text-purple-600 rounded-xl font-bold text-sm flex items-center justify-center group hover:bg-purple-600 hover:text-white transition-colors">
-                        자료 보기 <i id="arrow-3" class="fa-solid fa-chevron-down ml-2 text-xs transition-transform"></i>
-                    </button>
-                    <div id="menu-3" class="menu-content space-y-3">
-                        <a href="grade3_materials.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-purple-100 transition font-bold text-gray-700 text-sm">
-                            <span class="mr-3 text-xl">📚</span> 수업자료
-                        </a>
-                        <a href="grade3_programs.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-purple-100 transition font-bold text-gray-700 text-sm">
-                            <span class="mr-3 text-xl">💻</span> 프로그램
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </section>
+                <!-- 중학교 3학년 -->
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-purple-100 ring-2 ring-purple-50 card-hover transition-all duration-300">
+                    <div class="bg-purple-50 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 text-purple-600 font-bold text-2xl shadow-inner">3</div>
+                    <h3 class="text-2xl font-bold mb-4 text-gray-800">중학교 3학년</h3>
+                    <p class="text-gray-500 text-sm mb-6 font-medium">중학 수학의 완성 및 고교 연계</p>
+                    <button onclick="toggleMenu(3)" class="w-full py-3 bg-purple-50 text-purple-600 rounded-xl font-bold text-sm flex items-center justify-center group hover:bg-purple-600 hover:text-white transition-colors">
+                        자료 보기 <i id="arrow-3" class="fa-solid fa-chevron-down ml-2 text-xs transition-transform"></i>
+                    </button>
+                    <div id="menu-3" class="menu-content space-y-3">
+                        <a href="grade3_materials.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-purple-100 transition font-bold text-gray-700 text-sm">
+                            <span class="mr-3 text-xl">📚</span> 수업자료
+                        </a>
+                        <a href="grade3_programs.html" class="flex items-center p-4 bg-gray-50 rounded-2xl hover:bg-purple-100 transition font-bold text-gray-700 text-sm">
+                            <span class="mr-3 text-xl">💻</span> 프로그램
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        <!-- 창의적 체험활동 섹션 -->
-        <section class="mb-20">
-            <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
-                <i class="fa-solid fa-dice text-orange-500 mr-4"></i> 창의적 체험활동 (게임 및 퀴즈)
-            </h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- 라스베이거스 추가 -->
-                <a href="라스베이거스.html" class="flex items-center p-6 bg-white rounded-[2rem] shadow-sm border border-yellow-100 ring-2 ring-yellow-50 card-hover transition group">
-                    <span class="text-4xl mr-4 group-hover:scale-110 transition duration-300">💰</span>
-                    <div class="flex flex-col">
-                        <span class="font-bold text-gray-800 group-hover:text-yellow-600 text-lg transition-colors">라스베이거스</span>
-                        <span class="text-gray-400 text-xs">확률과 전략의 주사위 게임</span>
-                    </div>
-                </a>
-                
-                <a href="스피드퀴즈.html" class="flex items-center p-6 bg-white rounded-[2rem] shadow-sm border border-indigo-100 ring-2 ring-indigo-50 card-hover transition group">
-                    <span class="text-4xl mr-4 group-hover:scale-110 transition duration-300">⚡</span>
-                    <div class="flex flex-col">
-                        <span class="font-bold text-gray-700 group-hover:text-indigo-600 text-lg transition-colors">스피드 퀴즈</span>
-                        <span class="text-gray-400 text-xs">학년별 수학 용어 대항전</span>
-                    </div>
-                </a>
-                <a href="요트 다이스 조별 게임.html" class="flex items-center p-6 bg-white rounded-[2rem] shadow-sm border border-gray-100 card-hover transition group">
-                    <span class="text-4xl mr-4 group-hover:rotate-12 transition duration-300">🎲</span>
-                    <span class="font-bold text-gray-700 group-hover:text-orange-500 text-lg transition-colors">요트 다이스</span>
-                </a>
-                <a href="코드네임 조별 게임.html" class="flex items-center p-6 bg-white rounded-[2rem] shadow-sm border border-gray-100 card-hover transition group">
-                    <span class="text-4xl mr-4 group-hover:scale-110 transition duration-300">🕵️</span>
-                    <span class="font-bold text-gray-700 group-hover:text-orange-500 text-lg transition-colors">코드네임</span>
-                </a>
-                <a href="초성게임.html" class="flex items-center p-6 bg-white rounded-[2rem] shadow-sm border border-gray-100 card-hover transition group">
-                    <span class="text-4xl mr-4 group-hover:-translate-y-1 transition duration-300">🅰️</span>
-                    <span class="font-bold text-gray-700 group-hover:text-orange-500 text-lg transition-colors">초성게임</span>
-                </a>
-                <a href="릴레이 이어그리기.html" class="flex items-center p-6 bg-white rounded-[2rem] shadow-sm border border-gray-100 card-hover transition group">
-                    <span class="text-4xl mr-4 group-hover:rotate-[-12deg] transition duration-300">🎨</span>
-                    <span class="font-bold text-gray-700 group-hover:text-orange-500 text-lg transition-colors">릴레이 이어그리기</span>
-                </a>
-            </div>
-        </section>
+        <!-- 창의적 체험활동 섹션 -->
+        <section class="mb-20">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+                <i class="fa-solid fa-dice text-orange-500 mr-4"></i> 창의적 체험활동 (게임 및 퀴즈)
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <a href="라스베이거스.html" class="flex items-center p-6 bg-white rounded-[2rem] shadow-sm border border-yellow-100 ring-2 ring-yellow-50 card-hover transition group">
+                    <span class="text-4xl mr-4 group-hover:scale-110 transition duration-300">💰</span>
+                    <div class="flex flex-col">
+                        <span class="font-bold text-gray-800 group-hover:text-yellow-600 text-lg transition-colors">라스베이거스</span>
+                        <span class="text-gray-400 text-xs font-medium">확률과 전략의 주사위 게임</span>
+                    </div>
+                </a>
+                <a href="스피드퀴즈.html" class="flex items-center p-6 bg-white rounded-[2rem] shadow-sm border border-indigo-100 ring-2 ring-indigo-50 card-hover transition group">
+                    <span class="text-4xl mr-4 group-hover:scale-110 transition duration-300">⚡</span>
+                    <div class="flex flex-col">
+                        <span class="font-bold text-gray-700 group-hover:text-indigo-600 text-lg transition-colors">스피드 퀴즈</span>
+                        <span class="text-gray-400 text-xs font-medium">학년별 수학 용어 대항전</span>
+                    </div>
+                </a>
+                <a href="요트 다이스 조별 게임.html" class="flex items-center p-6 bg-white rounded-[2rem] shadow-sm border border-gray-100 card-hover transition group">
+                    <span class="text-4xl mr-4 group-hover:rotate-12 transition duration-300">🎲</span>
+                    <span class="font-bold text-gray-700 group-hover:text-orange-500 text-lg transition-colors">요트 다이스</span>
+                </a>
+                <a href="코드네임 조별 게임.html" class="flex items-center p-6 bg-white rounded-[2rem] shadow-sm border border-gray-100 card-hover transition group">
+                    <span class="text-4xl mr-4 group-hover:scale-110 transition duration-300">🕵️</span>
+                    <span class="font-bold text-gray-700 group-hover:text-orange-500 text-lg transition-colors">코드네임</span>
+                </a>
+                <a href="초성게임.html" class="flex items-center p-6 bg-white rounded-[2rem] shadow-sm border border-gray-100 card-hover transition group">
+                    <span class="text-4xl mr-4 group-hover:-translate-y-1 transition duration-300">🅰️</span>
+                    <span class="font-bold text-gray-700 group-hover:text-orange-500 text-lg transition-colors">초성게임</span>
+                </a>
+                <a href="릴레이 이어그리기.html" class="flex items-center p-6 bg-white rounded-[2rem] shadow-sm border border-gray-100 card-hover transition group">
+                    <span class="text-4xl mr-4 group-hover:rotate-[-12deg] transition duration-300">🎨</span>
+                    <span class="font-bold text-gray-700 group-hover:text-orange-500 text-lg transition-colors">릴레이 이어그리기</span>
+                </a>
+            </div>
+        </section>
 
-        <!-- 학급 관리 도구 섹션 -->
-        <section>
-            <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
-                <i class="fa-solid fa-toolbox text-indigo-500 mr-4"></i> 학급 관리 도구
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <a href="랜덤 숫자뽑기.html" class="flex items-center p-8 bg-white rounded-[2.5rem] shadow-sm border border-indigo-50 card-hover transition group">
-                    <div class="w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center mr-8 group-hover:bg-indigo-100 transition duration-300 shadow-inner">
-                        <i class="fa-solid fa-shuffle text-4xl text-indigo-500 group-hover:rotate-180 transition duration-500"></i>
-                    </div>
-                    <div>
-                        <span class="block font-bold text-gray-800 text-2xl mb-1">랜덤 숫자뽑기</span>
-                        <span class="text-gray-500 font-medium">발표자 선정 및 번호 추첨 도구</span>
-                    </div>
-                </a>
-                <a href="자리배치도.html" class="flex items-center p-8 bg-white rounded-[2.5rem] shadow-sm border border-indigo-50 card-hover transition group">
-                    <div class="w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center mr-8 group-hover:bg-indigo-100 transition duration-300 shadow-inner">
-                        <i class="fa-solid fa-chair text-4xl text-indigo-500 group-hover:scale-110 transition duration-300"></i>
-                    </div>
-                    <div>
-                        <span class="block font-bold text-gray-800 text-2xl mb-1">자리배치도</span>
-                        <span class="text-gray-500 font-medium">좌석 배치 및 명렬표 자동 관리</span>
-                    </div>
-                </a>
-            </div>
-        </section>
-        
-        <footer class="mt-20 text-center text-gray-400 text-sm border-t border-gray-200 pt-8">
-            <p>© 2026 수학 수업 자료실. 모든 자료는 수업용으로 사용 가능합니다.</p>
-        </footer>
-    </div>
+        <!-- 만능 도구함 섹션 -->
+        <section>
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+                <i class="fa-solid fa-toolbox text-indigo-500 mr-4"></i> 만능 도구함
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 랜덤 숫자뽑기 -->
+                <a href="랜덤 숫자뽑기.html" class="flex flex-col items-center p-8 bg-white rounded-[2.5rem] shadow-sm border border-indigo-50 card-hover transition group text-center">
+                    <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-100 transition duration-300 shadow-inner">
+                        <i class="fa-solid fa-shuffle text-3xl text-indigo-500 group-hover:rotate-180 transition duration-500"></i>
+                    </div>
+                    <div>
+                        <span class="block font-bold text-gray-800 text-xl mb-1">랜덤 숫자뽑기</span>
+                        <span class="text-gray-500 text-sm font-medium">발표자 선정 및 추첨</span>
+                    </div>
+                </a>
+                <!-- 자리배치도 -->
+                <a href="자리배치도.html" class="flex flex-col items-center p-8 bg-white rounded-[2.5rem] shadow-sm border border-indigo-50 card-hover transition group text-center">
+                    <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-100 transition duration-300 shadow-inner">
+                        <i class="fa-solid fa-chair text-3xl text-indigo-500 group-hover:scale-110 transition duration-300"></i>
+                    </div>
+                    <div>
+                        <span class="block font-bold text-gray-800 text-xl mb-1">자리배치도</span>
+                        <span class="text-gray-500 text-sm font-medium">학급 좌석 배치 관리</span>
+                    </div>
+                </a>
+                <!-- 범교과 게시판 (전용 리스트 페이지 연결) -->
+                <a href="cross_curricular.html" class="flex flex-col items-center p-8 bg-white rounded-[2.5rem] shadow-sm border border-purple-100 ring-2 ring-purple-50 card-hover transition group text-center">
+                    <div class="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-100 transition duration-300 shadow-inner">
+                        <i class="fa-solid fa-clipboard-list text-3xl text-purple-500 group-hover:bounce transition duration-300"></i>
+                    </div>
+                    <div>
+                        <span class="block font-bold text-gray-800 text-xl mb-1">범교과 게시판</span>
+                        <span class="text-gray-500 text-sm font-medium">범교과 학습 자료실</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+        
+        <footer class="mt-20 text-center text-gray-400 text-sm border-t border-gray-200 pt-8">
+            <p>© 2026 수학 수업 자료실. 모든 자료는 수업용으로 사용 가능합니다.</p>
+        </footer>
+    </div>
 
-    <script>
-        function toggleMenu(n) {
-            const menu = document.getElementById(`menu-${n}`);
-            const arrow = document.getElementById(`arrow-${n}`);
-            const isOpen = menu.classList.toggle('open');
-            if(arrow) {
-                arrow.style.transform = isOpen ? "rotate(180deg)" : "rotate(0deg)";
-            }
-        }
-    </script>
+    <script>
+        function toggleMenu(n) {
+            const menu = document.getElementById(`menu-${n}`);
+            const arrow = document.getElementById(`arrow-${n}`);
+            const isOpen = menu.classList.toggle('open');
+            if(arrow) {
+                arrow.style.transform = isOpen ? "rotate(180deg)" : "rotate(0deg)";
+            }
+        }
+    </script>
 </body>
-</html> 이거 미리보기로 보여줘
+</html>
