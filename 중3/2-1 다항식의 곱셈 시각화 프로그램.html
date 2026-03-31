@@ -61,6 +61,25 @@
                 grid-template-rows: auto 384px;
             }
         }
+
+        .toggle-btn {
+            transition: all 0.3s ease;
+        }
+        .toggle-active {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        /* 네모 기호 강조 스타일 */
+        .square-symbol {
+            display: inline-block;
+            font-size: 1.2em;
+            font-weight: 900;
+            color: #4f46e5;
+            margin: 0 0.1em;
+            vertical-align: middle;
+            line-height: 1;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col items-center p-2 md:p-6">
@@ -120,17 +139,33 @@
             </div>
 
             <!-- 오른쪽: 수식 전개 -->
-            <div class="w-full lg:w-[55%] bg-blue-50/50 p-8 md:p-12 rounded-[3rem] border-2 border-blue-100 flex flex-col justify-center shadow-inner">
-                <div class="space-y-12">
-                    <!-- 기본 식 -->
-                    <div id="baseEquation" class="math-text text-4xl md:text-5xl text-gray-800 font-bold leading-tight">
-                        <!-- JS 입력 -->
+            <div class="w-full lg:w-[55%] bg-blue-50/50 p-8 md:p-12 rounded-[3rem] border-2 border-blue-100 flex flex-col justify-center shadow-inner relative">
+                <!-- 치환 버튼 -->
+                <div class="absolute top-6 right-8 flex items-center gap-3">
+                    <span class="text-xs font-bold text-blue-400 uppercase tracking-wider">Substitution Mode</span>
+                    <button id="substitutionToggle" class="toggle-btn px-4 py-2 rounded-full border-2 border-indigo-200 bg-white text-indigo-500 font-bold text-sm hover:border-indigo-400">
+                        치환하기 (□)
+                    </button>
+                </div>
+
+                <div class="space-y-12 mt-4">
+                    <!-- 기본 식 및 치환 설명 -->
+                    <div class="flex flex-wrap items-center gap-x-8 gap-y-4">
+                        <div id="baseEquation" class="math-text text-4xl md:text-5xl text-gray-800 font-bold leading-tight">
+                            <!-- JS 입력 -->
+                        </div>
+                        <!-- 첫 줄 오른쪽 치환 설명 -->
+                        <div id="topSubstitutionLegend" class="hidden px-4 py-2 bg-indigo-100 rounded-2xl border-2 border-indigo-200 text-indigo-600 font-bold text-xl md:text-2xl italic animate-pulse">
+                            (□ = <span id="topSubstitutionTarget"></span>)
+                        </div>
                     </div>
 
                     <!-- 1단계: 분배법칙 -->
-                    <div id="step1Row" class="flex items-center gap-6">
-                        <span class="text-gray-300 text-5xl font-light">=</span>
-                        <div id="step1" class="math-text text-4xl md:text-5xl font-bold text-blue-600 leading-tight"></div>
+                    <div id="step1Row" class="flex flex-col gap-2">
+                        <div class="flex items-center gap-6">
+                            <span class="text-gray-300 text-5xl font-light">=</span>
+                            <div id="step1" class="math-text text-4xl md:text-5xl font-bold text-blue-600 leading-tight"></div>
+                        </div>
                     </div>
                     
                     <!-- 2단계: 전개 완료 -->
@@ -156,11 +191,27 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const inputs = ['charA', 'charB', 'charC', 'charD'];
+            let substitutionMode = false;
+
+            const toggleBtn = document.getElementById('substitutionToggle');
+            toggleBtn.addEventListener('click', () => {
+                substitutionMode = !substitutionMode;
+                if (substitutionMode) {
+                    toggleBtn.classList.add('toggle-active');
+                    toggleBtn.innerText = '치환 해제';
+                } else {
+                    toggleBtn.classList.remove('toggle-active');
+                    toggleBtn.innerText = '치환하기 (□)';
+                }
+                update();
+            });
 
             function parseTerm(s) {
                 s = s.trim();
                 if (!s || s === '0') return { coeff: 0, variable: '' };
                 const match = s.match(/^([-+]?\d*\.?\d*)(.*)$/);
+                if (!match) return { coeff: 0, variable: '' };
+                
                 let coeffStr = match[1];
                 let variable = match[2];
 
@@ -248,29 +299,42 @@
                     }
                 });
 
-                let factor1 = (a.coeff !== 0 && b.coeff !== 0) ? `(${aVal} + ${bVal})` : (a.coeff !== 0 ? aVal : (b.coeff !== 0 ? bVal : '0'));
-                let factor2 = (c.coeff !== 0 && d.coeff !== 0) ? `(${cVal} + ${dVal})` : (c.coeff !== 0 ? cVal : (d.coeff !== 0 ? dVal : '0'));
-                
-                if (a.coeff < 0 && b.coeff === 0) factor1 = `(${aVal})`;
-                if (c.coeff < 0 && d.coeff === 0) factor2 = `(${cVal})`;
-                
-                document.getElementById('baseEquation').innerHTML = `${factor1}${factor2}`;
+                // 공통 인수 (치환 대상) 구성
+                let commonPart = (c.coeff !== 0 && d.coeff !== 0) ? `(${cVal} + ${dVal})` : (c.coeff !== 0 ? cVal : dVal);
+                let squareHtml = '<span class="square-symbol">□</span>';
+                let displayPart = substitutionMode ? squareHtml : commonPart;
 
+                // 기본 식 업데이트 (여기서도 치환 적용)
+                let factor1 = (a.coeff !== 0 && b.coeff !== 0) ? `(${aVal} + ${bVal})` : (a.coeff !== 0 ? aVal : (b.coeff !== 0 ? bVal : '0'));
+                if (a.coeff < 0 && b.coeff === 0) factor1 = `(${aVal})`;
+                
+                document.getElementById('baseEquation').innerHTML = `${factor1}${displayPart}`;
+
+                // 상단 치환 설명 업데이트
+                const topLegendEl = document.getElementById('topSubstitutionLegend');
+                const topTargetEl = document.getElementById('topSubstitutionTarget');
+                if (substitutionMode && (a.coeff !== 0 || b.coeff !== 0)) {
+                    topLegendEl.classList.remove('hidden');
+                    topTargetEl.innerText = commonPart;
+                } else {
+                    topLegendEl.classList.add('hidden');
+                }
+
+                // 1단계 분배법칙 업데이트
                 let step1Html = '';
                 if (a.coeff !== 0) {
-                    let inner = (c.coeff !== 0 && d.coeff !== 0) ? `(${cVal} + ${dVal})` : (c.coeff !== 0 ? cVal : dVal);
-                    step1Html += `${aVal}${inner}`;
+                    step1Html += `${aVal}${displayPart}`;
                 }
                 if (a.coeff !== 0 && b.coeff !== 0) step1Html += ' + ';
                 if (b.coeff !== 0) {
-                    let inner = (c.coeff !== 0 && d.coeff !== 0) ? `(${cVal} + ${dVal})` : (c.coeff !== 0 ? cVal : dVal);
-                    step1Html += `${bVal}${inner}`;
+                    step1Html += `${bVal}${displayPart}`;
                 }
                 document.getElementById('step1').innerHTML = step1Html || '0';
                 
                 const isComplex = (a.coeff !== 0 && b.coeff !== 0) || (c.coeff !== 0 && d.coeff !== 0);
                 document.getElementById('step1Row').style.display = isComplex ? 'flex' : 'none';
 
+                // 2단계 전개 결과 업데이트
                 const expandedEl = document.getElementById('expandedResult');
                 expandedEl.innerHTML = '';
                 if (activeTerms.length === 0) {
@@ -284,6 +348,7 @@
                     });
                 }
 
+                // 최종 정리 (동류항) 업데이트
                 const sumMap = {};
                 const order = [];
                 const varDisplayMap = {};
