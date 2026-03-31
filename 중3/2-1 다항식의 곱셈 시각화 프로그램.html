@@ -88,19 +88,19 @@
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
                 <div class="space-y-2 text-center">
                     <label class="text-xs font-bold text-red-500 uppercase tracking-widest">가로 항 1 (A)</label>
-                    <input type="text" id="charA" value="a" placeholder="예: a" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-red-100 bg-white input-focus-effect math-text outline-none">
+                    <input type="text" id="charA" value="x" placeholder="예: x" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-red-100 bg-white input-focus-effect math-text outline-none">
                 </div>
                 <div class="space-y-2 text-center">
                     <label class="text-xs font-bold text-orange-500 uppercase tracking-widest">가로 항 2 (B)</label>
-                    <input type="text" id="charB" value="" placeholder="예: b" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-orange-100 bg-white input-focus-effect math-text outline-none">
+                    <input type="text" id="charB" value="a" placeholder="예: a" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-orange-100 bg-white input-focus-effect math-text outline-none">
                 </div>
                 <div class="space-y-2 text-center">
                     <label class="text-xs font-bold text-emerald-500 uppercase tracking-widest">세로 항 1 (C)</label>
-                    <input type="text" id="charC" value="b" placeholder="예: a" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-emerald-100 bg-white input-focus-effect math-text outline-none">
+                    <input type="text" id="charC" value="x" placeholder="예: x" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-emerald-100 bg-white input-focus-effect math-text outline-none">
                 </div>
                 <div class="space-y-2 text-center">
                     <label class="text-xs font-bold text-purple-500 uppercase tracking-widest">세로 항 2 (D)</label>
-                    <input type="text" id="charD" value="" placeholder="예: b" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-purple-100 bg-white input-focus-effect math-text outline-none">
+                    <input type="text" id="charD" value="b" placeholder="예: b" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-purple-100 bg-white input-focus-effect math-text outline-none">
                 </div>
             </div>
         </div>
@@ -165,7 +165,7 @@
                         <div id="step2Content" class="math-text text-2xl md:text-3xl text-gray-700 font-semibold flex flex-wrap gap-x-4"></div>
                     </div>
 
-                    <!-- 3단계: 동류항 정리 (내림차순 정렬 적용) -->
+                    <!-- 3단계: 동류항 정리 (이차방정식 꼴 묶기 적용) -->
                     <div id="step3Row" class="equation-step flex items-center justify-center lg:justify-start gap-4 bg-indigo-600 p-6 rounded-2xl shadow-lg shadow-indigo-200">
                         <span class="text-white text-3xl font-black">∴</span>
                         <div id="step3Content" class="math-text text-3xl md:text-4xl text-white font-black tracking-tight"></div>
@@ -357,44 +357,96 @@
                 if (activeResults.length > 0) setTimeout(() => document.getElementById('step2Row').classList.add('visible'), 150);
                 else document.getElementById('step2Row').classList.remove('visible');
 
-                // 동류항 정리 및 내림차순 정렬 로직
-                const sumMap = {};
+                // --- 동류항 정리 및 이차방정식 꼴 (a+b)x 로직 ---
+                
+                // 1. 기준 문자 찾기 (기본적으로 x, 없으면 첫 번째 발견되는 문자)
+                const allVars = [...Object.keys(p.a.vars), ...Object.keys(p.b.vars), ...Object.keys(p.c.vars), ...Object.keys(p.d.vars)];
+                const mainVar = allVars.includes('x') ? 'x' : (allVars[0] || '');
+
+                // 2. 기준 문자의 지수별로 그룹화
+                const expGroups = {}; // exponent -> Array of components
                 activeResults.forEach(res => {
-                    const key = getVarKey(res.vars);
-                    if (!sumMap[key]) {
-                        sumMap[key] = { coeff: 0, vars: res.vars };
-                    }
-                    sumMap[key].coeff += res.coeff;
+                    const exp = res.vars[mainVar] || 0;
+                    // 기준 문자를 제외한 나머지 변수와 계수 정보 추출
+                    const otherVars = { ...res.vars };
+                    delete otherVars[mainVar];
+                    
+                    if (!expGroups[exp]) expGroups[exp] = [];
+                    expGroups[exp].push({ coeff: res.coeff, otherVars });
                 });
+
+                const sortedExponents = Object.keys(expGroups).map(Number).sort((a, b) => b - a);
+                let finalHtml = "";
+                let isOverallFirst = true;
+
+                sortedExponents.forEach(exp => {
+                    const components = expGroups[exp];
+                    
+                    // 지수 내에서 숫자 계수 합산 및 문자 계수 분류
+                    let numberSum = 0;
+                    const variableCoeffs = [];
+                    
+                    components.forEach(comp => {
+                        const varPart = getVarStr(comp.otherVars);
+                        if (varPart === "") {
+                            numberSum += comp.coeff;
+                        } else {
+                            variableCoeffs.push({ coeff: comp.coeff, varPart });
+                        }
+                    });
+
+                    // 괄호 안에 들어갈 내용 구성
+                    let innerParts = [];
+                    if (numberSum !== 0) innerParts.push(numberSum.toString());
+                    variableCoeffs.forEach(vc => {
+                        let part = "";
+                        if (vc.coeff === 1) part = vc.varPart;
+                        else if (vc.coeff === -1) part = "-" + vc.varPart;
+                        else part = vc.coeff + vc.varPart;
+                        innerParts.push(part);
+                    });
+
+                    if (innerParts.length === 0) return;
+
+                    // 부호 처리
+                    if (!isOverallFirst) {
+                        finalHtml += " + ";
+                    }
+
+                    // 출력 문자열 조립
+                    let termHtml = "";
+                    const mainVarPart = exp === 0 ? "" : (mainVar + (exp > 1 ? `<sup>${exp}</sup>` : ""));
+                    
+                    if (innerParts.length > 1) {
+                        // (a + b)x 형태
+                        let innerJoined = innerParts[0];
+                        for(let i=1; i<innerParts.length; i++) {
+                            const p = innerParts[i];
+                            innerJoined += p.startsWith('-') ? ` - ${p.substring(1)}` : ` + ${p}`;
+                        }
+                        termHtml = `(${innerJoined})${mainVarPart}`;
+                    } else {
+                        // 단일 항 형태
+                        const single = innerParts[0];
+                        if (mainVarPart === "") {
+                            termHtml = single;
+                        } else if (single === "1") {
+                            termHtml = mainVarPart;
+                        } else if (single === "-1") {
+                            termHtml = "-" + mainVarPart;
+                        } else {
+                            termHtml = single + mainVarPart;
+                        }
+                    }
+
+                    finalHtml += termHtml;
+                    isOverallFirst = false;
+                });
+
+                // 연산자 중복 제거 (+ - 를 - 로 변경 등)
+                finalHtml = finalHtml.replace(/\+ -/g, "- ");
 
                 const step3 = document.getElementById('step3Content');
-                let finalHtml = "";
-                let first = true;
-                
-                // 가로 첫 항(A)의 첫 번째 문자를 기준으로 내림차순 정렬
-                const primaryVar = Object.keys(p.a.vars)[0] || Object.keys(p.c.vars)[0] || '';
-                const sortedKeys = Object.keys(sumMap).sort((keyA, keyB) => {
-                    const termA = sumMap[keyA];
-                    const termB = sumMap[keyB];
-                    
-                    const expA = termA.vars[primaryVar] || 0;
-                    const expB = termB.vars[primaryVar] || 0;
-                    
-                    // 1순위: 기준 문자의 지수가 높은 순서
-                    if (expB !== expA) return expB - expA;
-                    
-                    // 2순위: 문자열 키 길이 (복잡한 항 우선)
-                    return keyB.length - keyA.length;
-                });
-
-                sortedKeys.forEach(key => {
-                    const term = sumMap[key];
-                    if (term.coeff !== 0) {
-                        finalHtml += formatTerm(term, first, false);
-                        first = false;
-                    }
-                });
-
                 step3.innerHTML = finalHtml || "0";
                 if (finalHtml) setTimeout(() => document.getElementById('step3Row').classList.add('visible'), 250);
                 else document.getElementById('step3Row').classList.remove('visible');
