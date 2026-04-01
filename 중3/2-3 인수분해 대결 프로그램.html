@@ -222,7 +222,7 @@
             scores: [0, 0, 0, 0, 0, 0],
             factors: [],
             foundIndices: [],
-            laneCooldowns: [0, 0, 0, 0, 0, 0] // 레인별 겹침 방지 쿨다운
+            laneCooldowns: [0, 0, 0, 0, 0, 0]
         };
 
         let timerInterval = null;
@@ -285,13 +285,9 @@
 
             if(spawnInterval) clearInterval(spawnInterval);
             if(gameState.currentRound === 3) {
-                // 즉시 화면 전체 영역에 풍선 12개 분산 배치
-                // 애니메이션 속도가 24초이므로 0~20초 사이의 음수 딜레이를 주어 화면에 꽉 차게 시작
                 for(let i = 0; i < 12; i++) {
                     spawnRisingBalloon(-(Math.random() * 18 + 1)); 
                 }
-                
-                // 이후 주기적으로 생성 (간격을 더 좁혀서 밀도 유지: 800ms)
                 spawnInterval = setInterval(() => {
                     spawnRisingBalloon(0);
                 }, 800);
@@ -329,12 +325,12 @@
                 q = Math.floor(Math.random() * 11) - 5;
                 s = Math.floor(Math.random() * 11) - 5;
             } else {
-                if (type < 0.6) {
+                if (type < 0.7) {
                     p = [1, 2, 3, 5][Math.floor(Math.random() * 4)];
                     r = [1, 2][Math.floor(Math.random() * 2)];
                     q = Math.floor(Math.random() * 11) - 5;
                     s = Math.floor(Math.random() * 11) - 5;
-                } else if (type < 0.85) {
+                } else if (type < 0.9) {
                     p = 1; r = 1; q = 0;
                     s = Math.floor(Math.random() * 11) - 5;
                 } else {
@@ -369,10 +365,6 @@
                 eqStr += (cTerm > 0 ? (eqStr ? " + " : "") : " - ") + Math.abs(cTerm);
             }
             if (!eqStr) eqStr = "0";
-
-            if (type >= 0.6 && type < 0.85 && gameState.currentRound > 1 && Math.random() > 0.5) {
-                eqStr = "(" + eqStr + ")x";
-            }
 
             document.getElementById('equation-display').innerHTML = eqStr.replace(/x²/g, 'x<sup style="font-size:0.6em">2</sup>');
             document.getElementById('equation-display').classList.remove('text-gray-400');
@@ -450,7 +442,6 @@
             });
 
             if (availableLanes.length === 0) {
-                // 만약 모든 레인이 쿨다운 중이라면 가장 오래된 레인을 강제 사용 (화면 비지 않게)
                 let oldestLane = 0;
                 let minTime = gameState.laneCooldowns[0];
                 gameState.laneCooldowns.forEach((time, idx) => {
@@ -460,7 +451,6 @@
             }
 
             const lane = availableLanes[Math.floor(Math.random() * availableLanes.length)];
-            // 세로 간격을 충분히 벌리기 위해 쿨다운 설정
             gameState.laneCooldowns[lane] = now + 3500; 
 
             const b = document.createElement('div');
@@ -475,7 +465,6 @@
             b.innerText = `(${text})`;
             b.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
             b.style.left = leftPos + '%';
-            // 시작 지점은 화면 아래
             b.style.bottom = "-150px";
             
             if (delay !== 0) {
@@ -485,7 +474,6 @@
             b.onclick = () => handleBalloonClick(b, text);
             
             container.appendChild(b);
-            // 24초 애니메이션 시간을 고려하여 제거 (여유있게 30초)
             setTimeout(() => { if(b.parentNode) b.remove(); }, 30000);
         }
 
@@ -506,7 +494,8 @@
                     gameState.solvedInRound++;
                     updateStatusUI();
                     
-                    if (gameState.solvedInRound >= gameState.targetPerRound) {
+                    // 3라운드는 무제한 모드 (목표 달성 조건 체크 제외)
+                    if (gameState.currentRound < 3 && gameState.solvedInRound >= gameState.targetPerRound) {
                         handleRoundClear();
                     } else {
                         setTimeout(nextProblem, 500);
@@ -525,7 +514,8 @@
         }
 
         function updateStatusUI() {
-            document.getElementById('target-display').innerText = `진행도: ${gameState.solvedInRound} / ${gameState.targetPerRound}`;
+            const target = gameState.currentRound === 3 ? "∞" : gameState.targetPerRound;
+            document.getElementById('target-display').innerText = `진행도: ${gameState.solvedInRound} / ${target}`;
             document.getElementById(`score-${gameState.currentTeam}`).innerText = gameState.scores[gameState.currentTeam - 1];
         }
 
@@ -557,12 +547,6 @@
                     gameState.currentRound++;
                     startRound();
                 };
-            } else {
-                title.innerText = "최종 우승!";
-                title.className = "text-5xl font-bold mb-4 text-yellow-500";
-                desc.innerText = "3단계의 모든 시련을 이겨냈습니다! 당신의 팀이 최고입니다!";
-                btn.innerText = "메인 화면으로";
-                btn.onclick = () => location.reload();
             }
             overlay.classList.remove('hidden');
         }
@@ -588,7 +572,7 @@
 
             title.innerText = "타임 오버";
             title.className = "text-5xl font-bold mb-4 text-red-600";
-            desc.innerText = "시간이 모두 소모되었습니다. 다시 한 번 도전해보세요!";
+            desc.innerText = `시간이 종료되었습니다! 총 ${gameState.solvedInRound}문제를 풀었습니다.`;
             btn.innerText = "다시 시작하기";
             btn.onclick = () => location.reload();
             overlay.classList.remove('hidden');
