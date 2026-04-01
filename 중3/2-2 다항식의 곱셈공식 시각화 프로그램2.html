@@ -124,7 +124,7 @@
         const B = 110;  
         const DIFF = A - B; 
         const CENTER_X = 640; 
-        const CENTER_Y = 520; 
+        const CENTER_Y = 500; 
 
         const pieces = {};
 
@@ -174,7 +174,7 @@
             return g;
         }
 
-        // 치수선 그리기 함수 (글자 겹침 방지 보강)
+        // 치수선 그리기 함수 (로직 복구 완료)
         function drawDim(x1, y1, x2, y2, label, side='상단', textGap = 55, xOffset = 0) {
             const g = createSVGElement('g', { class: 'ironman-transition' });
             const line = createSVGElement('line', { class: 'dimension-line' });
@@ -224,17 +224,16 @@
                 const curX = isExpanded ? bx : cx;
                 const curY = isExpanded ? by : cy;
 
-                // --- 가로 치수선 (글자가 선 사이에 오도록 조정) ---
-                drawDim(curX, curY-100, curX+DIFF, curY-100, "a-b", "상단", 40);
-                drawDim(curX+DIFF, curY-100, curX+A, curY-100, "b", "상단", 40);
-                // "전체 길이 a" 텍스트를 왼쪽으로 더 밀어(-60px) 잘림 방지
-                drawDim(curX, curY-210, curX+A, curY-210, "전체 길이 a", "상단", 45, -60); 
+                // 가로 치수선 (글자와 선 사이 간격을 50-60px로 여유있게 배치)
+                drawDim(curX, curY-100, curX+DIFF, curY-100, "a-b", "상단", 50);
+                drawDim(curX+DIFF, curY-100, curX+A, curY-100, "b", "상단", 50);
+                // "전체 길이 a" 글자가 선 끝에 걸리지 않도록 xOffset을 -70px로 확대
+                drawDim(curX, curY-210, curX+A, curY-210, "전체 길이 a", "상단", 60, -70); 
 
-                // --- 세로 치수선 ---
-                drawDim(curX-100, curY, curX-100, curY+DIFF, "a-b", "좌측", 50);
-                drawDim(curX-100, curY+DIFF, curX-100, curY+A, "b", "좌측", 50);
-                // 세로 전체 길이 텍스트를 선에서 더 멀리(110px) 띄움
-                drawDim(curX-220, curY, curX-220, curY+A, "전체 길이 a", "좌측", 110);
+                // 세로 치수선
+                drawDim(curX-100, curY, curX-100, curY+DIFF, "a-b", "좌측", 60);
+                drawDim(curX-100, curY+DIFF, curX-100, curY+A, "b", "좌측", 60);
+                drawDim(curX-240, curY, curX-240, curY+A, "전체 길이 a", "좌측", 120);
 
                 if (!isExpanded) {
                     pieces.p_res.style.transform = `translate(${cx}px, ${cy}px)`;
@@ -248,8 +247,9 @@
                     pieces.p_ab1.style.transform = `translate(${bx}px, ${by + DIFF}px)`; 
                     pieces.p_ab2.style.transform = `translate(${bx + DIFF}px, ${by}px)`; 
                     
-                    // 튕겨 나가는 애니메이션 효과
-                    pieces.p_ejected_b2.style.transform = `translate(${bx + DIFF + B + 140}px, ${by + DIFF + B + 140}px)`;
+                    // b² 조각의 위치를 오른쪽 상단 방향으로 더 높게 이동 (잘림 방지)
+                    // bx + A + 150 (오른쪽 여유공간), by + DIFF - 100 (높이 상향)
+                    pieces.p_ejected_b2.style.transform = `translate(${bx + A + 150}px, ${by + DIFF - 100}px)`;
                     pieces.p_ejected_b2.querySelector('rect').setAttribute('fill', '#dc2626'); 
                 }
             } else {
@@ -265,19 +265,19 @@
                     pieces.h2.style.transform = `translate(${bx + DIFF}px, ${by}px)`;
                     pieces.h3.style.transform = `translate(${bx}px, ${by + DIFF}px)`;
                     pieces.h_hole.style.transform = `translate(${bx + DIFF}px, ${by + DIFF}px)`;
-                    drawDim(bx, by-100, bx+DIFF, by-100, "a-b", "상단", 40);
-                    drawDim(bx+DIFF, by-100, bx+A, by-100, "b", "상단", 40);
-                    drawDim(bx, by-210, bx+A, by-210, "전체 길이 a", "상단", 45, -60);
-                    drawDim(bx-220, by, bx-220, by+A, "전체 길이 a", "좌측", 110);
+                    drawDim(bx, by-100, bx+DIFF, by-100, "a-b", "상단", 50);
+                    drawDim(bx+DIFF, by-100, bx+A, by-100, "b", "상단", 50);
+                    drawDim(bx, by-210, bx+A, by-210, "전체 길이 a", "상단", 60, -70);
+                    drawDim(bx-240, by, bx-240, by+A, "전체 길이 a", "좌측", 120);
                 } else {
                     pieces.h1.style.transform = `translate(${fx}px, ${fy}px)`;
                     pieces.h2.style.transform = `translate(${fx + DIFF}px, ${fy}px)`;
                     pieces.h3.style.transform = `translate(${fx + A + B}px, ${fy}px) rotate(90deg)`;
-                    drawDim(fx, fy-100, fx+A, fy-100, "길이 a", "상단", 40);
-                    drawDim(fx+A, fy-100, fx+A+B, fy-100, "길이 b", "상단", 40);
-                    drawDim(fx, fy-210, fx+A+B, fy-210, "전체 가로 (a+b)", "상단", 45, -60);
-                    drawDim(fx-80, fy, fx-80, fy+DIFF, "a-b", "좌측", 50);
-                    drawDim(fx-220, fy, fx-220, fy+A, "전체 길이 a", "좌측", 110);
+                    drawDim(fx, fy-100, fx+A, fy-100, "길이 a", "상단", 50);
+                    drawDim(fx+A, fy-100, fx+A+B, fy-100, "길이 b", "상단", 50);
+                    drawDim(fx, fy-210, fx+A+B, fy-210, "전체 가로 (a+b)", "상단", 60, -70);
+                    drawDim(fx-100, fy, fx-100, fy+DIFF, "a-b", "좌측", 60);
+                    drawDim(fx-240, fy, fx-240, fy+A, "전체 길이 a", "좌측", 120);
                 }
             }
             statusLabel.innerText = isExpanded ? "전개 상태" : "조립 상태";
