@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이차방정식 인수분해 농구 모드 Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+        
+        body {
+            font-family: 'Jua', sans-serif;
+            background-color: #f0f9ff;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* 풍선 기본 스타일 */
+        .balloon {
+            width: 100px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: inset -8px -8px 0 rgba(0,0,0,0.1);
+            transition: transform 0.2s, background-color 0.2s;
+            position: absolute;
+            z-index: 10;
+            text-align: center;
+            padding: 5px;
+        }
+
+        .balloon::before {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 45px;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 10px solid currentColor;
+        }
+
+        /* 1, 2라운드 고정 배치용 */
+        .static-balloon {
+            position: relative !important;
+            margin: auto;
+        }
+
+        /* 3라운드 상승 애니메이션 (느린 속도: 24초) */
+        @keyframes rise {
+            from { transform: translateY(100vh); }
+            to { transform: translateY(-160vh); }
+        }
+
+        .rising {
+            animation: rise 24s linear forwards;
+        }
+
+        .pop-animation {
+            animation: pop 0.4s forwards !important;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.5; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 20px;
+            padding: 20px;
+            height: 100%;
+        }
+
+        .hidden { display: none; }
+
+        .config-btn.active {
+            background-color: #2563eb;
+            color: white;
+            border-color: #1e40af;
+        }
+        
+        .team-card.active {
+            border-color: #facc15;
+            background-color: #fefce8;
+        }
+
+        .bonus-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5rem;
+            color: #facc15;
+            text-shadow: 0 0 20px rgba(0,0,0,0.5);
+            z-index: 100;
+            pointer-events: none;
+            animation: bonusFade 1.5s ease-out forwards;
+        }
+
+        @keyframes bonusFade {
+            0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -100px) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -200px) scale(1); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="p-4">
+
+    <div id="game-ui" class="max-w-5xl mx-auto">
+        
+        <!-- 상단 설정 바 -->
+        <div class="bg-white rounded-3xl shadow-xl p-6 mb-4 border-b-4 border-blue-200">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                
+                <!-- 시간 설정 -->
+                <div class="flex flex-col items-center gap-2">
+                    <span class="text-gray-600 font-bold text-sm">초기 시간 설정</span>
+                    <div class="flex gap-1 w-full">
+                        <button onclick="setTime(60, this)" class="config-btn flex-1 py-2 border-2 border-blue-200 rounded-xl hover:bg-blue-50 transition active">1분</button>
+                        <button onclick="setTime(120, this)" class="config-btn flex-1 py-2 border-2 border-blue-200 rounded-xl hover:bg-blue-50 transition">2분</button>
+                        <button onclick="setTime(180, this)" class="config-btn flex-1 py-2 border-2 border-blue-200 rounded-xl hover:bg-blue-50 transition">3분</button>
+                    </div>
+                </div>
+
+                <!-- 시작 라운드 설정 -->
+                <div class="flex flex-col items-center gap-2">
+                    <span class="text-gray-600 font-bold text-sm">시작 라운드 선택</span>
+                    <div class="flex gap-1 w-full">
+                        <button onclick="setStartRound(1, this)" class="config-btn flex-1 py-2 border-2 border-blue-200 rounded-xl hover:bg-blue-50 transition active">1R</button>
+                        <button onclick="setStartRound(2, this)" class="config-btn flex-1 py-2 border-2 border-blue-200 rounded-xl hover:bg-blue-50 transition">2R</button>
+                        <button onclick="setStartRound(3, this)" class="config-btn flex-1 py-2 border-2 border-blue-200 rounded-xl hover:bg-blue-50 transition">3R</button>
+                    </div>
+                </div>
+
+                <!-- 게임 상태 및 시작 버튼 -->
+                <div class="flex flex-col items-center gap-2 border-x-2 border-gray-100 px-4">
+                    <div class="flex gap-3 items-center mb-1">
+                        <div class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm" id="round-badge">라운드 1</div>
+                        <div class="text-xl text-blue-500 font-bold"><span id="timer">60</span>초</div>
+                    </div>
+                    <button id="start-btn" onclick="initGame()" class="w-full bg-green-500 hover:bg-green-600 text-white text-lg py-2 rounded-xl shadow-md transition transform active:scale-95">
+                        게임 시작!
+                    </button>
+                </div>
+
+                <!-- 진행도 표시 -->
+                <div class="flex flex-col items-center gap-1">
+                    <div id="current-team-display" class="text-sm font-bold text-gray-500 text-center">팀을 선택하세요</div>
+                    <div class="text-blue-600 text-lg font-bold" id="target-display">진행도: 0 / 7</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 문제 표시창 -->
+        <div class="bg-white rounded-3xl shadow-lg p-6 mb-4 text-center border-2 border-blue-100 relative">
+            <div id="equation-display" class="text-4xl font-bold text-gray-400 mb-2">문제가 여기에 표시됩니다</div>
+            <div id="factor-progress" class="flex justify-center gap-4 text-3xl font-bold text-blue-600 mt-2 min-h-[40px]"></div>
+        </div>
+
+        <!-- 게임 실행 영역 -->
+        <div id="game-canvas" class="h-[45vh] bg-white rounded-3xl border-4 border-dashed border-blue-100 relative shadow-inner overflow-hidden">
+            <div id="balloon-container" class="game-grid relative h-full w-full">
+                <div id="start-message" class="absolute inset-0 flex items-center justify-center text-2xl text-gray-300 font-bold text-center p-4">
+                    팀, 시간, 시작 라운드를 정하고<br>시작 버튼을 눌러주세요
+                </div>
+            </div>
+            
+            <div id="bonus-container"></div>
+
+            <div id="message-overlay" class="hidden absolute inset-0 bg-white/95 z-50 flex flex-col items-center justify-center text-center p-8">
+                <h2 id="msg-title" class="text-5xl font-bold mb-4 text-blue-600">성공!</h2>
+                <p id="msg-desc" class="text-2xl text-gray-600 mb-8"></p>
+                <button id="msg-btn" class="bg-blue-500 text-white px-10 py-3 rounded-full text-2xl shadow-xl hover:bg-blue-600 transition">
+                    확인
+                </button>
+            </div>
+        </div>
+
+        <!-- 팀 점수판 -->
+        <div class="mt-6 grid grid-cols-3 md:grid-cols-6 gap-3">
+            <script>
+                for(let i=1; i<=6; i++) {
+                    document.write(`
+                        <div onclick="selectTeam(${i})" id="team-card-${i}" class="team-card cursor-pointer bg-white p-3 rounded-2xl shadow border-2 border-transparent transition">
+                            <div class="text-center font-bold text-xs text-gray-400 mb-1">팀 ${i}</div>
+                            <div class="text-center text-2xl text-blue-500 font-bold" id="score-${i}">0</div>
+                        </div>
+                    `);
+                }
+            </script>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            currentRound: 1,
+            startRoundChoice: 1,
+            timeLeft: 60,
+            baseTime: 60,
+            solvedInRound: 0,
+            targetPerRound: 7, 
+            currentTeam: null,
+            isPaused: true,
+            scores: [0, 0, 0, 0, 0, 0],
+            factors: [],
+            foundIndices: [],
+            laneCooldowns: [0, 0, 0, 0, 0, 0] // 레인별 겹침 방지 쿨다운
+        };
+
+        let timerInterval = null;
+        let spawnInterval = null;
+
+        function setTime(seconds, btn) {
+            if (!gameState.isPaused) return;
+            gameState.baseTime = seconds;
+            gameState.timeLeft = seconds;
+            document.getElementById('timer').innerText = seconds;
+            document.querySelectorAll('.flex:nth-child(1) .config-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function setStartRound(round, btn) {
+            if (!gameState.isPaused) return;
+            gameState.startRoundChoice = round;
+            document.getElementById('round-badge').innerText = `라운드 ${round}`;
+            document.querySelectorAll('.flex:nth-child(2) .config-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function selectTeam(num) {
+            if (!gameState.isPaused) return;
+            gameState.currentTeam = num;
+            document.querySelectorAll('.team-card').forEach(c => c.classList.remove('active'));
+            document.getElementById(`team-card-${num}`).classList.add('active');
+            document.getElementById('current-team-display').innerText = `팀 ${num} 준비 완료`;
+            document.getElementById('current-team-display').className = "text-sm font-bold text-blue-600 text-center";
+        }
+
+        function initGame() {
+            if (!gameState.currentTeam) {
+                alert("팀을 먼저 선택해주세요!");
+                return;
+            }
+            gameState.currentRound = gameState.startRoundChoice;
+            gameState.solvedInRound = 0;
+            gameState.isPaused = false;
+            gameState.timeLeft = gameState.baseTime; 
+            
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('start-btn').classList.add('opacity-50');
+            document.getElementById('balloon-container').innerHTML = ''; 
+            
+            startRound();
+        }
+
+        function startRound() {
+            gameState.solvedInRound = 0;
+            gameState.isPaused = false;
+            document.getElementById('message-overlay').classList.add('hidden');
+            document.getElementById('round-badge').innerText = `라운드 ${gameState.currentRound}`;
+            document.getElementById('timer').innerText = Math.ceil(gameState.timeLeft);
+            updateStatusUI();
+            nextProblem();
+            
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+
+            if(spawnInterval) clearInterval(spawnInterval);
+            if(gameState.currentRound === 3) {
+                // 즉시 화면 전체 영역에 풍선 12개 분산 배치
+                // 애니메이션 속도가 24초이므로 0~20초 사이의 음수 딜레이를 주어 화면에 꽉 차게 시작
+                for(let i = 0; i < 12; i++) {
+                    spawnRisingBalloon(-(Math.random() * 18 + 1)); 
+                }
+                
+                // 이후 주기적으로 생성 (간격을 더 좁혀서 밀도 유지: 800ms)
+                spawnInterval = setInterval(() => {
+                    spawnRisingBalloon(0);
+                }, 800);
+            }
+        }
+
+        function updateTimer() {
+            if (gameState.isPaused) return;
+            gameState.timeLeft--;
+            document.getElementById('timer').innerText = Math.max(0, Math.ceil(gameState.timeLeft));
+            if (gameState.timeLeft <= 0) endGame();
+        }
+
+        function nextProblem() {
+            generateEquation();
+            updateFactorProgress();
+            if(gameState.currentRound < 3) {
+                renderStaticBalloons();
+            }
+        }
+
+        function formatFactor(p, q) {
+            if (p === 0) return q.toString();
+            let pStr = p === 1 ? "x" : p === -1 ? "-x" : p + "x";
+            if (q === 0) return pStr;
+            return pStr + (q > 0 ? "+" + q : q);
+        }
+
+        function generateEquation() {
+            let p, q, r, s;
+            let type = Math.random();
+
+            if (gameState.currentRound === 1) {
+                p = 1; r = 1;
+                q = Math.floor(Math.random() * 11) - 5;
+                s = Math.floor(Math.random() * 11) - 5;
+            } else {
+                if (type < 0.6) {
+                    p = [1, 2, 3, 5][Math.floor(Math.random() * 4)];
+                    r = [1, 2][Math.floor(Math.random() * 2)];
+                    q = Math.floor(Math.random() * 11) - 5;
+                    s = Math.floor(Math.random() * 11) - 5;
+                } else if (type < 0.85) {
+                    p = 1; r = 1; q = 0;
+                    s = Math.floor(Math.random() * 11) - 5;
+                } else {
+                    const denoms = [2, 3, 4, 5];
+                    const d = denoms[Math.floor(Math.random() * denoms.length)];
+                    gameState.factors = [`x+1/${d}`, `x-1/${d}`];
+                    gameState.foundIndices = [];
+                    document.getElementById('equation-display').innerHTML = `x² - 1/${d*d}`;
+                    document.getElementById('equation-display').classList.remove('text-gray-400');
+                    document.getElementById('equation-display').classList.add('text-gray-800');
+                    return;
+                }
+            }
+
+            gameState.factors = [formatFactor(p, q), formatFactor(r, s)];
+            gameState.foundIndices = [];
+
+            const aTerm = p * r;
+            const bTerm = p * s + q * r;
+            const cTerm = q * s;
+
+            let eqStr = "";
+            if (aTerm !== 0) {
+                let aStr = aTerm === 1 ? "x²" : aTerm === -1 ? "-x²" : aTerm + "x²";
+                eqStr += aStr;
+            }
+            if (bTerm !== 0) {
+                let bStr = Math.abs(bTerm) === 1 ? "x" : Math.abs(bTerm) + "x";
+                eqStr += (bTerm > 0 ? (eqStr ? " + " : "") : " - ") + bStr;
+            }
+            if (cTerm !== 0) {
+                eqStr += (cTerm > 0 ? (eqStr ? " + " : "") : " - ") + Math.abs(cTerm);
+            }
+            if (!eqStr) eqStr = "0";
+
+            if (type >= 0.6 && type < 0.85 && gameState.currentRound > 1 && Math.random() > 0.5) {
+                eqStr = "(" + eqStr + ")x";
+            }
+
+            document.getElementById('equation-display').innerHTML = eqStr.replace(/x²/g, 'x<sup style="font-size:0.6em">2</sup>');
+            document.getElementById('equation-display').classList.remove('text-gray-400');
+            document.getElementById('equation-display').classList.add('text-gray-800');
+        }
+
+        function updateFactorProgress() {
+            const container = document.getElementById('factor-progress');
+            let html = "";
+            gameState.factors.forEach((f, idx) => {
+                if(gameState.foundIndices.includes(idx)) {
+                    html += `<span class="bg-blue-100 px-3 py-1 rounded-lg border-2 border-blue-400">(${f})</span>`;
+                } else {
+                    html += `<span class="bg-gray-100 px-3 py-1 rounded-lg border-2 border-dashed border-gray-300 text-gray-300">( ? )</span>`;
+                }
+            });
+            container.innerHTML = html;
+        }
+
+        const colors = ['#f87171', '#60a5fa', '#34d399', '#fbbf24', '#a78bfa', '#f472b6'];
+
+        function getRandomWrongFactor(round) {
+            if (round === 1) {
+                const q = Math.floor(Math.random() * 21) - 10;
+                return formatFactor(1, q);
+            }
+            const type = Math.random();
+            if (type < 0.7) {
+                const p = [1, 2, 3][Math.floor(Math.random() * 3)];
+                const q = Math.floor(Math.random() * 15) - 7;
+                return formatFactor(p, q);
+            } else if (type < 0.9) {
+                return "x";
+            } else {
+                const d = [2, 3, 4, 5][Math.floor(Math.random() * 4)];
+                return `x${Math.random() > 0.5 ? '+' : '-'}1/${d}`;
+            }
+        }
+
+        function renderStaticBalloons() {
+            const container = document.getElementById('balloon-container');
+            container.innerHTML = '';
+            container.className = "game-grid";
+            
+            let items = [];
+            gameState.factors.forEach(f => items.push({ text: f }));
+            
+            while(items.length < 15) {
+                const f = getRandomWrongFactor(gameState.currentRound);
+                if(!gameState.factors.includes(f)) {
+                    items.push({ text: f });
+                }
+            }
+            items.sort(() => Math.random() - 0.5);
+
+            items.forEach(item => {
+                const b = document.createElement('div');
+                b.className = 'balloon static-balloon';
+                b.innerText = `(${item.text})`;
+                b.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                b.onclick = () => handleBalloonClick(b, item.text);
+                container.appendChild(b);
+            });
+        }
+
+        function spawnRisingBalloon(delay = 0) {
+            if(gameState.isPaused || gameState.currentRound !== 3) return;
+            const container = document.getElementById('balloon-container');
+            container.className = "relative h-full w-full";
+
+            let availableLanes = [];
+            const now = Date.now();
+            gameState.laneCooldowns.forEach((time, idx) => {
+                if (now > time) availableLanes.push(idx);
+            });
+
+            if (availableLanes.length === 0) {
+                // 만약 모든 레인이 쿨다운 중이라면 가장 오래된 레인을 강제 사용 (화면 비지 않게)
+                let oldestLane = 0;
+                let minTime = gameState.laneCooldowns[0];
+                gameState.laneCooldowns.forEach((time, idx) => {
+                    if (time < minTime) { minTime = time; oldestLane = idx; }
+                });
+                availableLanes = [oldestLane];
+            }
+
+            const lane = availableLanes[Math.floor(Math.random() * availableLanes.length)];
+            // 세로 간격을 충분히 벌리기 위해 쿨다운 설정
+            gameState.laneCooldowns[lane] = now + 3500; 
+
+            const b = document.createElement('div');
+            b.className = 'balloon rising';
+            
+            const isCorrect = Math.random() < 0.4;
+            let text = isCorrect ? gameState.factors[Math.floor(Math.random() * 2)] : getRandomWrongFactor(3);
+
+            const laneWidth = 100 / 6;
+            const leftPos = (lane * laneWidth) + (laneWidth / 2) - 5; 
+
+            b.innerText = `(${text})`;
+            b.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            b.style.left = leftPos + '%';
+            // 시작 지점은 화면 아래
+            b.style.bottom = "-150px";
+            
+            if (delay !== 0) {
+                b.style.animationDelay = delay + 's';
+            }
+            
+            b.onclick = () => handleBalloonClick(b, text);
+            
+            container.appendChild(b);
+            // 24초 애니메이션 시간을 고려하여 제거 (여유있게 30초)
+            setTimeout(() => { if(b.parentNode) b.remove(); }, 30000);
+        }
+
+        function handleBalloonClick(el, text) {
+            if (gameState.isPaused) return;
+
+            const targetIndex = gameState.factors.findIndex((f, idx) => f === text && !gameState.foundIndices.includes(idx));
+
+            if (targetIndex !== -1) {
+                el.classList.add('pop-animation');
+                gameState.foundIndices.push(targetIndex);
+                gameState.scores[gameState.currentTeam - 1] += 5;
+                updateFactorProgress();
+                updateStatusUI();
+                
+                if (gameState.foundIndices.length === 2) {
+                    gameState.scores[gameState.currentTeam - 1] += 10;
+                    gameState.solvedInRound++;
+                    updateStatusUI();
+                    
+                    if (gameState.solvedInRound >= gameState.targetPerRound) {
+                        handleRoundClear();
+                    } else {
+                        setTimeout(nextProblem, 500);
+                    }
+                } else {
+                    setTimeout(() => { if(el.parentNode) el.remove(); }, 400);
+                }
+            } else {
+                el.classList.add('shake');
+                el.style.backgroundColor = '#6b7280';
+                gameState.timeLeft = Math.max(0, gameState.timeLeft - 4);
+                gameState.scores[gameState.currentTeam - 1] = Math.max(0, gameState.scores[gameState.currentTeam - 1] - 5);
+                updateStatusUI();
+                setTimeout(() => el.classList.remove('shake'), 500);
+            }
+        }
+
+        function updateStatusUI() {
+            document.getElementById('target-display').innerText = `진행도: ${gameState.solvedInRound} / ${gameState.targetPerRound}`;
+            document.getElementById(`score-${gameState.currentTeam}`).innerText = gameState.scores[gameState.currentTeam - 1];
+        }
+
+        function handleRoundClear() {
+            gameState.isPaused = true;
+            clearInterval(timerInterval);
+            if(spawnInterval) clearInterval(spawnInterval);
+            
+            let bonusAmount = 0;
+            if (gameState.timeLeft > (gameState.baseTime / 2)) {
+                bonusAmount = 25; 
+                gameState.timeLeft += bonusAmount;
+                showBonusEffect(bonusAmount);
+            }
+
+            const overlay = document.getElementById('message-overlay');
+            const title = document.getElementById('msg-title');
+            const desc = document.getElementById('msg-desc');
+            const btn = document.getElementById('msg-btn');
+
+            if (gameState.currentRound < 3) {
+                title.innerText = bonusAmount > 0 ? "타임 익스텐션!" : "라운드 성공!";
+                title.className = "text-5xl font-bold mb-4 text-green-600";
+                desc.innerHTML = bonusAmount > 0 ? 
+                    `빠른 속도로 클리어하여 보너스 시간을 획득했습니다! <br><span class="text-yellow-500 text-3xl">+${bonusAmount}초 보너스!</span>` : 
+                    "라운드를 성공적으로 통과했습니다.";
+                btn.innerText = "다음 라운드 도전";
+                btn.onclick = () => {
+                    gameState.currentRound++;
+                    startRound();
+                };
+            } else {
+                title.innerText = "최종 우승!";
+                title.className = "text-5xl font-bold mb-4 text-yellow-500";
+                desc.innerText = "3단계의 모든 시련을 이겨냈습니다! 당신의 팀이 최고입니다!";
+                btn.innerText = "메인 화면으로";
+                btn.onclick = () => location.reload();
+            }
+            overlay.classList.remove('hidden');
+        }
+
+        function showBonusEffect(seconds) {
+            const container = document.getElementById('bonus-container');
+            const bonusDiv = document.createElement('div');
+            bonusDiv.className = 'bonus-text';
+            bonusDiv.innerText = `TIME BONUS +${seconds}s`;
+            container.appendChild(bonusDiv);
+            setTimeout(() => bonusDiv.remove(), 2000);
+        }
+
+        function endGame() {
+            gameState.isPaused = true;
+            clearInterval(timerInterval);
+            if(spawnInterval) clearInterval(spawnInterval);
+            
+            const overlay = document.getElementById('message-overlay');
+            const title = document.getElementById('msg-title');
+            const desc = document.getElementById('msg-desc');
+            const btn = document.getElementById('msg-btn');
+
+            title.innerText = "타임 오버";
+            title.className = "text-5xl font-bold mb-4 text-red-600";
+            desc.innerText = "시간이 모두 소모되었습니다. 다시 한 번 도전해보세요!";
+            btn.innerText = "다시 시작하기";
+            btn.onclick = () => location.reload();
+            overlay.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
