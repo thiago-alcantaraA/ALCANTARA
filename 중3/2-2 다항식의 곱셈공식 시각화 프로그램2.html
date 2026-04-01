@@ -24,7 +24,7 @@
             stroke-width: 2.5; 
         }
 
-        /* 배경 점선 그리드 */
+        /* 배경 점선 그리드 (이미지 스타일) */
         .canvas-bg {
             background-color: #ffffff;
             background-image: radial-gradient(#cbd5e1 2px, transparent 2px);
@@ -72,7 +72,7 @@
 
     <!-- 메인 컨텐츠 영역 -->
     <div class="flex-1 flex overflow-hidden">
-        <!-- 왼쪽: 시각화 영역 (그리드 배경) -->
+        <!-- 왼쪽: 시각화 영역 -->
         <div class="flex-1 relative canvas-bg overflow-hidden flex items-center justify-center">
             <svg id="mainSvg" width="1100" height="900" viewBox="0 0 1100 900" class="overflow-visible">
                 <g id="dimGroup"></g>
@@ -85,7 +85,7 @@
             </div>
         </div>
 
-        <!-- 오른쪽: 제어 패널 (세로형 버튼) -->
+        <!-- 오른쪽: 제어 패널 -->
         <div class="w-96 control-panel p-10 flex flex-col justify-center items-center gap-10 shadow-2xl">
             <div class="text-center">
                 <p class="text-slate-500 font-black text-lg mb-3">공식 전개 제어</p>
@@ -119,12 +119,12 @@
         let isExpanded = false;
         let currentTab = 1;
 
-        // 크기 설정
+        // 좌표 및 크기 정밀 설정
         const A = 380; 
         const B = 110;  
         const DIFF = A - B; 
-        const CENTER_X = 600; 
-        const CENTER_Y = 500; 
+        const CENTER_X = 640; 
+        const CENTER_Y = 520; 
 
         const pieces = {};
 
@@ -137,20 +137,17 @@
         function initElements() {
             pieceGroup.innerHTML = '';
             
-            // (a-b)^2 보라색 (이미지 느낌)
+            // 이미지 스타일 색상 적용
             pieces.p_frame = createBlock(A, A, 'none', '#94a3b8', '', '');
             pieces.p_frame.firstChild.setAttribute('stroke-dasharray', '8,4');
             pieces.p_res = createBlock(DIFF, DIFF, '#e0e7ff', '#6366f1', '(a-b)²', 'area-label-res');
             
-            // ab 직사각형 (이미지 느낌의 하늘색)
             pieces.p_ab1 = createBlock(A, B, 'rgba(186, 230, 253, 0.7)', '#0ea5e9', 'ab', 'area-label-ab'); 
             pieces.p_ab2 = createBlock(B, A, 'rgba(186, 230, 253, 0.7)', '#0ea5e9', 'ab', 'area-label-ab'); 
             
-            // 튕겨 나가는 b² 조각
             pieces.p_ejected_b2 = createBlock(B, B, 'rgba(186, 230, 253, 0.95)', '#0284c7', 'b²', 'area-label-b2');
             pieces.p_ejected_b2.classList.add('ejected-b2');
             
-            // 공식 2 (합차)
             pieces.h1 = createBlock(DIFF, DIFF, '#e0e7ff', '#6366f1', '', ''); 
             pieces.h2 = createBlock(B, DIFF, '#bae6fd', '#0ea5e9', '', '');    
             pieces.h3 = createBlock(DIFF, B, '#bae6fd', '#0ea5e9', '', '');    
@@ -177,10 +174,7 @@
             return g;
         }
 
-        /**
-         * 치수선 그리기
-         * xOffset: 텍스트를 선 방향으로 추가 이동 (글자 잘림 방지용)
-         */
+        // 치수선 그리기 함수 (글자 겹침 방지 보강)
         function drawDim(x1, y1, x2, y2, label, side='상단', textGap = 55, xOffset = 0) {
             const g = createSVGElement('g', { class: 'ironman-transition' });
             const line = createSVGElement('line', { class: 'dimension-line' });
@@ -196,12 +190,12 @@
             line.setAttribute('x1', x1); line.setAttribute('y1', y1);
             line.setAttribute('x2', x2); line.setAttribute('y2', y2);
             
-            if (y1 === y2) { // 가로
+            if (y1 === y2) { // 가로축
                 c1.setAttribute('x1', x1); c1.setAttribute('y1', y1-capSize/2); c1.setAttribute('x2', x1); c1.setAttribute('y2', y1+capSize/2);
                 c2.setAttribute('x1', x2); c2.setAttribute('y1', y1-capSize/2); c2.setAttribute('x2', x2); c2.setAttribute('y2', y1+capSize/2);
                 t.setAttribute('x', ((x1+x2)/2) + xOffset); 
                 t.setAttribute('y', y1 + (side==='상단' ? -textGap : textGap));
-            } else { // 세로
+            } else { // 세로축
                 c1.setAttribute('x1', x1-capSize/2); c1.setAttribute('y1', y1); c1.setAttribute('x2', x1+capSize/2); c1.setAttribute('y2', y1);
                 c2.setAttribute('x1', x1-capSize/2); c2.setAttribute('y1', y2); c2.setAttribute('x2', x1+capSize/2); c2.setAttribute('y2', y2);
                 t.setAttribute('x', x1 + (side==='좌측' ? -textGap : textGap)); 
@@ -230,17 +224,17 @@
                 const curX = isExpanded ? bx : cx;
                 const curY = isExpanded ? by : cy;
 
-                // --- 가로 치수선 (이미지 스타일 복구) ---
-                drawDim(curX, curY-100, curX+DIFF, curY-100, "a-b", "상단", 55);
-                drawDim(curX+DIFF, curY-100, curX+A, curY-100, "b", "상단", 55);
-                // "전체 길이 a" 텍스트 겹침 방지를 위해 xOffset -45px 적용
-                drawDim(curX, curY-210, curX+A, curY-210, "전체 길이 a", "상단", 60, -45); 
+                // --- 가로 치수선 (글자가 선 사이에 오도록 조정) ---
+                drawDim(curX, curY-100, curX+DIFF, curY-100, "a-b", "상단", 40);
+                drawDim(curX+DIFF, curY-100, curX+A, curY-100, "b", "상단", 40);
+                // "전체 길이 a" 텍스트를 왼쪽으로 더 밀어(-60px) 잘림 방지
+                drawDim(curX, curY-210, curX+A, curY-210, "전체 길이 a", "상단", 45, -60); 
 
-                // --- 세로 치수선 (이미지 스타일 복구) ---
-                drawDim(curX-100, curY, curX-100, curY+DIFF, "a-b", "좌측", 65);
-                drawDim(curX-100, curY+DIFF, curX-100, curY+A, "b", "좌측", 65);
-                // 세로 "전체 길이 a"는 선에서 130px 띄워 선명하게 표시
-                drawDim(curX-240, curY, curX-240, curY+A, "전체 길이 a", "좌측", 130);
+                // --- 세로 치수선 ---
+                drawDim(curX-100, curY, curX-100, curY+DIFF, "a-b", "좌측", 50);
+                drawDim(curX-100, curY+DIFF, curX-100, curY+A, "b", "좌측", 50);
+                // 세로 전체 길이 텍스트를 선에서 더 멀리(110px) 띄움
+                drawDim(curX-220, curY, curX-220, curY+A, "전체 길이 a", "좌측", 110);
 
                 if (!isExpanded) {
                     pieces.p_res.style.transform = `translate(${cx}px, ${cy}px)`;
@@ -254,7 +248,7 @@
                     pieces.p_ab1.style.transform = `translate(${bx}px, ${by + DIFF}px)`; 
                     pieces.p_ab2.style.transform = `translate(${bx + DIFF}px, ${by}px)`; 
                     
-                    // 튕겨 나가는 애니메이션 및 색상 일치
+                    // 튕겨 나가는 애니메이션 효과
                     pieces.p_ejected_b2.style.transform = `translate(${bx + DIFF + B + 140}px, ${by + DIFF + B + 140}px)`;
                     pieces.p_ejected_b2.querySelector('rect').setAttribute('fill', '#dc2626'); 
                 }
@@ -271,27 +265,29 @@
                     pieces.h2.style.transform = `translate(${bx + DIFF}px, ${by}px)`;
                     pieces.h3.style.transform = `translate(${bx}px, ${by + DIFF}px)`;
                     pieces.h_hole.style.transform = `translate(${bx + DIFF}px, ${by + DIFF}px)`;
-                    drawDim(bx, by-100, bx+DIFF, by-100, "a-b", "상단", 55);
-                    drawDim(bx+DIFF, by-100, bx+A, by-100, "b", "상단", 55);
-                    drawDim(bx, by-210, bx+A, by-210, "전체 길이 a", "상단", 60, -45);
-                    drawDim(bx-240, by, bx-240, by+A, "전체 길이 a", "좌측", 130);
+                    drawDim(bx, by-100, bx+DIFF, by-100, "a-b", "상단", 40);
+                    drawDim(bx+DIFF, by-100, bx+A, by-100, "b", "상단", 40);
+                    drawDim(bx, by-210, bx+A, by-210, "전체 길이 a", "상단", 45, -60);
+                    drawDim(bx-220, by, bx-220, by+A, "전체 길이 a", "좌측", 110);
                 } else {
                     pieces.h1.style.transform = `translate(${fx}px, ${fy}px)`;
                     pieces.h2.style.transform = `translate(${fx + DIFF}px, ${fy}px)`;
                     pieces.h3.style.transform = `translate(${fx + A + B}px, ${fy}px) rotate(90deg)`;
-                    drawDim(fx, fy-100, fx+A, fy-100, "길이 a", "상단", 55);
-                    drawDim(fx+A, fy-100, fx+A+B, fy-100, "길이 b", "상단", 55);
-                    drawDim(fx, fy-210, fx+A+B, fy-210, "전체 가로 (a+b)", "상단", 60, -45);
-                    drawDim(fx-100, fy, fx-100, fy+DIFF, "a-b", "좌측", 65);
-                    drawDim(fx-240, fy, fx-240, fy+A, "전체 길이 a", "좌측", 130);
+                    drawDim(fx, fy-100, fx+A, fy-100, "길이 a", "상단", 40);
+                    drawDim(fx+A, fy-100, fx+A+B, fy-100, "길이 b", "상단", 40);
+                    drawDim(fx, fy-210, fx+A+B, fy-210, "전체 가로 (a+b)", "상단", 45, -60);
+                    drawDim(fx-80, fy, fx-80, fy+DIFF, "a-b", "좌측", 50);
+                    drawDim(fx-220, fy, fx-220, fy+A, "전체 길이 a", "좌측", 110);
                 }
             }
             statusLabel.innerText = isExpanded ? "전개 상태" : "조립 상태";
             btnText.innerText = isExpanded ? "다시 조립하기" : "전개 과정 보기";
         }
+
         toggleBtn.addEventListener('click', () => { isExpanded = !isExpanded; animate(); });
         tab1.addEventListener('click', () => { currentTab = 1; isExpanded = false; tab1.className = "px-10 py-2.5 rounded-xl font-bold bg-indigo-600 text-white shadow-lg"; tab2.className = "px-10 py-2.5 rounded-xl font-bold text-slate-400 hover:text-white border border-transparent ml-2"; animate(); });
         tab2.addEventListener('click', () => { currentTab = 2; isExpanded = false; tab2.className = "px-10 py-2.5 rounded-xl font-bold bg-indigo-600 text-white shadow-lg"; tab1.className = "px-10 py-2.5 rounded-xl font-bold text-slate-400 hover:text-white border border-transparent ml-2"; animate(); });
+        
         initElements(); animate();
     </script>
 </body>
