@@ -3,604 +3,435 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>이차방정식 인수분해 마스터 - 전문가용</title>
+    <title>다항식 곱셈 시각화 도구 Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap');
         
         body {
-            font-family: 'Jua', sans-serif;
+            font-family: 'Noto Sans KR', sans-serif;
             background-color: #f8fafc;
-            overflow: hidden;
-            user-select: none;
         }
 
-        /* 풍선 스타일 최적화 */
-        .balloon {
-            width: 85px;
-            height: 105px;
-            border-radius: 50% 50% 50% 50% / 45% 45% 55% 55%;
+        .rect-box {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 0.9rem;
-            cursor: pointer;
-            box-shadow: inset -6px -8px 0 rgba(0,0,0,0.1), 0 10px 15px -3px rgba(0,0,0,0.1);
-            transition: transform 0.2s, background-color 0.2s;
-            position: absolute;
-            z-index: 10;
-            text-align: center;
-            padding: 4px;
-            border: 2px solid rgba(255,255,255,0.4);
+            font-weight: 800;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 2px solid rgba(255,255,255,0.2);
         }
 
-        .balloon::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-top: 12px solid currentColor;
+        .math-text {
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
         }
 
-        /* 1, 2라운드 정적 배치 */
-        .static-balloon {
-            position: relative !important;
-            margin: auto;
+        sup {
+            font-size: 0.55em;
+            line-height: 0;
+            vertical-align: 0.4em;
+            margin-left: 1px;
+            font-style: normal;
         }
 
-        /* 3라운드 느린 상승 (24초) */
-        @keyframes riseUp {
-            from { transform: translateY(0); }
-            to { transform: translateY(-165vh); }
-        }
-
-        .rising {
-            animation: riseUp 24s linear forwards;
-        }
-
-        /* 피드백 애니메이션 */
-        .pop-effect {
-            animation: pop 0.4s forwards;
-        }
-
-        @keyframes pop {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.5); opacity: 0.5; }
-            100% { transform: scale(0); opacity: 0; }
-        }
-
-        .shake-effect {
-            animation: shake 0.5s;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-8px); }
-            40% { transform: translateX(8px); }
-            60% { transform: translateX(-8px); }
-            80% { transform: translateX(8px); }
-        }
-
-        .game-grid {
+        .grid-container {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 12px;
-            padding: 12px;
-            height: 100%;
+            transition: all 0.5s ease;
         }
 
-        .config-btn.active {
-            background-color: #2563eb;
-            color: white;
-            border-color: #1d4ed8;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        
-        .team-card.active {
-            border-color: #eab308;
-            background-color: #fefce8;
-            transform: scale(1.02);
+        .model-layout {
+            display: inline-grid;
+            grid-template-columns: auto 1fr;
+            grid-template-rows: auto 1fr;
+            gap: 0.5rem;
         }
 
-        .bonus-notify {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 4.5rem;
-            color: #fbbf24;
-            font-weight: 900;
-            text-shadow: 2px 2px 0 #b45309, 0 0 30px rgba(251, 191, 36, 0.5);
-            z-index: 100;
-            pointer-events: none;
-            animation: bonusAnim 2s ease-out forwards;
+        .equation-step {
+            transition: all 0.4s ease;
+            opacity: 0;
+            transform: translateY(10px);
         }
 
-        @keyframes bonusAnim {
-            0% { transform: translate(-50%, 20%) scale(0.5); opacity: 0; }
-            30% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
-            100% { transform: translate(-50%, -150%) scale(1); opacity: 0; }
+        .equation-step.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
-        .hidden { display: none; }
+        .input-focus-effect:focus {
+            box-shadow: 0 4px 0 -1px #6366f1;
+        }
+
+        .square-symbol {
+            display: inline-block;
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 0 0.4rem;
+            border-radius: 0.4rem;
+            font-style: normal;
+            border: 1px solid #c7d2fe;
+        }
     </style>
 </head>
-<body class="p-4 bg-slate-50">
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+        <!-- 헤더 -->
+        <div class="bg-indigo-600 p-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-black text-white mb-2">다항식 곱셈 시각화 도구</h1>
+            <p class="text-indigo-100 opacity-80">사각형의 면적과 교환법칙($ab=ba$)을 시각적으로 체험하세요.</p>
+        </div>
 
-    <div id="game-container" class="max-w-6xl mx-auto">
-        
-        <!-- 상단 제어 및 상태 센터 -->
-        <div class="bg-white rounded-[2rem] shadow-2xl p-5 mb-4 border-b-8 border-blue-100">
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-center">
-                
-                <!-- 설정 1: 초기 시간 -->
-                <div class="space-y-2">
-                    <p class="text-slate-400 text-center text-xs font-bold uppercase tracking-wider">시간 설정</p>
-                    <div class="flex gap-2 justify-center">
-                        <button onclick="updateTimeLimit(60, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold hover:bg-slate-50 active">1분</button>
-                        <button onclick="updateTimeLimit(120, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold hover:bg-slate-50">2분</button>
-                        <button onclick="updateTimeLimit(180, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold hover:bg-slate-50">3분</button>
+        <!-- 입력 섹션 -->
+        <div class="p-6 md:p-10 border-b border-gray-100 bg-gray-50/50">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="space-y-2 text-center">
+                    <label class="text-xs font-bold text-red-500 uppercase tracking-widest">가로 항 1 (A)</label>
+                    <input type="text" id="charA" value="a" placeholder="예: x" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-red-100 bg-white input-focus-effect math-text outline-none">
+                </div>
+                <div class="space-y-2 text-center">
+                    <label class="text-xs font-bold text-orange-500 uppercase tracking-widest">가로 항 2 (B)</label>
+                    <input type="text" id="charB" value="0" placeholder="예: a" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-orange-100 bg-white input-focus-effect math-text outline-none">
+                </div>
+                <div class="space-y-2 text-center">
+                    <label class="text-xs font-bold text-emerald-500 uppercase tracking-widest">세로 항 1 (C)</label>
+                    <input type="text" id="charC" value="b" placeholder="예: x" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-emerald-100 bg-white input-focus-effect math-text outline-none">
+                </div>
+                <div class="space-y-2 text-center">
+                    <label class="text-xs font-bold text-purple-500 uppercase tracking-widest">세로 항 2 (D)</label>
+                    <input type="text" id="charD" value="0" placeholder="예: b" class="w-full text-2xl font-bold text-center p-3 rounded-xl border-2 border-purple-100 bg-white input-focus-effect math-text outline-none">
+                </div>
+            </div>
+        </div>
+
+        <!-- 메인 콘텐츠 영역 -->
+        <div class="flex flex-col lg:flex-row p-6 md:p-10 gap-10">
+            
+            <!-- 왼쪽: 시각화 모델 -->
+            <div class="w-full lg:w-1/2 flex flex-col items-center">
+                <div class="model-layout w-full max-w-[400px]">
+                    <div></div>
+                    <div id="topLabelRow" class="grid items-end pb-2">
+                        <div id="labA" class="text-center font-bold text-red-600 math-text text-2xl"></div>
+                        <div id="labB" class="text-center font-bold text-orange-600 math-text text-2xl border-l-2 border-gray-200"></div>
+                    </div>
+                    <div id="leftLabelCol" class="grid items-stretch pr-2">
+                        <div id="labC" class="flex items-center justify-end font-bold text-emerald-600 math-text text-2xl"></div>
+                        <div id="labD" class="flex items-center justify-end font-bold text-purple-600 math-text text-2xl border-t-2 border-gray-200"></div>
+                    </div>
+                    <div class="aspect-square bg-gray-100 rounded-2xl overflow-hidden border-4 border-gray-200 shadow-inner">
+                        <div id="rectGrid" class="grid-container w-full h-full">
+                            <div id="rectAC" class="rect-box bg-red-400 text-xl md:text-3xl"><span></span></div>
+                            <div id="rectBC" class="rect-box bg-orange-400 text-xl md:text-3xl"><span></span></div>
+                            <div id="rectAD" class="rect-box bg-emerald-400 text-xl md:text-3xl"><span></span></div>
+                            <div id="rectBD" class="rect-box bg-purple-400 text-xl md:text-3xl"><span></span></div>
+                        </div>
                     </div>
                 </div>
-
-                <!-- 설정 2: 시작 지점 -->
-                <div class="space-y-2">
-                    <p class="text-slate-400 text-center text-xs font-bold uppercase tracking-wider">단계 선택</p>
-                    <div class="flex gap-2 justify-center">
-                        <button onclick="updateStartRound(1, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold hover:bg-slate-50 active">1단계</button>
-                        <button onclick="updateStartRound(2, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold hover:bg-slate-50">2단계</button>
-                        <button onclick="updateStartRound(3, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold hover:bg-slate-50">3단계</button>
-                    </div>
+                <div class="mt-8 p-4 bg-blue-50 rounded-2xl border border-blue-100 text-center w-full max-w-[400px]">
+                    <p class="text-blue-800 text-sm font-bold">💡 시각화 안내</p>
+                    <p class="text-blue-600 text-xs mt-1">입력된 각 항이 사각형의 가로와 세로 길이가 됩니다.</p>
                 </div>
+            </div>
 
-                <!-- 핵심 대시보드 -->
-                <div class="bg-slate-900 rounded-3xl p-4 flex flex-col items-center justify-center gap-2 shadow-inner">
-                    <div class="flex items-center gap-3">
-                        <span id="round-indicator" class="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-black">ROUND 1</span>
-                        <span class="text-3xl text-white font-black tabular-nums"><span id="timer-val">60</span><small class="text-lg ml-1 font-normal opacity-50">초</small></span>
-                    </div>
-                    <button id="start-btn" onclick="launchGame()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-xl text-lg font-bold shadow-lg transition-all active:scale-95">
-                        도전 시작
+            <!-- 오른쪽: 수식 전개 -->
+            <div class="w-full lg:w-1/2 flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-gray-700">전개 과정</h3>
+                    <button id="subToggle" class="px-4 py-2 bg-white border-2 border-indigo-100 text-indigo-600 rounded-xl text-sm font-bold hover:bg-indigo-50 transition-colors shadow-sm">
+                        치환 모드 (□) ON/OFF
                     </button>
                 </div>
 
-                <!-- 진행도 대시보드 -->
-                <div class="text-center space-y-1 border-l-2 border-slate-100 pl-4">
-                    <p id="active-team-name" class="text-slate-400 font-bold text-xs uppercase">팀을 선택해 주세요</p>
-                    <div class="flex flex-col items-center">
-                        <p class="text-blue-600 text-3xl font-black" id="progress-val">0 / 7</p>
-                        <p class="text-[10px] text-slate-300 font-bold uppercase tracking-tighter">진행 중인 문제 수</p>
+                <div class="space-y-8 bg-slate-50 p-6 md:p-8 rounded-3xl border border-gray-100 min-h-[350px] flex flex-col justify-center text-center lg:text-left">
+                    <!-- 기본 수식 -->
+                    <div class="math-text text-3xl md:text-4xl text-gray-800 font-bold flex items-center justify-center lg:justify-start flex-wrap gap-2">
+                        <span id="baseEquation"></span>
+                        <span id="subLegend" class="hidden text-base font-normal bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full not-italic">
+                            (□ = <span id="subTarget"></span>)
+                        </span>
+                    </div>
+
+                    <!-- 1단계: 분배법칙 -->
+                    <div id="step1Row" class="equation-step flex items-start justify-center lg:justify-start gap-4">
+                        <span class="text-gray-400 text-3xl">=</span>
+                        <div id="step1Content" class="math-text text-2xl md:text-3xl text-indigo-600 font-semibold leading-relaxed"></div>
+                    </div>
+
+                    <!-- 2단계: 곱셈 결과 -->
+                    <div id="step2Row" class="equation-step flex items-start justify-center lg:justify-start gap-4 border-t border-gray-200 pt-6">
+                        <span class="text-gray-400 text-3xl">=</span>
+                        <div id="step2Content" class="math-text text-2xl md:text-3xl text-gray-700 font-semibold flex flex-wrap gap-x-4"></div>
+                    </div>
+
+                    <!-- 3단계: 최종 정리 -->
+                    <div id="step3Row" class="equation-step flex items-center justify-center lg:justify-start gap-4 bg-indigo-600 p-6 rounded-2xl shadow-lg shadow-indigo-200">
+                        <span class="text-white text-3xl font-black">∴</span>
+                        <div id="step3Content" class="math-text text-3xl md:text-4xl text-white font-black tracking-tight"></div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- 문제 영역 -->
-        <div class="bg-white rounded-[2rem] shadow-lg p-6 mb-4 text-center border-t-4 border-blue-500 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1 bg-slate-50">
-                <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
-            </div>
-            <div id="equation-text" class="text-5xl font-black text-slate-300 transition-colors duration-500">문제가 여기에 표시됩니다</div>
-            <div id="factor-slots" class="flex justify-center gap-6 mt-6"></div>
-        </div>
-
-        <!-- 게임 플레이 캔버스 -->
-        <div id="play-area" class="h-[42vh] bg-white rounded-[2.5rem] border-4 border-dashed border-slate-200 relative shadow-inner overflow-hidden">
-            <div id="balloon-layer" class="relative h-full w-full">
-                <div id="ready-msg" class="absolute inset-0 flex flex-col items-center justify-center text-center p-10">
-                    <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                        <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    </div>
-                    <h3 class="text-2xl font-black text-slate-800 mb-2">팀워크 챌린지 준비</h3>
-                    <p class="text-slate-400 font-medium">하단에서 팀을 선택하고 상단 시작 버튼을 눌러주세요!</p>
-                </div>
-            </div>
-            <div id="bonus-layer"></div>
-            
-            <!-- 결과창 오버레이 -->
-            <div id="overlay-ui" class="hidden absolute inset-0 bg-white/95 z-[100] flex flex-col items-center justify-center text-center p-10 animate-in fade-in zoom-in duration-300">
-                <div id="overlay-icon" class="mb-6"></div>
-                <h2 id="overlay-title" class="text-6xl font-black mb-4">결과</h2>
-                <p id="overlay-desc" class="text-2xl text-slate-600 mb-10"></p>
-                <button id="overlay-btn" class="bg-slate-900 text-white px-12 py-4 rounded-3xl text-2xl font-bold shadow-2xl hover:bg-slate-800 transition-all">확인</button>
-            </div>
-        </div>
-
-        <!-- 팀 점수판 (선택 기능 포함) -->
-        <div class="mt-4 grid grid-cols-6 gap-3">
-            <script>
-                const teamColors = ['bg-red-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500', 'bg-pink-500'];
-                for(let i=1; i<=6; i++) {
-                    document.write(`
-                        <div onclick="pickTeam(${i})" id="team-box-${i}" class="team-card cursor-pointer bg-white p-4 rounded-3xl shadow-md border-4 border-transparent transition-all hover:shadow-xl">
-                            <div class="flex flex-col items-center gap-1">
-                                <div class="w-3 h-3 rounded-full ${teamColors[i-1]}"></div>
-                                <span class="text-xs font-black text-slate-400 uppercase tracking-tighter">${i}팀</span>
-                                <span id="team-score-${i}" class="text-2xl font-black text-slate-800 tabular-nums">0</span>
-                            </div>
-                        </div>
-                    `);
-                }
-            </script>
         </div>
     </div>
 
     <script>
-        // 전역 상태 관리
-        const state = {
-            round: 1,
-            startRoundAt: 1,
-            timeLeft: 60,
-            initialTime: 60,
-            solvedCount: 0,
-            targetCount: 7,
-            currentTeam: null,
-            paused: true,
-            scores: [0, 0, 0, 0, 0, 0],
-            factors: [],
-            collectedIndices: [],
-            // 레인 관리 시스템 (12개 레인)
-            lanes: Array(12).fill(0),
-            laneWidthPercent: 100 / 12
-        };
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = ['charA', 'charB', 'charC', 'charD'];
+            let subMode = false;
 
-        let mainTimer = null;
-        let balloonGenerator = null;
-
-        // 시간 설정 업데이트
-        function updateTimeLimit(secs, el) {
-            if (!state.paused) return;
-            state.initialTime = secs;
-            state.timeLeft = secs;
-            document.getElementById('timer-val').innerText = secs;
-            el.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        // 시작 라운드 업데이트
-        function updateStartRound(r, el) {
-            if (!state.paused) return;
-            state.startRoundAt = r;
-            document.getElementById('round-indicator').innerText = `ROUND ${r}`;
-            el.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        // 팀 선택
-        function pickTeam(num) {
-            if (!state.paused) return;
-            state.currentTeam = num;
-            document.querySelectorAll('.team-card').forEach(c => c.classList.remove('active'));
-            document.getElementById(`team-box-${num}`).classList.add('active');
-            document.getElementById('active-team-name').innerText = `${num}팀 도전 준비됨`;
-            document.getElementById('active-team-name').className = "text-blue-500 font-black text-xs uppercase tracking-widest";
-        }
-
-        // 게임 런칭
-        function launchGame() {
-            if (!state.currentTeam) {
-                alert("게임을 시작할 팀을 먼저 선택해 주세요.");
-                return;
-            }
-            state.round = state.startRoundAt;
-            state.solvedCount = 0;
-            state.paused = false;
-            state.timeLeft = state.initialTime;
-            
-            document.getElementById('start-btn').disabled = true;
-            document.getElementById('start-btn').classList.add('opacity-50');
-            document.getElementById('balloon-layer').innerHTML = ''; // 안내 문구 삭제
-            
-            startRoundCycle();
-        }
-
-        // 라운드 진입 로직
-        function startRoundCycle() {
-            state.solvedCount = 0;
-            state.paused = false;
-            document.getElementById('overlay-ui').classList.add('hidden');
-            document.getElementById('round-indicator').innerText = `ROUND ${state.round}`;
-            document.getElementById('timer-val').innerText = Math.ceil(state.timeLeft);
-            
-            refreshUI();
-            nextEquation();
-            
-            if(mainTimer) clearInterval(mainTimer);
-            mainTimer = setInterval(tick, 1000);
-
-            if(balloonGenerator) clearInterval(balloonGenerator);
-            if(state.round === 3) {
-                // 즉시 화면 가득 채우기 (20개 분산 생성)
-                for(let i = 0; i < 20; i++) {
-                    createFloatingBalloon(-(Math.random() * 22)); 
-                }
-                // 생성 주기 타이트하게 유지 (600ms)
-                balloonGenerator = setInterval(() => createFloatingBalloon(0), 600);
-            }
-        }
-
-        // 타이머 핸들러
-        function tick() {
-            if (state.paused) return;
-            state.timeLeft--;
-            document.getElementById('timer-val').innerText = Math.max(0, Math.ceil(state.timeLeft));
-            if (state.timeLeft <= 0) finishGame();
-        }
-
-        // 다음 문제 생성 (수학 로직 정밀화)
-        function nextEquation() {
-            let p, q, r, s;
-            let probType = Math.random();
-
-            if (state.round === 1) {
-                p = 1; r = 1;
-                q = Math.floor(Math.random() * 11) - 5;
-                s = Math.floor(Math.random() * 11) - 5;
-            } else {
-                if (probType < 0.7) {
-                    p = [1, 2, 3][Math.floor(Math.random() * 3)];
-                    r = [1, 2][Math.floor(Math.random() * 2)];
-                    q = Math.floor(Math.random() * 9) - 4;
-                    s = Math.floor(Math.random() * 9) - 4;
-                } else if (probType < 0.9) {
-                    p = 1; r = 1; q = 0;
-                    s = Math.floor(Math.random() * 11) - 5;
-                } else {
-                    // 합차 공식 등 특수 케이스 (반드시 이차식)
-                    const n = [2, 3, 4, 5][Math.floor(Math.random() * 4)];
-                    state.factors = [`x+1/${n}`, `x-1/${n}`];
-                    state.collectedIndices = [];
-                    document.getElementById('equation-text').innerHTML = `x² - 1/${n*n}`;
-                    document.getElementById('equation-text').className = "text-5xl font-black text-slate-800";
-                    renderFactorSlots();
-                    if(state.round < 3) renderGridBalloons();
-                    return;
-                }
-            }
-
-            const buildFactorText = (a, b) => {
-                if (a === 0) return b.toString();
-                let aPart = (a === 1 ? "x" : (a === -1 ? "-x" : a + "x"));
-                if (b === 0) return aPart;
-                return aPart + (b > 0 ? "+" + b : b);
-            };
-
-            state.factors = [buildFactorText(p, q), buildFactorText(r, s)];
-            state.collectedIndices = [];
-
-            // 전개 로직 (수학적 오류 방지)
-            const A = p * r;
-            const B = p * s + q * r;
-            const C = q * s;
-
-            let displayEq = "";
-            if (A !== 0) displayEq += (A === 1 ? "x²" : (A === -1 ? "-x²" : A + "x²"));
-            if (B !== 0) {
-                let absB = Math.abs(B);
-                displayEq += (B > 0 ? " + " : " - ") + (absB === 1 ? "x" : absB + "x");
-            }
-            if (C !== 0) displayEq += (C > 0 ? " + " : " - ") + Math.abs(C);
-            if (!displayEq) displayEq = "0";
-
-            document.getElementById('equation-text').innerHTML = displayEq.replace(/x²/g, 'x<sup style="font-size:0.6em">2</sup>');
-            document.getElementById('equation-text').className = "text-5xl font-black text-slate-800";
-            
-            renderFactorSlots();
-            if(state.round < 3) renderGridBalloons();
-        }
-
-        // 인수 빈칸 렌더링
-        function renderFactorSlots() {
-            const box = document.getElementById('factor-slots');
-            box.innerHTML = '';
-            state.factors.forEach((f, i) => {
-                const slot = document.createElement('div');
-                const isFound = state.collectedIndices.includes(i);
-                slot.className = `px-6 py-3 rounded-2xl border-4 transition-all duration-500 font-black text-2xl ${isFound ? 'bg-blue-500 border-blue-600 text-white' : 'bg-slate-50 border-dashed border-slate-200 text-slate-200'}`;
-                slot.innerText = isFound ? `(${f})` : '( ? )';
-                box.appendChild(slot);
-            });
-            // 진행 바 업데이트
-            const totalGoal = state.round === 3 ? 20 : state.targetCount;
-            const percentage = (state.solvedCount / totalGoal) * 100;
-            document.getElementById('progress-bar').style.width = percentage + '%';
-        }
-
-        // 풍선 색상 팔레트
-        const palette = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
-
-        // 오답 인수 생성
-        function generateWrongFactor() {
-            if (state.round === 1) {
-                return `x${(Math.random() > 0.5 ? '+' : '-')}${Math.floor(Math.random()*9+1)}`;
-            }
-            const type = Math.random();
-            if (type < 0.7) {
-                const a = [1, 2, 3][Math.floor(Math.random()*3)];
-                const b = Math.floor(Math.random()*15)-7;
-                return (a === 1 ? 'x' : a+'x') + (b === 0 ? '' : (b > 0 ? '+'+b : b));
-            } else if (type < 0.9) return "x";
-            else return `x${Math.random() > 0.5 ? '+' : '-'}1/${[2, 3, 5][Math.floor(Math.random()*3)]}`;
-        }
-
-        // 1, 2단계용 격자 배치
-        function renderGridBalloons() {
-            const container = document.getElementById('balloon-layer');
-            container.innerHTML = '';
-            container.className = "game-grid";
-            let items = state.factors.map(f => ({ text: f, correct: true }));
-            while(items.length < 15) {
-                const w = generateWrongFactor();
-                if(!state.factors.includes(w)) items.push({ text: w, correct: false });
-            }
-            items.sort(() => Math.random() - 0.5);
-            items.forEach(item => {
-                const b = document.createElement('div');
-                b.className = 'balloon static-balloon';
-                b.innerText = `(${item.text})`;
-                b.style.backgroundColor = palette[Math.floor(Math.random() * palette.length)];
-                b.onclick = () => handlePop(b, item.text);
-                container.appendChild(b);
-            });
-        }
-
-        // 3단계용 상승 풍선 생성 (레인 시스템)
-        function createFloatingBalloon(delay = 0) {
-            if(state.paused || state.round !== 3) return;
-            const layer = document.getElementById('balloon-layer');
-            layer.className = "relative h-full w-full";
-
-            // 가용한 레인 찾기 (수직 겹침 방지)
-            let possibleLanes = [];
-            const timestamp = Date.now();
-            state.lanes.forEach((cooldown, idx) => {
-                if (timestamp > cooldown) possibleLanes.push(idx);
+            const subToggle = document.getElementById('subToggle');
+            subToggle.addEventListener('click', () => {
+                subMode = !subMode;
+                subToggle.classList.toggle('bg-indigo-600', subMode);
+                subToggle.classList.toggle('text-white', subMode);
+                update();
             });
 
-            if (possibleLanes.length === 0) return; 
-
-            const pickedLane = possibleLanes[Math.floor(Math.random() * possibleLanes.length)];
-            // 레인 쿨다운: 24초 애니메이션이므로, 약 4초의 여유를 두면 수직으로 6개 정도씩 나옴
-            state.lanes[pickedLane] = timestamp + 4000; 
-
-            const b = document.createElement('div');
-            b.className = 'balloon rising';
-            
-            const correctProb = Math.random() < 0.45;
-            let txt = correctProb ? state.factors[Math.floor(Math.random() * 2)] : generateWrongFactor();
-
-            const xPos = (pickedLane * state.laneWidthPercent) + (state.laneWidthPercent / 2) - 4;
-
-            b.innerText = `(${txt})`;
-            b.style.backgroundColor = palette[Math.floor(Math.random() * palette.length)];
-            b.style.left = xPos + '%';
-            b.style.bottom = "-120px";
-            
-            if (delay !== 0) b.style.animationDelay = delay + 's';
-            
-            b.onclick = () => handlePop(b, txt);
-            layer.appendChild(b);
-            
-            // 애니메이션 종료 후 자동 제거
-            setTimeout(() => { if(b.parentNode) b.remove(); }, 30000);
-        }
-
-        // 풍선 터뜨리기 처리
-        function handlePop(el, text) {
-            if (state.paused) return;
-            const targetIdx = state.factors.findIndex((f, i) => f === text && !state.collectedIndices.includes(i));
-
-            if (targetIdx !== -1) {
-                // 정답
-                el.classList.add('pop-effect');
-                state.collectedIndices.push(targetIdx);
-                state.scores[state.currentTeam - 1] += 5;
-                renderFactorSlots();
-                refreshUI();
+            function parseTerm(s) {
+                s = s.trim().replace(/\s+/g, '');
+                if (!s || s === '0') return { coeff: 0, vars: {} };
                 
-                if (state.collectedIndices.length === 2) {
-                    // 한 문제 완성
-                    state.scores[state.currentTeam - 1] += 10;
-                    state.solvedCount++;
-                    refreshUI();
-                    
-                    if (state.round < 3 && state.solvedCount >= state.targetCount) {
-                        celebrateRoundClear();
-                    } else {
-                        setTimeout(nextEquation, 500);
-                    }
-                } else {
-                    setTimeout(() => { if(el.parentNode) el.remove(); }, 400);
+                const match = s.match(/^([-+]?\d*\.?\d*)(.*)$/);
+                let coeffStr = match[1];
+                let varStr = match[2];
+
+                let coeff = 1;
+                if (coeffStr === '-') coeff = -1;
+                else if (coeffStr === '+') coeff = 1;
+                else if (coeffStr !== '') coeff = parseFloat(coeffStr);
+
+                const vars = {};
+                if (varStr) {
+                    const tokens = varStr.match(/[a-z][0-9]*/g) || [varStr];
+                    tokens.forEach(t => {
+                        const vMatch = t.match(/([a-z])([0-9]*)/);
+                        if (vMatch) {
+                            const vName = vMatch[1];
+                            const vExp = vMatch[2] ? parseInt(vMatch[2]) : 1;
+                            vars[vName] = (vars[vName] || 0) + vExp;
+                        }
+                    });
                 }
-            } else {
-                // 오답
-                el.classList.add('shake-effect');
-                el.style.backgroundColor = '#475569';
-                state.timeLeft = Math.max(0, state.timeLeft - 4);
-                state.scores[state.currentTeam - 1] = Math.max(0, state.scores[state.currentTeam - 1] - 5);
-                refreshUI();
-                setTimeout(() => el.classList.remove('shake-effect'), 500);
-            }
-        }
-
-        // UI 정보 갱신
-        function refreshUI() {
-            const targetStr = state.round === 3 ? "∞" : state.targetCount;
-            document.getElementById('progress-val').innerText = `${state.solvedCount} / ${targetStr}`;
-            document.getElementById(`team-score-${state.currentTeam}`).innerText = state.scores[state.currentTeam - 1];
-        }
-
-        // 라운드 클리어 (타임 익스텐션)
-        function celebrateRoundClear() {
-            state.paused = true;
-            clearInterval(mainTimer);
-            if(balloonGenerator) clearInterval(balloonGenerator);
-            
-            let extTime = 0;
-            if (state.timeLeft > (state.initialTime / 2)) {
-                extTime = 25; 
-                state.timeLeft += extTime;
-                triggerBonusEffect(extTime);
+                return { coeff, vars };
             }
 
-            const ui = document.getElementById('overlay-ui');
-            const title = document.getElementById('overlay-title');
-            const desc = document.getElementById('overlay-desc');
-            const btn = document.getElementById('overlay-btn');
-            const icon = document.getElementById('overlay-icon');
+            function getVarStr(vars) {
+                const sorted = Object.keys(vars).sort();
+                return sorted.map(v => v + (vars[v] > 1 ? `<sup>${vars[v]}</sup>` : "")).join("");
+            }
 
-            title.innerText = extTime > 0 ? "타임 익스텐션!" : "단계 통과!";
-            title.className = "text-6xl font-black mb-4 text-blue-600";
-            desc.innerHTML = extTime > 0 ? 
-                `놀라운 속도입니다! 보너스 시간이 추가되었습니다.<br><span class="text-amber-500 text-4xl">+${extTime}초 획득!</span>` : 
-                "무사히 목표를 달성했습니다. 다음 단계로 나아갑니다.";
-            
-            icon.innerHTML = `<div class="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center mx-auto text-white text-5xl">★</div>`;
-            
-            btn.innerText = "다음 단계 도전";
-            btn.onclick = () => {
-                state.round++;
-                startRoundCycle();
-            };
-            ui.classList.remove('hidden');
-        }
+            function multiply(t1Raw, t2Raw) {
+                const t1 = parseTerm(t1Raw);
+                const t2 = parseTerm(t2Raw);
+                const resCoeff = t1.coeff * t2.coeff;
+                
+                if (resCoeff === 0) return null;
 
-        function triggerBonusEffect(secs) {
-            const box = document.getElementById('bonus-layer');
-            const div = document.createElement('div');
-            div.className = 'bonus-notify';
-            div.innerText = `+${secs}s EXTENSION`;
-            box.appendChild(div);
-            setTimeout(() => div.remove(), 2000);
-        }
+                const stdVars = { ...t1.vars };
+                for (let v in t2.vars) {
+                    stdVars[v] = (stdVars[v] || 0) + t2.vars[v];
+                }
 
-        // 게임 종료
-        function finishGame() {
-            state.paused = true;
-            clearInterval(mainTimer);
-            if(balloonGenerator) clearInterval(balloonGenerator);
-            
-            const ui = document.getElementById('overlay-ui');
-            const title = document.getElementById('overlay-title');
-            const desc = document.getElementById('overlay-desc');
-            const btn = document.getElementById('overlay-btn');
-            const icon = document.getElementById('overlay-icon');
+                let rawVarStr = "";
+                const v1Keys = Object.keys(t1.vars);
+                const v2Keys = Object.keys(t2.vars);
+                
+                if (v1Keys.length === 1 && v2Keys.length === 1 && v1Keys[0] === v2Keys[0]) {
+                    const vName = v1Keys[0];
+                    const totalExp = t1.vars[vName] + t2.vars[vName];
+                    rawVarStr = vName + `<sup>${totalExp}</sup>`;
+                } else {
+                    rawVarStr = getVarStr(t1.vars) + getVarStr(t2.vars);
+                }
 
-            title.innerText = "시간 종료";
-            title.className = "text-6xl font-black mb-4 text-red-500";
-            desc.innerHTML = `팀의 여정이 끝났습니다!<br><span class="text-slate-800">해결한 총 문제 수: ${state.solvedCount}개</span>`;
-            
-            icon.innerHTML = `<div class="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto text-red-500 text-5xl">⏰</div>`;
-            
-            btn.innerText = "메인으로 돌아가기";
-            btn.onclick = () => location.reload();
-            ui.classList.remove('hidden');
-        }
+                return { coeff: resCoeff, vars: stdVars, rawVar: rawVarStr };
+            }
+
+            function formatTerm(term, isFirst = false, useRaw = false) {
+                if (!term || term.coeff === 0) return "";
+                let s = "";
+                
+                if (term.coeff > 0 && !isFirst) s += " + ";
+                if (term.coeff < 0) s += isFirst ? "-" : " - ";
+                
+                const absCoeff = Math.abs(term.coeff);
+                const varPart = useRaw ? term.rawVar : getVarStr(term.vars);
+                const hasVars = varPart.length > 0;
+                
+                if (absCoeff !== 1 || !hasVars) s += absCoeff;
+                s += varPart;
+
+                return s;
+            }
+
+            function update() {
+                const v = {
+                    a: document.getElementById('charA').value,
+                    b: document.getElementById('charB').value,
+                    c: document.getElementById('charC').value,
+                    d: document.getElementById('charD').value
+                };
+
+                const p = {
+                    a: parseTerm(v.a), b: parseTerm(v.b),
+                    c: parseTerm(v.c), d: parseTerm(v.d)
+                };
+
+                // 그리드 비율 조정 (0인 항은 숨김)
+                const colStyle = `${p.a.coeff === 0 ? '0' : '1'}fr ${p.b.coeff === 0 ? '0' : '1'}fr`;
+                const rowStyle = `${p.c.coeff === 0 ? '0' : '1'}fr ${p.d.coeff === 0 ? '0' : '1'}fr`;
+                document.getElementById('rectGrid').style.gridTemplateColumns = colStyle;
+                document.getElementById('rectGrid').style.gridTemplateRows = rowStyle;
+                document.getElementById('topLabelRow').style.gridTemplateColumns = colStyle;
+                document.getElementById('leftLabelCol').style.gridTemplateRows = rowStyle;
+
+                document.getElementById('labA').innerText = p.a.coeff !== 0 ? v.a : "";
+                document.getElementById('labB').innerText = p.b.coeff !== 0 ? v.b : "";
+                document.getElementById('labC').innerText = p.c.coeff !== 0 ? v.c : "";
+                document.getElementById('labD').innerText = p.d.coeff !== 0 ? v.d : "";
+
+                const rectConfigs = [
+                    { id: 'AC', t1: v.a, t2: v.c },
+                    { id: 'BC', t1: v.b, t2: v.c },
+                    { id: 'AD', t1: v.a, t2: v.d },
+                    { id: 'BD', t1: v.b, t2: v.d }
+                ];
+
+                const activeResults = [];
+                rectConfigs.forEach(r => {
+                    const res = multiply(r.t1, r.t2);
+                    const el = document.querySelector(`#rect${r.id} span`);
+                    if (res) {
+                        el.innerHTML = formatTerm(res, true, true);
+                        activeResults.push(res);
+                    } else {
+                        el.innerHTML = "";
+                    }
+                });
+
+                const formatGroup = (term1, term2, raw1, raw2) => {
+                    if (term1.coeff !== 0 && term2.coeff !== 0) return `(${raw1} + ${raw2})`;
+                    if (term1.coeff !== 0) return raw1;
+                    if (term2.coeff !== 0) return raw2;
+                    return '0';
+                };
+
+                const groupAB = formatGroup(p.a, p.b, v.a, v.b);
+                const groupCD = formatGroup(p.c, p.d, v.c, v.d);
+                const displayCD = subMode ? `<span class="square-symbol">□</span>` : groupCD;
+
+                // 수식 표시
+                const isBothMonomial = (p.a.coeff !== 0 && p.b.coeff === 0 || p.a.coeff === 0 && p.b.coeff !== 0) && (p.c.coeff !== 0 && p.d.coeff === 0 || p.c.coeff === 0 && p.d.coeff !== 0);
+                const equationHtml = isBothMonomial ? `${groupAB} × ${displayCD}` : `${groupAB}${displayCD}`;
+                document.getElementById('baseEquation').innerHTML = equationHtml;
+                
+                const subLegend = document.getElementById('subLegend');
+                if (subMode) {
+                    subLegend.classList.remove('hidden');
+                    document.getElementById('subTarget').innerText = groupCD;
+                } else {
+                    subLegend.classList.add('hidden');
+                }
+
+                // 1단계
+                const step1 = document.getElementById('step1Content');
+                let step1Html = "";
+                if (p.a.coeff !== 0) step1Html += `${v.a}${displayCD}`;
+                if (p.a.coeff !== 0 && p.b.coeff !== 0) step1Html += " + ";
+                if (p.b.coeff !== 0) step1Html += `${v.b}${displayCD}`;
+                step1.innerHTML = step1Html || "0";
+                
+                const isComplex = (p.a.coeff !== 0 && p.b.coeff !== 0) || (p.c.coeff !== 0 && p.d.coeff !== 0);
+                document.getElementById('step1Row').style.display = isComplex ? 'flex' : 'none';
+                if (isComplex) setTimeout(() => document.getElementById('step1Row').classList.add('visible'), 50);
+
+                // 2단계
+                const step2 = document.getElementById('step2Content');
+                step2.innerHTML = "";
+                activeResults.forEach((res, idx) => {
+                    const span = document.createElement('span');
+                    span.innerHTML = formatTerm(res, idx === 0, true);
+                    step2.appendChild(span);
+                });
+                if (activeResults.length > 0) setTimeout(() => document.getElementById('step2Row').classList.add('visible'), 150);
+                else document.getElementById('step2Row').classList.remove('visible');
+
+                // 3단계 (동류항 정리)
+                const allVars = [...Object.keys(p.a.vars), ...Object.keys(p.b.vars), ...Object.keys(p.c.vars), ...Object.keys(p.d.vars)];
+                const mainVar = allVars.includes('x') ? 'x' : (allVars[0] || '');
+                const expGroups = {};
+                activeResults.forEach(res => {
+                    const exp = res.vars[mainVar] || 0;
+                    const otherVars = { ...res.vars };
+                    delete otherVars[mainVar];
+                    if (!expGroups[exp]) expGroups[exp] = [];
+                    expGroups[exp].push({ coeff: res.coeff, otherVars });
+                });
+
+                const sortedExponents = Object.keys(expGroups).map(Number).sort((a, b) => b - a);
+                let finalHtml = "";
+                let isOverallFirst = true;
+
+                sortedExponents.forEach(exp => {
+                    const components = expGroups[exp];
+                    let numberSum = 0;
+                    
+                    // 같은 변수 구성(otherVar)을 가진 항들의 계수를 합산하여 동류항 처리
+                    const consolidatedVariableCoeffs = {}; 
+                    components.forEach(comp => {
+                        const varPart = getVarStr(comp.otherVars);
+                        if (varPart === "") {
+                            numberSum += comp.coeff;
+                        } else {
+                            consolidatedVariableCoeffs[varPart] = (consolidatedVariableCoeffs[varPart] || 0) + comp.coeff;
+                        }
+                    });
+
+                    let innerParts = [];
+                    if (numberSum !== 0) innerParts.push(numberSum.toString());
+                    
+                    // 합산된 변수 계수들을 문자열로 변환
+                    Object.keys(consolidatedVariableCoeffs).sort().forEach(varPart => {
+                        const coeff = consolidatedVariableCoeffs[varPart];
+                        if (coeff === 0) return;
+                        let part = (coeff === 1) ? varPart : (coeff === -1 ? "-" + varPart : coeff + varPart);
+                        innerParts.push(part);
+                    });
+
+                    if (innerParts.length === 0) return;
+                    if (!isOverallFirst) finalHtml += " + ";
+
+                    let termHtml = "";
+                    const mainVarPart = exp === 0 ? "" : (mainVar + (exp > 1 ? `<sup>${exp}</sup>` : ""));
+                    if (innerParts.length > 1) {
+                        let innerJoined = innerParts[0];
+                        for(let i=1; i<innerParts.length; i++) {
+                            const p = innerParts[i];
+                            innerJoined += p.startsWith('-') ? ` - ${p.substring(1)}` : ` + ${p}`;
+                        }
+                        termHtml = `(${innerJoined})${mainVarPart}`;
+                    } else {
+                        const single = innerParts[0];
+                        if (mainVarPart === "") termHtml = single;
+                        else if (single === "1") termHtml = mainVarPart;
+                        else if (single === "-1") termHtml = "-" + mainVarPart;
+                        else termHtml = single + mainVarPart;
+                    }
+                    finalHtml += termHtml;
+                    isOverallFirst = false;
+                });
+
+                finalHtml = finalHtml.replace(/\+ -/g, "- ");
+                const step3 = document.getElementById('step3Content');
+                step3.innerHTML = finalHtml || "0";
+                if (finalHtml) setTimeout(() => document.getElementById('step3Row').classList.add('visible'), 250);
+                else document.getElementById('step3Row').classList.remove('visible');
+            }
+
+            inputs.forEach(id => document.getElementById(id).addEventListener('input', update));
+            update();
+        });
     </script>
 </body>
 </html>
