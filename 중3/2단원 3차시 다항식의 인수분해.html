@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>다항식의 인수분해 - 레이아웃 최적화 버전</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@300;400;700&display=swap');
+        
+        body {
+            background-color: #1a2624;
+            color: #e0e0e0;
+            font-family: 'Noto Sans KR', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* 전체 너비를 유지하며 내부 정렬 최적화 */
+        .a4-landscape {
+            width: 1900px;
+            height: 850px;
+            background-color: #243431;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            border-radius: 12px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .handwriting {
+            font-family: 'Nanum+Pen+Script', cursive;
+            font-size: 2.2rem;
+            white-space: nowrap;
+        }
+
+        .card {
+            background-color: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 15px;
+            padding: 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            min-width: 0; 
+        }
+
+        .highlight-blue { border: 2px solid #7fb3d5; }
+        .title-yellow { color: #f7dc6f; }
+        
+        .formula-box {
+            background-color: rgba(0, 0, 0, 0.25);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 8px 0;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            white-space: nowrap;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.95rem;
+        }
+
+        th, td {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 8px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #f7dc6f;
+        }
+
+        .tip-box {
+            background-color: rgba(243, 156, 18, 0.1);
+            border: 1px dashed rgba(243, 156, 18, 0.5);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 1.1rem;
+            color: #fbd38d;
+            white-space: nowrap;
+        }
+
+        .nowrap-text {
+            white-space: nowrap;
+        }
+
+        /* 1번 칸 공식 크기 축소 및 정렬 최적화 */
+        .adjusted-formula {
+            font-size: 2.8rem; /* 크기를 더 줄여서 상자 안에 쏙 들어가게 함 */
+            line-height: 1.1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="a4-landscape">
+        <!-- 상단 헤더 -->
+        <header class="flex justify-end items-end mb-8 border-b border-white border-opacity-15 pb-4">
+            <div class="text-right handwriting text-3xl opacity-80 nowrap-text">
+                수학의 기본은 원리의 이해!
+            </div>
+        </header>
+
+        <!-- 메인 콘텐츠 영역: 3번째 칸 비중 유지 (1:1:1.6) -->
+        <div class="flex-grow grid grid-cols-[1fr_1fr_1.6fr] gap-8">
+            
+            <!-- 1번 칸: 개념 비교 (상단 유지) & 공통인수 (크기/여백 대폭 축소) -->
+            <div class="flex flex-col gap-6">
+                <div class="card highlight-blue">
+                    <h2 class="handwriting text-blue-300 mb-2 text-3xl">★ 용어 비교</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>구분</th>
+                                <th>소인수분해 (수)</th>
+                                <th>인수분해 (식)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-bold">대상</td>
+                                <td>자연수</td>
+                                <td>다항식</td>
+                            </tr>
+                            <tr>
+                                <td class="font-bold">결과</td>
+                                <td>소수의 곱</td>
+                                <td>인수의 곱</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h2 class="handwriting text-green-300 mt-6 mb-2 text-3xl">★ 형태 비교</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>구분</th>
+                                <th>제곱수</th>
+                                <th>완전제곱식</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-bold">정의</td>
+                                <td>자연수의 제곱</td>
+                                <td>다항식의 제곱</td>
+                            </tr>
+                            <tr>
+                                <td class="font-bold">예시</td>
+                                <td>$16$</td>
+                                <td>$(a+b)^2$</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <h2 class="handwriting title-yellow mb-1 text-3xl">1. 공통인수로 묶기</h2>
+                    <div class="formula-box adjusted-formula py-4"> <!-- 여백 줄임 -->
+                        $ma + mb = m(a + b)$
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2번 칸: 완전제곱식 -->
+            <div class="flex flex-col gap-6">
+                <div class="card overflow-hidden">
+                    <h2 class="handwriting title-yellow mb-4 text-3xl">2. 완전제곱식 공식</h2>
+                    <div class="formula-box space-y-4 py-6">
+                        <div class="text-3xl">$a^2 + 2ab + b^2 = (a+b)^2$</div>
+                        <div class="text-3xl">$a^2 - 2ab + b^2 = (a-b)^2$</div>
+                    </div>
+                    
+                    <div class="space-y-4 mt-4">
+                        <div class="bg-blue-900 bg-opacity-25 p-4 rounded border border-blue-400 text-sm text-center">
+                            <span class="text-blue-300 font-bold block mb-1 text-lg">Step 1</span>
+                            양 끝항이 어떤 값의 제곱 형태인지 확인합니다.
+                        </div>
+                        <div class="bg-yellow-900 bg-opacity-25 p-4 rounded border border-yellow-400 text-sm text-center">
+                            <span class="text-yellow-300 font-bold block mb-1 text-lg">Step 2</span>
+                            가운데 항이 두 값의 곱의 2배가 맞는지 확인합니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3번 칸: 합차 공식 및 생각하기 (크기 조절로 잘림 방지) -->
+            <div class="flex flex-col">
+                <div class="card">
+                    <h2 class="handwriting title-yellow mb-4 text-3xl">3. 합차 공식 (제곱의 차)</h2>
+                    <!-- text-4xl로 조절하여 너비 안으로 들어오게 함 -->
+                    <div class="formula-box text-4xl py-16 mb-6"> 
+                        $a^2 - b^2 = (a+b)(a-b)$
+                    </div>
+                    
+                    <div class="tip-box text-center mb-8 text-xl">
+                        "제곱 마이너스 제곱은 합과 차의 곱으로 변신!"
+                    </div>
+
+                    <!-- 생각하기 섹션: 텍스트 잘림 방지를 위해 줄바꿈 추가 -->
+                    <div class="mt-auto p-10 bg-white bg-opacity-5 rounded-2xl border border-dashed border-gray-500 flex items-center gap-8">
+                        <span class="text-6xl text-yellow-400">💡</span>
+                        <div class="min-w-0">
+                            <p class="handwriting text-white text-4xl mb-3">생각해보기</p>
+                            <p class="text-2xl text-gray-200 leading-relaxed">
+                                $x^2 + 10x + \Box$ 가 완전제곱식이 되려면<br>$\Box$에 들어갈 알맞은 숫자는 무엇일까요?
+                            </p>
+                            <p class="text-lg opacity-60 mt-3 font-light">
+                                (힌트: 일차항 계수인 $10$의 절반을 구한 뒤, 그 값을 제곱해보세요!)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 하단 푸터 -->
+        <footer class="mt-8 flex justify-between items-center text-sm opacity-40">
+            <div class="nowrap-text">학습 단원: 다항식의 인수분해</div>
+            <div class="nowrap-text">페이지 - 1</div>
+        </footer>
+    </div>
+
+    <script>
+        window.onload = function() {
+            // KaTeX 수식 렌더링
+            const bodyContent = document.body.innerHTML;
+            document.body.innerHTML = bodyContent.replace(/\$([^\$]+)\$/g, function(match, capture) {
+                try {
+                    return katex.renderToString(capture, { throwOnError: false });
+                } catch (e) {
+                    return match;
+                }
+            });
+        };
+    </script>
+</body>
+</html>
