@@ -46,7 +46,7 @@
             border-top: 12px solid currentColor;
         }
 
-        /* 분수 스타일 */
+        /* 분수 수식 스타일 */
         .frac {
             display: inline-flex;
             flex-direction: column;
@@ -64,13 +64,13 @@
             padding: 0 2px;
         }
 
-        /* 1, 2단계 고정 격자 */
+        /* 1, 2단계용 격자 */
         .static-balloon {
             position: relative !important;
             margin: auto;
         }
 
-        /* 3단계 가로 이동 애니메이션 (회전초밥) */
+        /* 3단계 회전초밥 가로 이동 */
         @keyframes conveyor {
             from { left: -120px; }
             to { left: 110vw; }
@@ -80,7 +80,7 @@
             animation: conveyor 25s linear forwards;
         }
 
-        /* 효과 */
+        /* 효과 애니메이션 */
         .pop-effect { animation: pop 0.4s forwards; }
         @keyframes pop {
             0% { transform: scale(1); opacity: 1; }
@@ -144,11 +144,11 @@
 
     <div id="game-main" class="max-w-6xl mx-auto">
         
-        <!-- 대시보드 -->
+        <!-- 대시보드 섹션 -->
         <div class="bg-white rounded-[2rem] shadow-xl p-5 mb-4 border-b-8 border-blue-200">
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-center">
                 
-                <!-- 시간 -->
+                <!-- 시간 설정 -->
                 <div class="space-y-2">
                     <p class="text-slate-400 text-center text-xs font-bold uppercase tracking-wider">시간 설정</p>
                     <div class="flex gap-2 justify-center">
@@ -158,7 +158,7 @@
                     </div>
                 </div>
 
-                <!-- 단계 -->
+                <!-- 단계 선택 -->
                 <div class="space-y-2">
                     <p class="text-slate-400 text-center text-xs font-bold uppercase tracking-wider">시작 단계</p>
                     <div class="flex gap-2 justify-center">
@@ -168,7 +168,7 @@
                     </div>
                 </div>
 
-                <!-- 중앙 컨트롤 -->
+                <!-- 중앙 타이머 및 시작 -->
                 <div class="bg-slate-800 rounded-3xl p-4 flex flex-col items-center justify-center gap-2 shadow-lg">
                     <div class="flex items-center gap-3">
                         <span id="round-label" class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-black">1단계</span>
@@ -179,7 +179,7 @@
                     </button>
                 </div>
 
-                <!-- 진행 현황 -->
+                <!-- 진행도 표시 -->
                 <div class="text-center space-y-1 border-l-2 border-slate-200 pl-4">
                     <p id="team-status" class="text-slate-400 font-bold text-xs">팀을 선택하세요</p>
                     <div class="flex flex-col items-center">
@@ -190,7 +190,7 @@
             </div>
         </div>
 
-        <!-- 문제 노출 -->
+        <!-- 문제 노출 영역 -->
         <div class="bg-white rounded-[2rem] shadow-lg p-6 mb-4 text-center border-t-4 border-blue-500 relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-1 bg-slate-100">
                 <div id="status-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
@@ -199,7 +199,7 @@
             <div id="factor-view" class="flex justify-center gap-6 mt-6"></div>
         </div>
 
-        <!-- 게임 캔버스 -->
+        <!-- 게임 플레이 영역 -->
         <div id="canvas-area" class="h-[40vh] bg-white rounded-[2.5rem] border-4 border-dashed border-slate-200 relative shadow-inner overflow-hidden">
             <div id="layer-balloon" class="relative h-full w-full">
                 <div id="ready-msg" class="absolute inset-0 flex flex-col items-center justify-center text-center p-10">
@@ -210,7 +210,7 @@
             </div>
             <div id="layer-effect"></div>
             
-            <!-- 오버레이 -->
+            <!-- 결과창 오버레이 -->
             <div id="ui-overlay" class="hidden absolute inset-0 bg-white/95 z-[100] flex flex-col items-center justify-center text-center p-10">
                 <div id="overlay-icon" class="text-6xl mb-4"></div>
                 <h2 id="overlay-title" class="text-6xl font-black mb-4">결과</h2>
@@ -219,7 +219,7 @@
             </div>
         </div>
 
-        <!-- 점수판 -->
+        <!-- 팀 점수판 -->
         <div class="mt-4 grid grid-cols-6 gap-3">
             <script>
                 const colors = ['bg-red-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500', 'bg-rose-500'];
@@ -239,7 +239,7 @@
     </div>
 
     <script>
-        // 엔진 데이터
+        // 엔진 데이터 및 상태
         const engine = {
             round: 1,
             startRound: 1,
@@ -249,17 +249,17 @@
             goal: 7,
             team: null,
             playing: false,
+            isTransitioning: false, // 문제 전환 중 클릭 방지 플래그
             scores: Array(7).fill(0),
             currentFactors: [],
             foundIndices: [],
-            // 회전초밥용 트랙 (레인) 7개
             tracks: Array(7).fill(0)
         };
 
         let timerCore = null;
         let spawnCore = null;
 
-        // 수식 변환
+        // 수식 포맷팅 (분수 및 지수)
         function mathFormat(str) {
             let res = str.replace(/x²/g, 'x<sup style="font-size:0.6em">2</sup>');
             res = res.replace(/(\d+)\/(\d+)/g, '<span class="frac"><span class="num">$1</span><span class="den">$2</span></span>');
@@ -295,6 +295,7 @@
 
         function resetToLobby() {
             engine.playing = false;
+            engine.isTransitioning = false;
             document.getElementById('ui-overlay').classList.add('hidden');
             document.getElementById('launch-btn').disabled = false;
             document.getElementById('launch-btn').classList.remove('opacity-50');
@@ -325,6 +326,7 @@
             engine.round = engine.startRound;
             engine.solved = 0;
             engine.playing = true;
+            engine.isTransitioning = false;
             engine.time = engine.baseTime;
             document.getElementById('launch-btn').disabled = true;
             document.getElementById('launch-btn').classList.add('opacity-50');
@@ -352,19 +354,19 @@
 
             if(spawnCore) clearInterval(spawnCore);
             if(engine.round === 3) {
-                // 초기에 화면에 풍선 배치 (이미 트랙 중간에 있도록 딜레이 사용)
                 for(let i = 0; i < 15; i++) {
                     createSushiBalloon(-(Math.random() * 20)); 
                 }
-                // 지속적 생성
                 spawnCore = setInterval(() => createSushiBalloon(0), 1000);
             }
         }
 
         function nextProblem() {
+            engine.isTransitioning = false;
             let p, q, r, s;
             let type = Math.random();
 
+            // 1단계: 계수가 1인 기본식
             if (engine.round === 1) {
                 p = 1; r = 1;
                 q = Math.floor(Math.random() * 11) - 5;
@@ -379,6 +381,7 @@
                     p = 1; r = 1; q = 0;
                     s = Math.floor(Math.random() * 11) - 5;
                 } else {
+                    // 분수 문제
                     const n = [2, 3, 4, 5][Math.floor(Math.random() * 4)];
                     engine.currentFactors = [`x+1/${n}`, `x-1/${n}`];
                     engine.foundIndices = [];
@@ -428,7 +431,7 @@
             engine.currentFactors.forEach((f, i) => {
                 const s = document.createElement('div');
                 const ok = engine.foundIndices.includes(i);
-                s.className = `px-6 py-3 rounded-2xl border-4 transition-all duration-500 font-black text-2xl ${ok ? 'bg-blue-600 border-blue-700 text-white' : 'bg-white border-dashed border-slate-300 text-slate-200'}`;
+                s.className = `px-6 py-3 rounded-2xl border-4 transition-all duration-500 font-black text-2xl ${ok ? 'bg-blue-600 border-blue-700 text-white shadow-lg' : 'bg-white border-dashed border-slate-300 text-slate-200'}`;
                 s.innerHTML = ok ? mathFormat(`(${f})`) : '( ? )';
                 box.appendChild(s);
             });
@@ -482,8 +485,7 @@
             if (avLanes.length === 0) return; 
 
             const lane = avLanes[Math.floor(Math.random() * avLanes.length)];
-            // 가로 간격 확보를 위해 트랙 예약 (5초 대기)
-            engine.tracks[lane] = now + 5000; 
+            engine.tracks[lane] = now + 4000; // 가로 간격 확보를 위한 쿨다운
 
             const b = document.createElement('div');
             b.className = 'balloon conveyor-move';
@@ -507,10 +509,12 @@
         }
 
         function onPop(el, text) {
-            if (!engine.playing) return;
+            if (!engine.playing || engine.isTransitioning) return;
+            
             const idx = engine.currentFactors.findIndex((f, i) => f === text && !engine.foundIndices.includes(i));
 
             if (idx !== -1) {
+                // 정답 풍선 처리
                 el.classList.add('pop-effect');
                 engine.foundIndices.push(idx);
                 engine.scores[engine.team - 1] += 5;
@@ -518,18 +522,31 @@
                 updateUI();
                 
                 if (engine.foundIndices.length === 2) {
+                    // 한 문제 완성
+                    engine.isTransitioning = true; // 전환 시작
                     engine.scores[engine.team - 1] += 10;
                     engine.solved++;
                     updateUI();
-                    if (engine.round < 3 && engine.solved >= engine.goal) {
-                        clearRound();
-                    } else {
-                        setTimeout(nextProblem, 500);
-                    }
+                    
+                    // 정답 풍선들을 즉시 제거하여 중복 클릭 방지
+                    setTimeout(() => {
+                        if(el.parentNode) el.remove();
+                        if (engine.round < 3 && engine.solved >= engine.goal) {
+                            clearRound();
+                        } else {
+                            // 3단계의 경우, 문제 전환 시 화면을 한 번 비워 정돈함
+                            if(engine.round === 3) {
+                                document.getElementById('layer-balloon').innerHTML = '';
+                            }
+                            nextProblem();
+                        }
+                    }, 400);
                 } else {
+                    // 한 개만 찾은 경우 풍선만 제거
                     setTimeout(() => { if(el.parentNode) el.remove(); }, 400);
                 }
             } else {
+                // 오답 풍선 처리
                 el.classList.add('shake-effect');
                 el.style.backgroundColor = '#334155';
                 engine.time = Math.max(0, engine.time - 4);
@@ -548,6 +565,7 @@
 
         function clearRound() {
             engine.playing = false;
+            engine.isTransitioning = false;
             clearInterval(timerCore);
             if(spawnCore) clearInterval(spawnCore);
             
@@ -590,6 +608,7 @@
 
         function stopGame() {
             engine.playing = false;
+            engine.isTransitioning = false;
             clearInterval(timerCore);
             if(spawnCore) clearInterval(spawnCore);
             
@@ -601,7 +620,7 @@
 
             title.innerText = "시간 종료";
             title.className = "text-6xl font-black mb-4 text-red-500";
-            desc.innerHTML = `대결이 끝났습니다!<br><span class="text-slate-800 font-black">해결한 문제: ${engine.solved}개</span><br><small class="text-slate-400">점수는 점수판에 보존됩니다.</small>`;
+            desc.innerHTML = `대결이 끝났습니다!<br><span class="text-slate-800 font-black">해결한 문제: ${engine.solved}개</span><br><small class="text-slate-400">점수는 하단 점수판에 보존됩니다.</small>`;
             icon.innerText = "⏰";
             btn.innerText = "메인으로 돌아가기";
             btn.onclick = () => resetToLobby();
