@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>이차방정식 인수분해 마스터 - 전문가용</title>
+    <title>이차방정식 인수분해 마스터</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
         
         body {
             font-family: 'Jua', sans-serif;
-            background-color: #f8fafc;
+            background-color: #f1f5f9;
             overflow: hidden;
             user-select: none;
         }
 
-        /* 풍선 스타일 최적화 */
+        /* 풍선 스타일 */
         .balloon {
             width: 85px;
             height: 105px;
@@ -46,7 +46,7 @@
             border-top: 12px solid currentColor;
         }
 
-        /* 수식형 분수 스타일 */
+        /* 분수 스타일 */
         .frac {
             display: inline-flex;
             flex-direction: column;
@@ -64,43 +64,35 @@
             padding: 0 2px;
         }
 
-        /* 1, 2라운드 정적 배치 */
+        /* 1, 2단계 고정 격자 */
         .static-balloon {
             position: relative !important;
             margin: auto;
         }
 
-        /* 3라운드 느린 상승 (24초) */
-        @keyframes riseUp {
-            from { transform: translateY(0); }
-            to { transform: translateY(-165vh); }
+        /* 3단계 가로 이동 애니메이션 (회전초밥) */
+        @keyframes conveyor {
+            from { left: -120px; }
+            to { left: 110vw; }
         }
 
-        .rising {
-            animation: riseUp 24s linear forwards;
+        .conveyor-move {
+            animation: conveyor 25s linear forwards;
         }
 
-        /* 피드백 애니메이션 */
-        .pop-effect {
-            animation: pop 0.4s forwards;
-        }
-
+        /* 효과 */
+        .pop-effect { animation: pop 0.4s forwards; }
         @keyframes pop {
             0% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.5); opacity: 0.5; }
             100% { transform: scale(0); opacity: 0; }
         }
 
-        .shake-effect {
-            animation: shake 0.5s;
-        }
-
+        .shake-effect { animation: shake 0.5s; }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-8px); }
-            40% { transform: translateX(8px); }
-            60% { transform: translateX(-8px); }
-            80% { transform: translateX(8px); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
         }
 
         .game-grid {
@@ -130,7 +122,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 4.5rem;
+            font-size: 4rem;
             color: #fbbf24;
             font-weight: 900;
             text-shadow: 2px 2px 0 #b45309, 0 0 30px rgba(251, 191, 36, 0.5);
@@ -148,98 +140,96 @@
         .hidden { display: none; }
     </style>
 </head>
-<body class="p-4 bg-slate-50">
+<body class="p-4 bg-slate-100">
 
-    <div id="game-container" class="max-w-6xl mx-auto">
+    <div id="game-main" class="max-w-6xl mx-auto">
         
-        <!-- 상단 제어 및 상태 센터 -->
-        <div class="bg-white rounded-[2rem] shadow-2xl p-5 mb-4 border-b-8 border-blue-100">
+        <!-- 대시보드 -->
+        <div class="bg-white rounded-[2rem] shadow-xl p-5 mb-4 border-b-8 border-blue-200">
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-center">
                 
-                <!-- 설정 1: 초기 시간 -->
+                <!-- 시간 -->
                 <div class="space-y-2">
                     <p class="text-slate-400 text-center text-xs font-bold uppercase tracking-wider">시간 설정</p>
                     <div class="flex gap-2 justify-center">
-                        <button onclick="updateTimeLimit(60, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold hover:bg-slate-50 active">1분</button>
-                        <button onclick="updateTimeLimit(120, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold hover:bg-slate-50">2분</button>
-                        <button onclick="updateTimeLimit(180, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold hover:bg-slate-50">3분</button>
+                        <button onclick="changeLimit(60, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold active">1분</button>
+                        <button onclick="changeLimit(120, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold">2분</button>
+                        <button onclick="changeLimit(180, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold">3분</button>
                     </div>
                 </div>
 
-                <!-- 설정 2: 시작 지점 -->
+                <!-- 단계 -->
                 <div class="space-y-2">
-                    <p class="text-slate-400 text-center text-xs font-bold uppercase tracking-wider">단계 선택</p>
+                    <p class="text-slate-400 text-center text-xs font-bold uppercase tracking-wider">시작 단계</p>
                     <div class="flex gap-2 justify-center">
-                        <button onclick="updateStartRound(1, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold hover:bg-slate-50 active">1단계</button>
-                        <button onclick="updateStartRound(2, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold hover:bg-slate-50">2단계</button>
-                        <button onclick="updateStartRound(3, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold hover:bg-slate-50">3단계</button>
+                        <button onclick="changeStartRound(1, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold active">1단계</button>
+                        <button onclick="changeStartRound(2, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold">2단계</button>
+                        <button onclick="changeStartRound(3, this)" class="config-btn flex-1 py-2 border-2 border-slate-200 rounded-2xl text-sm font-bold">3단계</button>
                     </div>
                 </div>
 
-                <!-- 핵심 대시보드 -->
-                <div class="bg-slate-900 rounded-3xl p-4 flex flex-col items-center justify-center gap-2 shadow-inner">
+                <!-- 중앙 컨트롤 -->
+                <div class="bg-slate-800 rounded-3xl p-4 flex flex-col items-center justify-center gap-2 shadow-lg">
                     <div class="flex items-center gap-3">
-                        <span id="round-indicator" class="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-black">ROUND 1</span>
-                        <span class="text-3xl text-white font-black tabular-nums"><span id="timer-val">60</span><small class="text-lg ml-1 font-normal opacity-50">초</small></span>
+                        <span id="round-label" class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-black">1단계</span>
+                        <span class="text-3xl text-white font-black tabular-nums"><span id="timer-display">60</span><small class="text-lg ml-1 font-normal opacity-60">초</small></span>
                     </div>
-                    <button id="start-btn" onclick="launchGame()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-xl text-lg font-bold shadow-lg transition-all active:scale-95">
+                    <button id="launch-btn" onclick="startChallenge()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-xl text-lg font-bold transition-all active:scale-95">
                         도전 시작
                     </button>
                 </div>
 
-                <!-- 진행도 대시보드 -->
-                <div class="text-center space-y-1 border-l-2 border-slate-100 pl-4">
-                    <p id="active-team-name" class="text-slate-400 font-bold text-xs uppercase">팀을 선택해 주세요</p>
+                <!-- 진행 현황 -->
+                <div class="text-center space-y-1 border-l-2 border-slate-200 pl-4">
+                    <p id="team-status" class="text-slate-400 font-bold text-xs">팀을 선택하세요</p>
                     <div class="flex flex-col items-center">
-                        <p class="text-blue-600 text-3xl font-black" id="progress-val">0 / 7</p>
-                        <p class="text-[10px] text-slate-300 font-bold uppercase tracking-tighter">진행 중인 문제 수</p>
+                        <p class="text-blue-600 text-3xl font-black" id="solved-status">0 / 7</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">진행 중인 문제</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 문제 영역 -->
+        <!-- 문제 노출 -->
         <div class="bg-white rounded-[2rem] shadow-lg p-6 mb-4 text-center border-t-4 border-blue-500 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1 bg-slate-50">
-                <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
+            <div class="absolute top-0 left-0 w-full h-1 bg-slate-100">
+                <div id="status-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
             </div>
-            <div id="equation-text" class="text-5xl font-black text-slate-300 transition-colors duration-500 min-h-[60px]">문제가 여기에 표시됩니다</div>
-            <div id="factor-slots" class="flex justify-center gap-6 mt-6"></div>
+            <div id="equation-view" class="text-5xl font-black text-slate-300 min-h-[60px] flex items-center justify-center">문제가 여기에 표시됩니다</div>
+            <div id="factor-view" class="flex justify-center gap-6 mt-6"></div>
         </div>
 
-        <!-- 게임 플레이 캔버스 -->
-        <div id="play-area" class="h-[42vh] bg-white rounded-[2.5rem] border-4 border-dashed border-slate-200 relative shadow-inner overflow-hidden">
-            <div id="balloon-layer" class="relative h-full w-full">
+        <!-- 게임 캔버스 -->
+        <div id="canvas-area" class="h-[40vh] bg-white rounded-[2.5rem] border-4 border-dashed border-slate-200 relative shadow-inner overflow-hidden">
+            <div id="layer-balloon" class="relative h-full w-full">
                 <div id="ready-msg" class="absolute inset-0 flex flex-col items-center justify-center text-center p-10">
-                    <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                        <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    </div>
-                    <h3 class="text-2xl font-black text-slate-800 mb-2">팀워크 챌린지 준비</h3>
-                    <p class="text-slate-400 font-medium">하단에서 팀을 선택하고 상단 시작 버튼을 눌러주세요!</p>
+                    <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 text-3xl">🚀</div>
+                    <h3 class="text-2xl font-black text-slate-800 mb-1">인수분해 대결 준비</h3>
+                    <p class="text-slate-400 font-medium">팀을 고르고 시작 버튼을 누르세요!</p>
                 </div>
             </div>
-            <div id="bonus-layer"></div>
+            <div id="layer-effect"></div>
             
-            <!-- 결과창 오버레이 -->
-            <div id="overlay-ui" class="hidden absolute inset-0 bg-white/95 z-[100] flex flex-col items-center justify-center text-center p-10 animate-in fade-in zoom-in duration-300">
-                <div id="overlay-icon" class="mb-6"></div>
+            <!-- 오버레이 -->
+            <div id="ui-overlay" class="hidden absolute inset-0 bg-white/95 z-[100] flex flex-col items-center justify-center text-center p-10">
+                <div id="overlay-icon" class="text-6xl mb-4"></div>
                 <h2 id="overlay-title" class="text-6xl font-black mb-4">결과</h2>
                 <p id="overlay-desc" class="text-2xl text-slate-600 mb-10"></p>
-                <button id="overlay-btn" class="bg-slate-900 text-white px-12 py-4 rounded-3xl text-2xl font-bold shadow-2xl hover:bg-slate-800 transition-all">확인</button>
+                <button id="overlay-btn" class="bg-slate-900 text-white px-12 py-4 rounded-3xl text-2xl font-bold shadow-xl hover:bg-slate-800 transition-all">확인</button>
             </div>
         </div>
 
-        <!-- 팀 점수판 (선택 기능 포함) -->
+        <!-- 점수판 -->
         <div class="mt-4 grid grid-cols-6 gap-3">
             <script>
-                const teamColors = ['bg-red-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500', 'bg-pink-500'];
+                const colors = ['bg-red-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500', 'bg-rose-500'];
                 for(let i=1; i<=6; i++) {
                     document.write(`
-                        <div onclick="pickTeam(${i})" id="team-box-${i}" class="team-card cursor-pointer bg-white p-4 rounded-3xl shadow-md border-4 border-transparent transition-all hover:shadow-xl">
+                        <div onclick="selectTeam(${i})" id="team-card-${i}" class="team-card cursor-pointer bg-white p-4 rounded-3xl shadow border-4 border-transparent transition-all">
                             <div class="flex flex-col items-center gap-1">
-                                <div class="w-3 h-3 rounded-full ${teamColors[i-1]}"></div>
-                                <span class="text-xs font-black text-slate-400 uppercase tracking-tighter">${i}팀</span>
-                                <span id="team-score-${i}" class="text-2xl font-black text-slate-800 tabular-nums">0</span>
+                                <div class="w-3 h-3 rounded-full ${colors[i-1]}"></div>
+                                <span class="text-xs font-black text-slate-400 uppercase">${i}팀</span>
+                                <span id="score-val-${i}" class="text-2xl font-black text-slate-800">0</span>
                             </div>
                         </div>
                     `);
@@ -249,308 +239,290 @@
     </div>
 
     <script>
-        // 전역 상태 관리
-        const state = {
+        // 엔진 데이터
+        const engine = {
             round: 1,
-            startRoundAt: 1,
-            timeLeft: 60,
-            initialTime: 60,
-            solvedCount: 0,
-            targetCount: 7,
-            currentTeam: null,
-            paused: true,
-            scores: [0, 0, 0, 0, 0, 0],
-            factors: [],
-            collectedIndices: [],
-            // 레인 관리 시스템 (12개 레인)
-            lanes: Array(12).fill(0),
-            laneWidthPercent: 100 / 12
+            startRound: 1,
+            time: 60,
+            baseTime: 60,
+            solved: 0,
+            goal: 7,
+            team: null,
+            playing: false,
+            scores: Array(7).fill(0),
+            currentFactors: [],
+            foundIndices: [],
+            // 회전초밥용 트랙 (레인) 7개
+            tracks: Array(7).fill(0)
         };
 
-        let mainTimer = null;
-        let balloonGenerator = null;
+        let timerCore = null;
+        let spawnCore = null;
 
-        // 수식형 분수 변환 함수
-        function formatMathText(str) {
-            // x^2 처리
-            let formatted = str.replace(/x²/g, 'x<sup style="font-size:0.6em">2</sup>');
-            // 분수 처리 (숫자/숫자 패턴을 위아래 분수 태그로 변경)
-            formatted = formatted.replace(/(\d+)\/(\d+)/g, '<span class="frac"><span class="num">$1</span><span class="den">$2</span></span>');
-            return formatted;
+        // 수식 변환
+        function mathFormat(str) {
+            let res = str.replace(/x²/g, 'x<sup style="font-size:0.6em">2</sup>');
+            res = res.replace(/(\d+)\/(\d+)/g, '<span class="frac"><span class="num">$1</span><span class="den">$2</span></span>');
+            return res;
         }
 
-        // 시간 설정 업데이트
-        function updateTimeLimit(secs, el) {
-            if (!state.paused) return;
-            state.initialTime = secs;
-            state.timeLeft = secs;
-            document.getElementById('timer-val').innerText = secs;
+        function changeLimit(s, el) {
+            if (engine.playing) return;
+            engine.baseTime = s;
+            engine.time = s;
+            document.getElementById('timer-display').innerText = s;
             el.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
             el.classList.add('active');
         }
 
-        // 시작 라운드 업데이트
-        function updateStartRound(r, el) {
-            if (!state.paused) return;
-            state.startRoundAt = r;
-            document.getElementById('round-indicator').innerText = `ROUND ${r}`;
+        function changeStartRound(r, el) {
+            if (engine.playing) return;
+            engine.startRound = r;
+            document.getElementById('round-label').innerText = `${r}단계`;
             el.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
             el.classList.add('active');
         }
 
-        // 팀 선택
-        function pickTeam(num) {
-            if (!state.paused) return;
-            state.currentTeam = num;
+        function selectTeam(n) {
+            if (engine.playing) return;
+            engine.team = n;
             document.querySelectorAll('.team-card').forEach(c => c.classList.remove('active'));
-            document.getElementById(`team-box-${num}`).classList.add('active');
-            document.getElementById('active-team-name').innerText = `${num}팀 도전 준비됨`;
-            document.getElementById('active-team-name').className = "text-blue-500 font-black text-xs uppercase tracking-widest";
+            document.getElementById(`team-card-${n}`).classList.add('active');
+            const status = document.getElementById('team-status');
+            status.innerText = `${n}팀 대결 준비 완료`;
+            status.className = "text-blue-600 font-black text-xs uppercase tracking-widest";
         }
 
-        // 로비로 돌아가기 (점수 유지 버전)
-        function backToLobby() {
-            state.paused = true;
-            document.getElementById('overlay-ui').classList.add('hidden');
-            document.getElementById('start-btn').disabled = false;
-            document.getElementById('start-btn').classList.remove('opacity-50');
-            document.getElementById('equation-text').innerText = "문제가 여기에 표시됩니다";
-            document.getElementById('equation-text').className = "text-5xl font-black text-slate-300";
-            document.getElementById('factor-slots').innerHTML = "";
-            document.getElementById('progress-bar').style.width = "0%";
-            document.getElementById('balloon-layer').innerHTML = `
+        function resetToLobby() {
+            engine.playing = false;
+            document.getElementById('ui-overlay').classList.add('hidden');
+            document.getElementById('launch-btn').disabled = false;
+            document.getElementById('launch-btn').classList.remove('opacity-50');
+            document.getElementById('equation-view').innerText = "문제가 여기에 표시됩니다";
+            document.getElementById('equation-view').className = "text-5xl font-black text-slate-300 flex items-center justify-center";
+            document.getElementById('factor-view').innerHTML = "";
+            document.getElementById('status-bar').style.width = "0%";
+            document.getElementById('layer-balloon').innerHTML = `
                 <div id="ready-msg" class="absolute inset-0 flex flex-col items-center justify-center text-center p-10">
-                    <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                        <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    </div>
-                    <h3 class="text-2xl font-black text-slate-800 mb-2">팀워크 챌린지 준비</h3>
-                    <p class="text-slate-400 font-medium">하단에서 다음 팀을 선택하고 상단 시작 버튼을 눌러주세요!</p>
+                    <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 text-3xl">🚀</div>
+                    <h3 class="text-2xl font-black text-slate-800 mb-1">인수분해 대결 준비</h3>
+                    <p class="text-slate-400 font-medium">다음 팀을 선택하고 시작 버튼을 누르세요!</p>
                 </div>
             `;
-            // 현재 팀 선택 해제 (명시적으로 새로 선택하게 유도)
-            state.currentTeam = null;
+            engine.team = null;
             document.querySelectorAll('.team-card').forEach(c => c.classList.remove('active'));
-            document.getElementById('active-team-name').innerText = "팀을 선택해 주세요";
-            document.getElementById('active-team-name').className = "text-slate-400 font-bold text-xs uppercase";
-            document.getElementById('progress-val').innerText = "0 / 7";
-            document.getElementById('timer-val').innerText = state.initialTime;
+            document.getElementById('team-status').innerText = "팀을 선택하세요";
+            document.getElementById('team-status').className = "text-slate-400 font-bold text-xs";
+            document.getElementById('solved-status').innerText = "0 / 7";
+            document.getElementById('timer-display').innerText = engine.baseTime;
         }
 
-        // 게임 런칭
-        function launchGame() {
-            if (!state.currentTeam) {
-                alert("게임을 시작할 팀을 먼저 선택해 주세요.");
+        function startChallenge() {
+            if (!engine.team) {
+                alert("참가할 팀을 먼저 골라주세요.");
                 return;
             }
-            state.round = state.startRoundAt;
-            state.solvedCount = 0;
-            state.paused = false;
-            state.timeLeft = state.initialTime;
-            
-            document.getElementById('start-btn').disabled = true;
-            document.getElementById('start-btn').classList.add('opacity-50');
-            document.getElementById('balloon-layer').innerHTML = ''; 
-            
-            startRoundCycle();
+            engine.round = engine.startRound;
+            engine.solved = 0;
+            engine.playing = true;
+            engine.time = engine.baseTime;
+            document.getElementById('launch-btn').disabled = true;
+            document.getElementById('launch-btn').classList.add('opacity-50');
+            document.getElementById('layer-balloon').innerHTML = ''; 
+            startCycle();
         }
 
-        // 라운드 진입 로직
-        function startRoundCycle() {
-            state.solvedCount = 0;
-            state.paused = false;
-            document.getElementById('overlay-ui').classList.add('hidden');
-            document.getElementById('round-indicator').innerText = `ROUND ${state.round}`;
-            document.getElementById('timer-val').innerText = Math.ceil(state.timeLeft);
+        function startCycle() {
+            engine.solved = 0;
+            engine.playing = true;
+            document.getElementById('ui-overlay').classList.add('hidden');
+            document.getElementById('round-label').innerText = `${engine.round}단계`;
+            document.getElementById('timer-display').innerText = Math.ceil(engine.time);
             
-            refreshUI();
-            nextEquation();
+            updateUI();
+            nextProblem();
             
-            if(mainTimer) clearInterval(mainTimer);
-            mainTimer = setInterval(tick, 1000);
+            if(timerCore) clearInterval(timerCore);
+            timerCore = setInterval(() => {
+                if (!engine.playing) return;
+                engine.time--;
+                document.getElementById('timer-display').innerText = Math.max(0, Math.ceil(engine.time));
+                if (engine.time <= 0) stopGame();
+            }, 1000);
 
-            if(balloonGenerator) clearInterval(balloonGenerator);
-            if(state.round === 3) {
-                for(let i = 0; i < 20; i++) {
-                    createFloatingBalloon(-(Math.random() * 22)); 
+            if(spawnCore) clearInterval(spawnCore);
+            if(engine.round === 3) {
+                // 초기에 화면에 풍선 배치 (이미 트랙 중간에 있도록 딜레이 사용)
+                for(let i = 0; i < 15; i++) {
+                    createSushiBalloon(-(Math.random() * 20)); 
                 }
-                balloonGenerator = setInterval(() => createFloatingBalloon(0), 600);
+                // 지속적 생성
+                spawnCore = setInterval(() => createSushiBalloon(0), 1000);
             }
         }
 
-        // 타이머 핸들러
-        function tick() {
-            if (state.paused) return;
-            state.timeLeft--;
-            document.getElementById('timer-val').innerText = Math.max(0, Math.ceil(state.timeLeft));
-            if (state.timeLeft <= 0) finishGame();
-        }
-
-        // 다음 문제 생성
-        function nextEquation() {
+        function nextProblem() {
             let p, q, r, s;
-            let probType = Math.random();
+            let type = Math.random();
 
-            if (state.round === 1) {
+            if (engine.round === 1) {
                 p = 1; r = 1;
                 q = Math.floor(Math.random() * 11) - 5;
                 s = Math.floor(Math.random() * 11) - 5;
             } else {
-                if (probType < 0.7) {
+                if (type < 0.7) {
                     p = [1, 2, 3][Math.floor(Math.random() * 3)];
                     r = [1, 2][Math.floor(Math.random() * 2)];
                     q = Math.floor(Math.random() * 9) - 4;
                     s = Math.floor(Math.random() * 9) - 4;
-                } else if (probType < 0.9) {
+                } else if (type < 0.9) {
                     p = 1; r = 1; q = 0;
                     s = Math.floor(Math.random() * 11) - 5;
                 } else {
                     const n = [2, 3, 4, 5][Math.floor(Math.random() * 4)];
-                    state.factors = [`x+1/${n}`, `x-1/${n}`];
-                    state.collectedIndices = [];
-                    document.getElementById('equation-text').innerHTML = formatMathText(`x² - 1/${n*n}`);
-                    document.getElementById('equation-text').className = "text-5xl font-black text-slate-800";
-                    renderFactorSlots();
-                    if(state.round < 3) renderGridBalloons();
+                    engine.currentFactors = [`x+1/${n}`, `x-1/${n}`];
+                    engine.foundIndices = [];
+                    const eqBox = document.getElementById('equation-view');
+                    eqBox.innerHTML = mathFormat(`x² - 1/${n*n}`);
+                    eqBox.className = "text-5xl font-black text-slate-800 flex items-center justify-center";
+                    drawFactorSlots();
+                    if(engine.round < 3) drawGrid();
                     return;
                 }
             }
 
-            const buildFactorText = (a, b) => {
+            const getF = (a, b) => {
                 if (a === 0) return b.toString();
-                let aPart = (a === 1 ? "x" : (a === -1 ? "-x" : a + "x"));
-                if (b === 0) return aPart;
-                return aPart + (b > 0 ? "+" + b : b);
+                let ap = (a === 1 ? "x" : (a === -1 ? "-x" : a + "x"));
+                if (b === 0) return ap;
+                return ap + (b > 0 ? "+" + b : b);
             };
 
-            state.factors = [buildFactorText(p, q), buildFactorText(r, s)];
-            state.collectedIndices = [];
+            engine.currentFactors = [getF(p, q), getF(r, s)];
+            engine.foundIndices = [];
 
             const A = p * r;
             const B = p * s + q * r;
             const C = q * s;
 
-            let displayEq = "";
-            if (A !== 0) displayEq += (A === 1 ? "x²" : (A === -1 ? "-x²" : A + "x²"));
+            let eqStr = "";
+            if (A !== 0) eqStr += (A === 1 ? "x²" : (A === -1 ? "-x²" : A + "x²"));
             if (B !== 0) {
-                let absB = Math.abs(B);
-                displayEq += (B > 0 ? " + " : " - ") + (absB === 1 ? "x" : absB + "x");
+                let abB = Math.abs(B);
+                eqStr += (B > 0 ? " + " : " - ") + (abB === 1 ? "x" : abB + "x");
             }
-            if (C !== 0) displayEq += (C > 0 ? " + " : " - ") + Math.abs(C);
-            if (!displayEq) displayEq = "0";
+            if (C !== 0) eqStr += (C > 0 ? " + " : " - ") + Math.abs(C);
+            if (!eqStr) eqStr = "0";
 
-            document.getElementById('equation-text').innerHTML = formatMathText(displayEq);
-            document.getElementById('equation-text').className = "text-5xl font-black text-slate-800";
+            const eqView = document.getElementById('equation-view');
+            eqView.innerHTML = mathFormat(eqStr);
+            eqView.className = "text-5xl font-black text-slate-800 flex items-center justify-center";
             
-            renderFactorSlots();
-            if(state.round < 3) renderGridBalloons();
+            drawFactorSlots();
+            if(engine.round < 3) drawGrid();
         }
 
-        // 인수 빈칸 렌더링
-        function renderFactorSlots() {
-            const box = document.getElementById('factor-slots');
+        function drawFactorSlots() {
+            const box = document.getElementById('factor-view');
             box.innerHTML = '';
-            state.factors.forEach((f, i) => {
-                const slot = document.createElement('div');
-                const isFound = state.collectedIndices.includes(i);
-                slot.className = `px-6 py-3 rounded-2xl border-4 transition-all duration-500 font-black text-2xl ${isFound ? 'bg-blue-500 border-blue-600 text-white' : 'bg-slate-50 border-dashed border-slate-200 text-slate-200'}`;
-                slot.innerHTML = isFound ? formatMathText(`(${f})`) : '( ? )';
-                box.appendChild(slot);
+            engine.currentFactors.forEach((f, i) => {
+                const s = document.createElement('div');
+                const ok = engine.foundIndices.includes(i);
+                s.className = `px-6 py-3 rounded-2xl border-4 transition-all duration-500 font-black text-2xl ${ok ? 'bg-blue-600 border-blue-700 text-white' : 'bg-white border-dashed border-slate-300 text-slate-200'}`;
+                s.innerHTML = ok ? mathFormat(`(${f})`) : '( ? )';
+                box.appendChild(s);
             });
-            const totalGoal = state.round === 3 ? 20 : state.targetCount;
-            const percentage = (state.solvedCount / totalGoal) * 100;
-            document.getElementById('progress-bar').style.width = percentage + '%';
+            const max = engine.round === 3 ? 20 : engine.goal;
+            const per = (engine.solved / max) * 100;
+            document.getElementById('status-bar').style.width = per + '%';
         }
 
-        const palette = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+        const balColors = ['#f43f5e', '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#d946ef'];
 
-        function generateWrongFactor() {
-            if (state.round === 1) {
-                return `x${(Math.random() > 0.5 ? '+' : '-')}${Math.floor(Math.random()*9+1)}`;
-            }
-            const type = Math.random();
-            if (type < 0.7) {
+        function getWrongF() {
+            if (engine.round === 1) return `x${(Math.random() > 0.5 ? '+' : '-')}${Math.floor(Math.random()*9+1)}`;
+            const t = Math.random();
+            if (t < 0.7) {
                 const a = [1, 2, 3][Math.floor(Math.random()*3)];
-                const b = Math.floor(Math.random()*15)-7;
+                const b = Math.floor(Math.random()*11)-5;
                 return (a === 1 ? 'x' : a+'x') + (b === 0 ? '' : (b > 0 ? '+'+b : b));
-            } else if (type < 0.9) return "x";
+            } else if (t < 0.9) return "x";
             else return `x${Math.random() > 0.5 ? '+' : '-'}1/${[2, 3, 5][Math.floor(Math.random()*3)]}`;
         }
 
-        function renderGridBalloons() {
-            const container = document.getElementById('balloon-layer');
-            container.innerHTML = '';
-            container.className = "game-grid";
-            let items = state.factors.map(f => ({ text: f, correct: true }));
-            while(items.length < 15) {
-                const w = generateWrongFactor();
-                if(!state.factors.includes(w)) items.push({ text: w, correct: false });
+        function drawGrid() {
+            const layer = document.getElementById('layer-balloon');
+            layer.innerHTML = '';
+            layer.className = "game-grid";
+            let list = engine.currentFactors.map(f => ({ t: f }));
+            while(list.length < 15) {
+                const w = getWrongF();
+                if(!engine.currentFactors.includes(w)) list.push({ t: w });
             }
-            items.sort(() => Math.random() - 0.5);
-            items.forEach(item => {
+            list.sort(() => Math.random() - 0.5);
+            list.forEach(item => {
                 const b = document.createElement('div');
                 b.className = 'balloon static-balloon';
-                b.innerHTML = formatMathText(`(${item.text})`);
-                b.style.backgroundColor = palette[Math.floor(Math.random() * palette.length)];
-                b.onclick = () => handlePop(b, item.text);
-                container.appendChild(b);
+                b.innerHTML = mathFormat(`(${item.t})`);
+                b.style.backgroundColor = balColors[Math.floor(Math.random() * balColors.length)];
+                b.onclick = () => onPop(b, item.t);
+                layer.appendChild(b);
             });
         }
 
-        function createFloatingBalloon(delay = 0) {
-            if(state.paused || state.round !== 3) return;
-            const layer = document.getElementById('balloon-layer');
+        function createSushiBalloon(delay = 0) {
+            if(!engine.playing || engine.round !== 3) return;
+            const layer = document.getElementById('layer-balloon');
             layer.className = "relative h-full w-full";
 
-            let possibleLanes = [];
-            const timestamp = Date.now();
-            state.lanes.forEach((cooldown, idx) => {
-                if (timestamp > cooldown) possibleLanes.push(idx);
-            });
+            let avLanes = [];
+            const now = Date.now();
+            engine.tracks.forEach((cool, idx) => { if (now > cool) avLanes.push(idx); });
 
-            if (possibleLanes.length === 0) return; 
+            if (avLanes.length === 0) return; 
 
-            const pickedLane = possibleLanes[Math.floor(Math.random() * possibleLanes.length)];
-            state.lanes[pickedLane] = timestamp + 4000; 
+            const lane = avLanes[Math.floor(Math.random() * avLanes.length)];
+            // 가로 간격 확보를 위해 트랙 예약 (5초 대기)
+            engine.tracks[lane] = now + 5000; 
 
             const b = document.createElement('div');
-            b.className = 'balloon rising';
+            b.className = 'balloon conveyor-move';
             
-            const correctProb = Math.random() < 0.45;
-            let txt = correctProb ? state.factors[Math.floor(Math.random() * 2)] : generateWrongFactor();
+            const isOk = Math.random() < 0.45;
+            let txt = isOk ? engine.currentFactors[Math.floor(Math.random() * 2)] : getWrongF();
 
-            const xPos = (pickedLane * state.laneWidthPercent) + (state.laneWidthPercent / 2) - 4;
+            const trackHeight = 100 / 7;
+            const topPos = (lane * trackHeight) + (trackHeight / 2) - 8;
 
-            b.innerHTML = formatMathText(`(${txt})`);
-            b.style.backgroundColor = palette[Math.floor(Math.random() * palette.length)];
-            b.style.left = xPos + '%';
-            b.style.bottom = "-120px";
+            b.innerHTML = mathFormat(`(${txt})`);
+            b.style.backgroundColor = balColors[Math.floor(Math.random() * balColors.length)];
+            b.style.top = topPos + '%';
             
             if (delay !== 0) b.style.animationDelay = delay + 's';
             
-            b.onclick = () => handlePop(b, txt);
+            b.onclick = () => onPop(b, txt);
             layer.appendChild(b);
             
             setTimeout(() => { if(b.parentNode) b.remove(); }, 30000);
         }
 
-        function handlePop(el, text) {
-            if (state.paused) return;
-            const targetIdx = state.factors.findIndex((f, i) => f === text && !state.collectedIndices.includes(i));
+        function onPop(el, text) {
+            if (!engine.playing) return;
+            const idx = engine.currentFactors.findIndex((f, i) => f === text && !engine.foundIndices.includes(i));
 
-            if (targetIdx !== -1) {
+            if (idx !== -1) {
                 el.classList.add('pop-effect');
-                state.collectedIndices.push(targetIdx);
-                state.scores[state.currentTeam - 1] += 5;
-                renderFactorSlots();
-                refreshUI();
+                engine.foundIndices.push(idx);
+                engine.scores[engine.team - 1] += 5;
+                drawFactorSlots();
+                updateUI();
                 
-                if (state.collectedIndices.length === 2) {
-                    state.scores[state.currentTeam - 1] += 10;
-                    state.solvedCount++;
-                    refreshUI();
-                    
-                    if (state.round < 3 && state.solvedCount >= state.targetCount) {
-                        celebrateRoundClear();
+                if (engine.foundIndices.length === 2) {
+                    engine.scores[engine.team - 1] += 10;
+                    engine.solved++;
+                    updateUI();
+                    if (engine.round < 3 && engine.solved >= engine.goal) {
+                        clearRound();
                     } else {
                         setTimeout(nextProblem, 500);
                     }
@@ -559,70 +531,69 @@
                 }
             } else {
                 el.classList.add('shake-effect');
-                el.style.backgroundColor = '#475569';
-                state.timeLeft = Math.max(0, state.timeLeft - 4);
-                state.scores[state.currentTeam - 1] = Math.max(0, state.scores[state.currentTeam - 1] - 5);
-                refreshUI();
+                el.style.backgroundColor = '#334155';
+                engine.time = Math.max(0, engine.time - 4);
+                engine.scores[engine.team - 1] = Math.max(0, engine.scores[engine.team - 1] - 5);
+                updateUI();
                 setTimeout(() => el.classList.remove('shake-effect'), 500);
             }
         }
 
-        function refreshUI() {
-            if (!state.currentTeam) return;
-            const targetStr = state.round === 3 ? "∞" : state.targetCount;
-            document.getElementById('progress-val').innerText = `${state.solvedCount} / ${targetStr}`;
-            document.getElementById(`team-score-${state.currentTeam}`).innerText = state.scores[state.currentTeam - 1];
+        function updateUI() {
+            if (!engine.team) return;
+            const target = engine.round === 3 ? "∞" : engine.goal;
+            document.getElementById('solved-status').innerText = `${engine.solved} / ${target}`;
+            document.getElementById(`score-val-${engine.team}`).innerText = engine.scores[engine.team - 1];
         }
 
-        function celebrateRoundClear() {
-            state.paused = true;
-            clearInterval(mainTimer);
-            if(balloonGenerator) clearInterval(balloonGenerator);
+        function clearRound() {
+            engine.playing = false;
+            clearInterval(timerCore);
+            if(spawnCore) clearInterval(spawnCore);
             
-            let extTime = 0;
-            if (state.timeLeft > (state.initialTime / 2)) {
-                extTime = 25; 
-                state.timeLeft += extTime;
-                triggerBonusEffect(extTime);
+            let bonus = 0;
+            if (engine.time > (engine.baseTime / 2)) {
+                bonus = 25; 
+                engine.time += bonus;
+                showExtension(bonus);
             }
 
-            const ui = document.getElementById('overlay-ui');
+            const ui = document.getElementById('ui-overlay');
             const title = document.getElementById('overlay-title');
             const desc = document.getElementById('overlay-desc');
             const btn = document.getElementById('overlay-btn');
             const icon = document.getElementById('overlay-icon');
 
-            title.innerText = extTime > 0 ? "타임 익스텐션!" : "단계 통과!";
+            title.innerText = bonus > 0 ? "시간 연장!" : "단계 통과!";
             title.className = "text-6xl font-black mb-4 text-blue-600";
-            desc.innerHTML = extTime > 0 ? 
-                `놀라운 속도입니다! 보너스 시간이 추가되었습니다.<br><span class="text-amber-500 text-4xl">+${extTime}초 획득!</span>` : 
-                "무사히 목표를 달성했습니다. 다음 단계로 나아갑니다.";
+            desc.innerHTML = bonus > 0 ? 
+                `속도가 대단합니다! 보너스 시간이 주어집니다.<br><span class="text-amber-500 text-4xl">+${bonus}초 추가!</span>` : 
+                "목표를 달성했습니다. 다음 단계로 나아갑니다.";
             
-            icon.innerHTML = `<div class="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center mx-auto text-white text-5xl">★</div>`;
-            
+            icon.innerText = "⭐";
             btn.innerText = "다음 단계 도전";
             btn.onclick = () => {
-                state.round++;
-                startRoundCycle();
+                engine.round++;
+                startCycle();
             };
             ui.classList.remove('hidden');
         }
 
-        function triggerBonusEffect(secs) {
-            const box = document.getElementById('bonus-layer');
-            const div = document.createElement('div');
-            div.className = 'bonus-notify';
-            div.innerText = `+${secs}s EXTENSION`;
-            box.appendChild(div);
-            setTimeout(() => div.remove(), 2000);
+        function showExtension(s) {
+            const box = document.getElementById('layer-effect');
+            const d = document.createElement('div');
+            d.className = 'bonus-notify';
+            d.innerText = `+${s}초 시간 연장`;
+            box.appendChild(d);
+            setTimeout(() => d.remove(), 2000);
         }
 
-        function finishGame() {
-            state.paused = true;
-            clearInterval(mainTimer);
-            if(balloonGenerator) clearInterval(balloonGenerator);
+        function stopGame() {
+            engine.playing = false;
+            clearInterval(timerCore);
+            if(spawnCore) clearInterval(spawnCore);
             
-            const ui = document.getElementById('overlay-ui');
+            const ui = document.getElementById('ui-overlay');
             const title = document.getElementById('overlay-title');
             const desc = document.getElementById('overlay-desc');
             const btn = document.getElementById('overlay-btn');
@@ -630,12 +601,10 @@
 
             title.innerText = "시간 종료";
             title.className = "text-6xl font-black mb-4 text-red-500";
-            desc.innerHTML = `팀의 여정이 끝났습니다!<br><span class="text-slate-800 font-black">해결한 총 문제 수: ${state.solvedCount}개</span><br><br><small class="text-slate-400">점수는 점수판에 기록되었습니다.</small>`;
-            
-            icon.innerHTML = `<div class="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto text-red-500 text-5xl">⏰</div>`;
-            
+            desc.innerHTML = `대결이 끝났습니다!<br><span class="text-slate-800 font-black">해결한 문제: ${engine.solved}개</span><br><small class="text-slate-400">점수는 점수판에 보존됩니다.</small>`;
+            icon.innerText = "⏰";
             btn.innerText = "메인으로 돌아가기";
-            btn.onclick = () => backToLobby();
+            btn.onclick = () => resetToLobby();
             ui.classList.remove('hidden');
         }
     </script>
