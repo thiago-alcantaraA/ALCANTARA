@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>삼각형의 닮음과 길이 변화</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+        .canvas-container {
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+        input[type="range"] {
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- 헤더 섹션 -->
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">삼각형의 닮음과 길이 변화</h1>
+            <p class="text-slate-500 text-lg">각도가 일정할 때, 삼각형의 크기에 따른 변의 길이를 관찰해 보세요.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- 왼쪽 제어판 및 데이터 테이블 -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- 각도 조절 카드 -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <label class="block text-sm font-bold text-slate-700 mb-6">
+                        벌어진 각도 (θ): <span id="angle-value" class="text-blue-600 text-2xl ml-1">5</span>°
+                    </label>
+                    <input type="range" id="angle-slider" min="5" max="45" value="5" class="w-full h-2 bg-slate-200 rounded-lg appearance-none mb-4">
+                    <div class="flex justify-between text-xs font-semibold text-slate-400">
+                        <span>5°</span>
+                        <span>25°</span>
+                        <span>45°</span>
+                    </div>
+                </div>
+
+                <!-- 데이터 측정 카드 -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        삼각형의 길이 측정
+                    </h2>
+                    <div class="overflow-hidden">
+                        <table class="w-full text-sm text-center">
+                            <thead>
+                                <tr class="text-slate-400 border-b border-slate-100">
+                                    <th class="pb-3 font-medium text-left">항목</th>
+                                    <th class="pb-3 font-bold text-blue-500">△OBA</th>
+                                    <th class="pb-3 font-bold text-green-500">△ODC</th>
+                                    <th class="pb-3 font-bold text-purple-500">△OFE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="result-table">
+                                <!-- 자바스크립트로 동적 생성 -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 닮음 설명 박스 -->
+                    <div class="mt-8 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <h3 class="text-blue-800 font-bold text-sm mb-2 flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                            도움말: 삼각형의 닮음
+                        </h3>
+                        <p class="text-blue-700 text-sm font-bold mb-1 tracking-wider text-center">
+                            △OBA ∽ △ODC ∽ △OFE
+                        </p>
+                        <p class="text-blue-600/80 text-[11px] leading-relaxed">
+                            원점 <strong>O</strong>의 각도가 같고 모두 수직인 선으로 만들어졌으므로, 세 삼각형은 크기만 다른 <strong>AA 닮음</strong> 관계입니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 메인 시각화 캔버스 영역 -->
+            <div class="lg:col-span-3 canvas-container p-8 flex flex-col items-center justify-center min-h-[600px]">
+                <div class="relative w-full h-full flex items-center justify-center">
+                    <canvas id="similarityCanvas" class="max-w-full h-auto"></canvas>
+                </div>
+                
+                <!-- 하단 범례 -->
+                <div class="mt-10 flex flex-wrap justify-center gap-10 text-sm font-semibold text-slate-600">
+                    <div class="flex items-center"><span class="w-4 h-4 bg-blue-500 rounded-sm mr-2"></span> 첫 번째 (빗변: 1)</div>
+                    <div class="flex items-center"><span class="w-4 h-4 bg-green-500 rounded-sm mr-2"></span> 두 번째 (빗변: 2)</div>
+                    <div class="flex items-center"><span class="w-4 h-4 bg-purple-500 rounded-sm mr-2"></span> 세 번째 (빗변: 3)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('similarityCanvas');
+        const ctx = canvas.getContext('2d');
+        const slider = document.getElementById('angle-slider');
+        const angleDisplay = document.getElementById('angle-value');
+        const resultTable = document.getElementById('result-table');
+
+        // 디자인 상수 설정
+        const config = {
+            paddingLeft: 80,
+            paddingBottom: 100,
+            unitScale: 230, // 빗변 1단위당 픽셀 크기
+            baseUnits: [1, 2, 3], // 빗변의 길이 단위
+            colors: ['#3b82f6', '#22c55e', '#a855f7'],
+            labels: [
+                { bottom: 'B', top: 'A' },
+                { bottom: 'D', top: 'C' },
+                { bottom: 'F', top: 'E' }
+            ]
+        };
+
+        function init() {
+            canvas.width = 900;
+            canvas.height = 650;
+            update();
+        }
+
+        function update() {
+            const angleDeg = parseFloat(slider.value);
+            const angleRad = angleDeg * (Math.PI / 180);
+            
+            angleDisplay.textContent = angleDeg;
+            render(angleRad);
+        }
+
+        function render(angleRad) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const oX = config.paddingLeft;
+            const oY = canvas.height - config.paddingBottom;
+
+            // 1. 수평 가이드라인 (바닥선)
+            ctx.beginPath();
+            ctx.strokeStyle = '#f1f5f9';
+            ctx.lineWidth = 2;
+            ctx.moveTo(0, oY);
+            ctx.lineTo(canvas.width, oY);
+            ctx.stroke();
+
+            // 2. 빗변 방향 보조선 (충분히 길게)
+            ctx.beginPath();
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.setLineDash([5, 5]);
+            ctx.moveTo(oX, oY);
+            ctx.lineTo(oX + 800, oY - 800 * Math.tan(angleRad));
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 3. 원점 O 레이블
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 24px Arial';
+            ctx.fillText('O', oX - 50, oY + 10);
+
+            const measurements = { base: [], height: [], hypo: [] };
+
+            // 4. 삼각형 그리기 (빗변 길이가 1, 2, 3이 되도록 계산)
+            [2, 1, 0].forEach(index => {
+                const hypoUnit = config.baseUnits[index];
+                const hypoLen = hypoUnit * config.unitScale;
+                
+                // 빗변이 고정되었을 때 밑변과 높이 계산
+                const bLen = hypoLen * Math.cos(angleRad);
+                const hLen = hypoLen * Math.sin(angleRad);
+                
+                const tX = oX + bLen;
+                const tY = oY - hLen;
+
+                // 삼각형 본체
+                ctx.beginPath();
+                ctx.strokeStyle = config.colors[index];
+                ctx.lineWidth = 4;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                // 높이 (수직선)
+                ctx.moveTo(tX, oY);
+                ctx.lineTo(tX, tY);
+                
+                // 빗변
+                ctx.moveTo(oX, oY);
+                ctx.lineTo(tX, tY);
+                
+                // 밑변
+                ctx.moveTo(oX, oY);
+                ctx.lineTo(tX, oY);
+                ctx.stroke();
+
+                // 꼭짓점 이름 (A~F)
+                ctx.fillStyle = config.colors[index];
+                ctx.font = 'bold 22px Arial';
+                // 밑변 끝점 (B, D, F) - 각도에 따라 위치가 변함
+                ctx.fillText(config.labels[index].bottom, tX - 10, oY + 45);
+                // 빗변 끝점 (A, C, E)
+                ctx.fillText(config.labels[index].top, tX - 10, tY - 20);
+
+                // 직각 기호
+                let squareSize = 20;
+                if (hLen < squareSize + 5) {
+                    squareSize = Math.max(6, hLen * 0.6);
+                }
+
+                ctx.beginPath();
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = '#94a3b8';
+                ctx.moveTo(tX - squareSize, oY);
+                ctx.lineTo(tX - squareSize, oY - squareSize);
+                ctx.lineTo(tX, oY - squareSize);
+                ctx.stroke();
+
+                // 데이터 수집
+                measurements.hypo[index] = hypoUnit.toFixed(0);
+                measurements.base[index] = (hypoUnit * Math.cos(angleRad)).toFixed(2);
+                measurements.height[index] = (hypoUnit * Math.sin(angleRad)).toFixed(2);
+            });
+
+            // 5. 각도 θ 표시
+            ctx.beginPath();
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 3;
+            ctx.arc(oX, oY, 80, 0, -angleRad, true);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'italic bold 24px Arial';
+            ctx.fillText('θ', oX + 90, oY - 35);
+
+            updateTable(measurements);
+        }
+
+        function updateTable(data) {
+            const rows = [
+                { label: '빗변의 길이', key: 'hypo', color: 'text-slate-800' },
+                { label: '밑변의 길이', key: 'base', color: 'text-slate-600' },
+                { label: '높이의 길이', key: 'height', color: 'text-slate-800' }
+            ];
+
+            resultTable.innerHTML = rows.map(row => `
+                <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                    <td class="py-5 px-1 text-left text-slate-400 font-medium text-[13px]">${row.label}</td>
+                    <td class="py-5 px-1 text-blue-600 font-bold text-base">${data[row.key][0]}</td>
+                    <td class="py-5 px-1 text-green-600 font-bold text-base">${data[row.key][1]}</td>
+                    <td class="py-5 px-1 text-purple-600 font-bold text-base">${data[row.key][2]}</td>
+                </tr>
+            `).join('');
+        }
+
+        slider.addEventListener('input', update);
+        window.onload = init;
+    </script>
+</body>
+</html>
