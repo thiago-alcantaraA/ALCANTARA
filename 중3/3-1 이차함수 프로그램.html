@@ -13,6 +13,7 @@
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&display=swap');
         body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; overflow: hidden; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
         input[type="range"] {
             -webkit-appearance: none;
             appearance: none;
@@ -20,19 +21,23 @@
         }
         input[type="range"]::-webkit-slider-runnable-track {
             background: #334155;
-            height: 0.4rem;
+            height: 0.5rem;
             border-radius: 0.5rem;
         }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            margin-top: -0.55rem;
+            margin-top: -0.5rem;
             background-color: currentColor;
             height: 1.5rem;
             width: 1.5rem;
             border-radius: 50%;
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            transition: transform 0.1s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
         }
     </style>
 </head>
@@ -53,7 +58,13 @@
                 }
             }, []);
 
-            const RenderFrac = ({ val, className = "" }) => {
+            const resetValues = () => {
+                setA(1);
+                setP(0);
+                setQ(0);
+            };
+
+            const RenderValue = ({ val, className = "" }) => {
                 if (val === 0) return <span>0</span>;
                 if (Number.isInteger(val)) return <span>{val}</span>;
                 const numerator = Math.round(val * 2);
@@ -74,7 +85,7 @@
                 if (val === 0) return <span>0</span>;
                 if (val === 1) return null;
                 if (val === -1) return <span className="mr-[-2px]">－</span>;
-                return <RenderFrac val={val} className="mr-1" />;
+                return <RenderValue val={val} className="mr-1" />;
             };
 
             const points = useMemo(() => {
@@ -98,10 +109,10 @@
 
             const getPath = (ca, cp, cq) => {
                 let d = "";
-                for (let x = -12; x <= 12; x += 0.1) {
+                for (let x = -15; x <= 15; x += 0.1) {
                     const y = ca * Math.pow(x - cp, 2) + cq;
                     const sx = toSvgX(x); const sy = toSvgY(y);
-                    if (x === -12) d += `M ${sx} ${sy}`;
+                    if (x === -15) d += `M ${sx} ${sy}`;
                     else d += ` L ${sx} ${sy}`;
                 }
                 return d;
@@ -110,14 +121,24 @@
             return (
                 <div className="flex flex-col h-screen bg-slate-900 text-slate-100 p-6 overflow-hidden">
                     <header className="flex justify-between items-center mb-6 px-4">
-                        <h1 className="text-3xl font-bold flex items-center gap-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-                            이차함수 평행이동의 원리
-                        </h1>
-                        <div className="bg-slate-800 px-10 py-4 rounded-full border border-slate-700 shadow-2xl">
-                            <code className="text-3xl font-mono flex items-center">
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-3xl font-bold flex items-center gap-3">
+                                <i data-lucide="line-chart" className="text-blue-400 w-8 h-8"></i>
+                                이차함수 평행이동 시뮬레이터
+                            </h1>
+                            <button 
+                                onClick={resetValues}
+                                className="bg-slate-700 hover:bg-slate-600 text-slate-300 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all"
+                            >
+                                <i data-lucide="refresh-cw" className="w-4 h-4"></i> 초기화
+                            </button>
+                        </div>
+                        
+                        <div className="bg-slate-800 px-10 py-4 rounded-2xl border border-slate-700 shadow-2xl relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <code className="text-3xl font-mono flex items-center relative z-10">
                                 y － <span className="text-green-400 font-bold mx-1">{q >= 0 ? q : `(${q})`}</span>
-                                <span className="mx-2">＝</span>
+                                <span className="mx-2 text-slate-500">＝</span>
                                 {a === 0 ? <span className="font-bold">0</span> : 
                                     <React.Fragment>
                                         {RenderA(a)}(x － <span className="text-red-400 font-bold mx-1">{p >= 0 ? p : `(${p})`}</span>)²
@@ -130,101 +151,127 @@
                     <div className="grid grid-cols-12 gap-6 flex-1 overflow-hidden">
                         <div className="col-span-7 flex flex-col gap-6 overflow-hidden">
                             
-                            {/* 1. 상단 가로형 조절기 - p의 범위를 -6 ~ 6으로 수정 */}
-                            <div className="bg-slate-800/50 rounded-3xl p-6 border border-slate-700 shadow-lg">
-                                <div className="grid grid-cols-3 gap-8">
+                            {/* 상단 조절기 */}
+                            <div className="bg-slate-800/50 rounded-3xl p-6 border border-slate-700 shadow-lg backdrop-blur-sm">
+                                <div className="grid grid-cols-3 gap-10">
                                     <div className="flex flex-col justify-center">
                                         <div className="flex justify-between mb-2 items-center">
-                                            <label className="text-slate-400 font-medium">폭 (a)</label>
-                                            <span className="text-blue-400 font-bold text-xl"><RenderFrac val={a} /></span>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                                <label className="text-slate-400 font-bold">폭 (a)</label>
+                                            </div>
+                                            <span className="text-blue-400 font-mono text-2xl font-black"><RenderValue val={a} /></span>
                                         </div>
-                                        <input type="range" min="-4" max="4" step="0.5" value={a} onChange={(e) => setA(parseFloat(e.target.value))} className="w-full text-blue-500" />
+                                        <input type="range" min="-1" max="4" step="0.5" value={a} onChange={(e) => setA(parseFloat(e.target.value))} className="w-full text-blue-500" />
                                     </div>
-                                    <div className="flex flex-col justify-center border-l border-slate-700/50 pl-8">
+                                    
+                                    <div className="flex flex-col justify-center border-l border-slate-700/50 pl-10">
                                         <div className="flex justify-between mb-2 items-center">
-                                            <label className="text-slate-400 font-medium">x축 이동 (p)</label>
-                                            <span className="text-red-400 font-bold text-xl">{p >= 0 ? `+${p}` : p}</span>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                                <label className="text-slate-400 font-bold">x축 이동 (p)</label>
+                                            </div>
+                                            <span className="text-red-400 font-mono text-2xl font-black">{p > 0 ? `+${p}` : p}</span>
                                         </div>
-                                        <input type="range" min="-6" max="6" step="1" value={p} onChange={(e) => setP(parseFloat(e.target.value))} className="w-full text-red-500" />
+                                        <input type="range" min="-6" max="6" step="1" value={p} onChange={(e) => setP(parseInt(e.target.value))} className="w-full text-red-500" />
                                     </div>
-                                    <div className="flex flex-col justify-center border-l border-slate-700/50 pl-8">
+                                    
+                                    <div className="flex flex-col justify-center border-l border-slate-700/50 pl-10">
                                         <div className="flex justify-between mb-2 items-center">
-                                            <label className="text-slate-400 font-medium">y축 이동 (q)</label>
-                                            <span className="text-green-400 font-bold text-xl">{q >= 0 ? `+${q}` : q}</span>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                                <label className="text-slate-400 font-bold">y축 이동 (q)</label>
+                                            </div>
+                                            <span className="text-green-400 font-mono text-2xl font-black">{q > 0 ? `+${q}` : q}</span>
                                         </div>
-                                        <input type="range" min="-10" max="10" step="1" value={q} onChange={(e) => setQ(parseFloat(e.target.value))} className="w-full text-green-500" />
+                                        <input type="range" min="-10" max="10" step="1" value={q} onChange={(e) => setQ(parseInt(e.target.value))} className="w-full text-green-500" />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* 2. 가로로 긴 그래프 */}
-                            <div className="flex-1 bg-white rounded-3xl p-4 flex flex-col relative shadow-2xl overflow-hidden">
+                            {/* 메인 그래프 (범례 박스 제거됨) */}
+                            <div className="flex-1 bg-white rounded-3xl p-5 flex flex-col relative shadow-2xl overflow-hidden group">
                                 <div className="flex-1 relative border-2 border-slate-100 rounded-2xl overflow-hidden bg-slate-50">
-                                    <svg viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`} className="w-full h-full preserve-aspect-ratio">
-                                        {/* Grid lines */}
-                                        {[-10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10].map(x => (
-                                            <line key={`x-${x}`} x1={toSvgX(x)} y1="0" x2={toSvgX(x)} y2={viewBoxHeight} stroke="#e2e8f0" strokeWidth="1" strokeDasharray={x===0?"0":"4"} />
+                                    <svg viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`} className="w-full h-full">
+                                        {/* 격자선 */}
+                                        {[-12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12].map(x => (
+                                            <line key={`x-${x}`} x1={toSvgX(x)} y1="0" x2={toSvgX(x)} y2={viewBoxHeight} stroke="#e2e8f0" strokeWidth={x===0?"2":"1"} strokeDasharray={x===0?"0":"4"} />
                                         ))}
-                                        {[-20, -15, -10, -5, 0, 5, 10, 15, 20].map(y => (
-                                            <line key={`y-${y}`} x1="0" y1={toSvgY(y)} x2={viewBoxWidth} y2={toSvgY(y)} stroke="#e2e8f0" strokeWidth="1" strokeDasharray={y===0?"0":"4"} />
+                                        {[-20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30].map(y => (
+                                            <line key={`y-${y}`} x1="0" y1={toSvgY(y)} x2={viewBoxWidth} y2={toSvgY(y)} stroke="#e2e8f0" strokeWidth={y===0?"2":"1"} strokeDasharray={y===0?"0":"4"} />
                                         ))}
                                         
-                                        {/* Axes */}
-                                        <line x1="0" y1={centerY} x2={viewBoxWidth} y2={centerY} stroke="#94a3b8" strokeWidth="2" />
-                                        <line x1={centerX} y1="0" x2={centerX} y2={viewBoxHeight} stroke="#94a3b8" strokeWidth="2" />
+                                        <line x1="0" y1={centerY} x2={viewBoxWidth} y2={centerY} stroke="#94a3b8" strokeWidth="2.5" />
+                                        <line x1={centerX} y1="0" x2={centerX} y2={viewBoxHeight} stroke="#94a3b8" strokeWidth="2.5" />
                                         
-                                        {/* Base Curve (Dashed) */}
-                                        <path d={getPath(a, 0, 0)} fill="none" stroke="#cbd5e1" strokeWidth="3" strokeDasharray="6" />
+                                        <path d={getPath(a, 0, 0)} fill="none" stroke="#cbd5e1" strokeWidth="3" strokeDasharray="8" />
+                                        <path d={getPath(a, p, q)} fill="none" stroke="#3b82f6" strokeWidth="6" strokeLinecap="round" />
                                         
-                                        {/* Translated Curve */}
-                                        <path d={getPath(a, p, q)} fill="none" stroke="#3b82f6" strokeWidth="5" />
-                                        
-                                        {/* Moving Points */}
                                         {points.map((pt, i) => (
                                             <g key={i}>
-                                                <circle cx={toSvgX(pt.x)} cy={toSvgY(pt.y)} r="3" fill="#cbd5e1" />
-                                                <circle cx={toSvgX(pt.newX)} cy={toSvgY(pt.newY)} r="6" fill="#ef4444" />
-                                                {(p !== 0 || q !== 0) && <path d={`M ${toSvgX(pt.x)} ${toSvgY(pt.y)} L ${toSvgX(pt.newX)} ${toSvgY(pt.newY)}`} stroke="#ef4444" strokeWidth="2" strokeDasharray="3" opacity="0.4" />}
+                                                <circle cx={toSvgX(pt.x)} cy={toSvgY(pt.y)} r="3.5" fill="#cbd5e1" />
+                                                <circle cx={toSvgX(pt.newX)} cy={toSvgY(pt.newY)} r="7" fill="#ef4444" />
+                                                {(p !== 0 || q !== 0) && (
+                                                    <path 
+                                                        d={`M ${toSvgX(pt.x)} ${toSvgY(pt.y)} L ${toSvgX(pt.newX)} ${toSvgY(pt.newY)}`} 
+                                                        stroke="#ef4444" 
+                                                        strokeWidth="2.5" 
+                                                        strokeDasharray="4" 
+                                                        opacity="0.5" 
+                                                    />
+                                                )}
                                             </g>
                                         ))}
                                     </svg>
-                                    <div className="absolute top-4 left-4 flex gap-4 text-xs font-bold text-slate-400">
-                                        <div className="flex items-center gap-1"><div className="w-3 h-0.5 bg-slate-300 border-dashed border-b-2"></div> 기본형 (y={a}x²)</div>
-                                        <div className="flex items-center gap-1"><div className="w-3 h-0.5 bg-blue-500"></div> 이동형</div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* 3. 오른쪽 표 */}
-                        <div className="col-span-5 bg-slate-800/50 rounded-3xl border border-slate-700 overflow-hidden flex flex-col shadow-lg">
+                        {/* 오른쪽 좌표 분석 표 */}
+                        <div className="col-span-5 bg-slate-800/50 rounded-3xl border border-slate-700 overflow-hidden flex flex-col shadow-lg backdrop-blur-sm">
                             <table className="w-full text-center border-collapse h-full">
                                 <thead className="bg-slate-800 text-slate-400">
                                     <tr className="border-b border-slate-700">
-                                        <th className="py-6 px-4"><div className="text-xs mb-1 font-bold uppercase tracking-wider">원래 규칙</div><div className="text-xl font-mono text-slate-300 italic">y ＝ {RenderA(a)}x²</div></th>
-                                        <th className="py-6 px-4 text-blue-400 bg-blue-900/10"><div className="text-xs mb-1 font-bold text-blue-500/50 uppercase tracking-wider">이동 후 결과</div><div className="text-xl font-bold italic">점의 좌표</div></th>
-                                        <th className="py-6 px-4 text-white"><div className="text-xs mb-1 font-bold text-slate-500 uppercase tracking-wider">규칙 분석</div><div className="text-2xl font-black">？</div></th>
+                                        <th className="py-6 px-4">
+                                            <div className="text-[10px] mb-1 font-black text-slate-500 uppercase tracking-[0.2em]">원래 규칙</div>
+                                            <div className="text-xl font-mono text-slate-300 italic font-bold">y ＝ {RenderA(a)}x²</div>
+                                        </th>
+                                        <th className="py-6 px-4 text-blue-400 bg-blue-900/10">
+                                            <div className="text-[10px] mb-1 font-black text-blue-500/50 uppercase tracking-[0.2em]">이동 후 결과</div>
+                                            <div className="text-xl font-black italic">점의 좌표</div>
+                                        </th>
+                                        <th className="py-6 px-4 text-white">
+                                            <div className="text-[10px] mb-1 font-black text-slate-500 uppercase tracking-[0.2em]">이동 원리 분석</div>
+                                            <div className="text-2xl font-black text-yellow-400">?</div>
+                                        </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-700/50">
+                                <tbody className="divide-y divide-slate-700/40">
                                     {points.map((pt, i) => (
-                                        <tr key={i} className="hover:bg-slate-700/30 transition-colors">
-                                            <td className="py-3 font-mono text-slate-400 text-2xl font-bold tracking-tight">
-                                                ({pt.x}, <RenderFrac val={pt.y} />)
+                                        <tr key={i} className="hover:bg-slate-700/40 transition-all group">
+                                            <td className="py-4 font-mono text-slate-500 text-2xl font-bold tracking-tighter opacity-80 group-hover:opacity-100">
+                                                ({pt.x}, <RenderValue val={pt.y} />)
                                             </td>
-                                            <td className="py-3 font-black text-blue-400 font-mono text-3xl bg-blue-900/5">
-                                                ({pt.newX}, <RenderFrac val={pt.newY} />)
+                                            <td className="py-4 font-black text-blue-400 font-mono text-3xl bg-blue-900/5 group-hover:bg-blue-900/10">
+                                                ({pt.newX}, <RenderValue val={pt.newY} />)
                                             </td>
-                                            <td className="py-3 bg-slate-700/20 font-mono text-2xl font-bold tracking-tight">
-                                                <span className="text-slate-500">(</span>{pt.x}<span className="text-red-400 mx-0.5">{p >= 0 ? `+${p}` : `－${Math.abs(p)}`}</span>
-                                                <span className="text-slate-500">,</span> <RenderFrac val={pt.y} /><span className="text-green-400 mx-0.5">{q >= 0 ? `+${q}` : `－${Math.abs(q)}`}</span><span className="text-slate-500">)</span>
+                                            <td className="py-4 bg-slate-700/20 font-mono text-2xl font-bold tracking-tighter">
+                                                <span className="text-slate-500">(</span>
+                                                {pt.x}<span className="text-red-400 mx-0.5">{p >= 0 ? `+${p}` : `－${Math.abs(p)}`}</span>
+                                                <span className="text-slate-500">,</span> 
+                                                <RenderValue val={pt.y} /><span className="text-green-400 mx-0.5">{q >= 0 ? `+${q}` : `－${Math.abs(q)}`}</span>
+                                                <span className="text-slate-500">)</span>
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
-                            <div className="p-5 bg-slate-800 text-center text-blue-300 text-lg font-bold border-t border-slate-700">
-                                점의 좌표는 이동량만큼 더해지지만, 식에서는 보정(－)이 필요합니다.
+                            
+                            <div className="p-6 bg-slate-900/80 text-center border-t border-slate-700">
+                                <p className="text-blue-300 text-lg font-bold leading-relaxed">
+                                    점의 좌표는 이동량만큼 <span className="underline decoration-blue-500 underline-offset-4">더해지지만</span>,<br/>
+                                    식의 변수($x, y$)에는 이동량만큼 <span className="text-red-400 underline decoration-red-500 underline-offset-4">빼서 대입</span>합니다.
+                                </p>
                             </div>
                         </div>
                     </div>
