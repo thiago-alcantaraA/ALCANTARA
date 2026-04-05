@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>랜덤 게임 메이커</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f1f5f9;
+        }
+
+        .hidden { display: none; }
+        
+        .menu-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .menu-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        .wheel-canvas {
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
+        }
+
+        .node-input {
+            transition: all 0.2s;
+        }
+
+        .node-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .wheel-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 가로 스크롤바 디자인 */
+        .custom-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- 메인 메뉴 화면 -->
+    <div id="view-menu" class="max-w-4xl w-full text-center space-y-12 py-10">
+        <header>
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4">오늘의 운은?</h1>
+            <p class="text-lg text-gray-600">원하는 게임을 선택해서 내기나 순서를 정해보세요!</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
+            <!-- 사다리 타기 선택 -->
+            <button onclick="showView('ladder')" class="menu-card bg-white p-10 rounded-[2.5rem] shadow-lg flex flex-col items-center group">
+                <div class="w-24 h-24 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">
+                    <svg class="w-12 h-12 text-blue-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16M9 6v12m6-12v12" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">사다리 타기</h2>
+                <p class="text-gray-500">클래식한 운명 테스트</p>
+            </button>
+
+            <!-- 돌림판 선택 -->
+            <button onclick="showView('wheel')" class="menu-card bg-white p-10 rounded-[2.5rem] shadow-lg flex flex-col items-center group">
+                <div class="w-24 h-24 bg-indigo-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-indigo-600 transition-colors">
+                    <svg class="w-12 h-12 text-indigo-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <circle cx="12" cy="12" r="9" stroke-width="2"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">행운의 돌림판</h2>
+                <p class="text-gray-500">시각적인 긴장감과 재미</p>
+            </button>
+        </div>
+    </div>
+
+    <!-- 사다리 타기 컨테이너 -->
+    <div id="view-ladder" class="hidden max-w-[95vw] w-full bg-white rounded-3xl shadow-xl p-6 md:p-10 relative">
+        <button onclick="showView('menu')" class="absolute top-6 left-6 text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        </button>
+
+        <header class="text-center mb-8 pt-4">
+            <h1 class="text-3xl font-extrabold text-gray-800 mb-2">사다리 타기</h1>
+        </header>
+
+        <div id="ladder-setup" class="space-y-6">
+            <div class="flex items-center justify-center gap-4">
+                <label class="font-semibold text-gray-700">인원 수:</label>
+                <input type="number" id="ladder-player-count" min="2" max="10" value="4" class="w-20 px-3 py-2 border rounded-lg text-center font-bold">
+                <button onclick="initLadderInputs()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors">창 생성</button>
+            </div>
+            <div id="ladder-inputs-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+            <div class="text-center"><button onclick="startLadderGame()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-3 rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-transform">사다리 만들기!</button></div>
+        </div>
+
+        <div id="ladder-game" class="hidden space-y-6">
+            <div class="flex justify-between items-center"><button onclick="resetLadder()" class="text-gray-500 hover:text-gray-700">← 다시 설정</button><span class="text-sm text-gray-400">이름을 클릭하면 사다리를 내려갑니다</span></div>
+            <div class="custom-scroll overflow-x-auto pb-6 flex flex-col items-center">
+                <div id="ladder-names-header" class="flex justify-around w-full mb-3 px-4"></div>
+                <canvas id="ladder-canvas" class="bg-gray-50 rounded-xl shadow-inner"></canvas>
+                <div id="ladder-results-footer" class="flex justify-around w-full mt-3 px-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 돌림판 컨테이너 -->
+    <div id="view-wheel" class="hidden max-w-5xl w-full bg-white rounded-[2rem] shadow-2xl p-8 md:p-12 relative">
+        <button onclick="showView('menu')" class="absolute top-8 left-8 text-gray-400 hover:text-gray-600 transition-colors">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        </button>
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-extrabold text-gray-800">행운의 돌림판</h1>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            <div class="lg:col-span-5 space-y-6">
+                <div class="bg-gray-50 p-6 rounded-[1.5rem] border border-gray-100 shadow-sm">
+                    <h3 class="font-bold text-lg mb-4 text-gray-700">항목 설정 (최대 10개)</h3>
+                    <div id="wheel-inputs" class="space-y-3 max-h-[300px] overflow-y-auto pr-2"></div>
+                    <button onclick="addWheelInput()" class="mt-4 w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50 transition-all font-medium">+ 항목 추가</button>
+                </div>
+                <button onclick="spinWheel()" id="spin-button" class="w-full bg-[#4f46e5] hover:bg-[#4338ca] text-white py-5 rounded-2xl font-extrabold text-2xl shadow-xl active:scale-[0.98] transition-all">돌리기!</button>
+            </div>
+
+            <div class="lg:col-span-7 flex flex-col items-center justify-center">
+                <div class="wheel-container">
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
+                        <div class="w-0 h-0 border-l-[18px] border-l-transparent border-r-[18px] border-r-transparent border-t-[36px] border-t-rose-500 drop-shadow-lg"></div>
+                    </div>
+                    <canvas id="wheel-canvas" width="500" height="500" class="wheel-canvas max-w-full h-auto"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 화면 전환 로직 ---
+        function showView(view) {
+            document.getElementById('view-menu').classList.add('hidden');
+            document.getElementById('view-ladder').classList.add('hidden');
+            document.getElementById('view-wheel').classList.add('hidden');
+            document.getElementById('view-' + view).classList.remove('hidden');
+            if (view === 'ladder') initLadderInputs();
+            if (view === 'wheel') initWheelInputs();
+        }
+
+        function showResultModal(name, result) {
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+            overlay.onclick = () => overlay.remove();
+            const modal = document.createElement('div');
+            modal.className = 'bg-white rounded-3xl p-10 max-w-sm w-full text-center shadow-2xl animate-bounce-short';
+            modal.innerHTML = `
+                <div class="text-5xl mb-6">🎉</div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">${name ? name + ' 님의 ' : ''}결과</h2>
+                <div class="text-4xl font-black text-indigo-600 my-6">${result}</div>
+                <button class="bg-indigo-600 text-white w-full py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-colors">확인</button>
+            `;
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+        }
+
+        // --- 사다리 타기 로직 (가로로 넓히고 세로로 줄임) ---
+        const ladderCanvas = document.getElementById('ladder-canvas');
+        const lctx = ladderCanvas.getContext('2d');
+        let ladderPlayers = [];
+        let ladderResultsArr = [];
+        let ladderData = [];
+        let ladderPaths = [];
+        
+        // 전자칠판 최적화 설정
+        const L_PADDING = 60;   // 양옆 여백 확대
+        const L_SPACING = 160;  // 세로선 간격 대폭 확대 (기존 80 -> 160)
+        const L_ROWS = 8;       // 가로줄 개수 축소 (기존 15 -> 8)
+        const L_ROW_H = 50;     // 줄 사이 높이 조정 (기존 30 -> 50)
+
+        function initLadderInputs() {
+            const count = parseInt(document.getElementById('ladder-player-count').value);
+            const container = document.getElementById('ladder-inputs-container');
+            container.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const div = document.createElement('div');
+                div.className = 'space-y-2 p-3 bg-gray-50 rounded-xl border border-gray-100';
+                div.innerHTML = `<input type="text" placeholder="이름 ${i+1}" class="node-input w-full px-2 py-1 rounded border text-sm l-name" value="참가자${i+1}">
+                                 <input type="text" placeholder="결과 ${i+1}" class="node-input w-full px-2 py-1 rounded border text-sm l-result" value="결과${i+1}">`;
+                container.appendChild(div);
+            }
+        }
+
+        function startLadderGame() {
+            const nameInputs = document.querySelectorAll('.l-name');
+            const resultInputs = document.querySelectorAll('.l-result');
+            ladderPlayers = Array.from(nameInputs).map(i => i.value || '무명');
+            ladderResultsArr = Array.from(resultInputs).map(i => i.value || '꽝');
+            document.getElementById('ladder-setup').classList.add('hidden');
+            document.getElementById('ladder-game').classList.remove('hidden');
+            
+            const count = ladderPlayers.length;
+            ladderData = [];
+            for (let r = 0; r < L_ROWS; r++) {
+                let row = new Array(count - 1).fill(false);
+                for (let c = 0; c < count - 1; c++) {
+                    if (Math.random() > 0.5 && (c === 0 || !row[c-1])) row[c] = true;
+                }
+                ladderData.push(row);
+            }
+            
+            ladderPaths = [];
+            for (let s = 0; s < count; s++) {
+                let curr = s;
+                let p = [{x: s, y: 0}];
+                for (let r = 0; r < L_ROWS; r++) {
+                    if (curr > 0 && ladderData[r][curr-1]) { curr--; p.push({x: curr+1, y: r+1}, {x: curr, y: r+1}); }
+                    else if (curr < count-1 && ladderData[r][curr]) { curr++; p.push({x: curr-1, y: r+1}, {x: curr, y: r+1}); }
+                    else { p.push({x: curr, y: r+1}); }
+                }
+                ladderPaths.push(p);
+            }
+            drawLadder();
+        }
+
+        function resetLadder() {
+            document.getElementById('ladder-game').classList.add('hidden');
+            document.getElementById('ladder-setup').classList.remove('hidden');
+        }
+
+        function drawLadder() {
+            const count = ladderPlayers.length;
+            const w = (count - 1) * L_SPACING + L_PADDING * 2;
+            const h = L_ROWS * L_ROW_H + L_ROW_H;
+            ladderCanvas.width = w; ladderCanvas.height = h;
+
+            const header = document.getElementById('ladder-names-header');
+            header.innerHTML = ''; header.style.width = w + 'px';
+            ladderPlayers.forEach((n, i) => {
+                const b = document.createElement('button');
+                b.className = 'w-32 text-lg font-extrabold truncate text-gray-800 hover:text-blue-600 transition-colors';
+                b.innerText = n; b.onclick = () => animateLadderPath(i);
+                header.appendChild(b);
+            });
+
+            const footer = document.getElementById('ladder-results-footer');
+            footer.innerHTML = ''; footer.style.width = w + 'px';
+            ladderResultsArr.forEach(r => {
+                const d = document.createElement('div');
+                d.className = 'w-32 text-lg font-bold text-center truncate text-indigo-600';
+                d.innerText = r; footer.appendChild(d);
+            });
+            renderLadderBase();
+        }
+
+        function renderLadderBase() {
+            lctx.clearRect(0,0,ladderCanvas.width,ladderCanvas.height);
+            lctx.strokeStyle = '#cbd5e1'; lctx.lineWidth = 6; lctx.lineCap = 'round';
+            const count = ladderPlayers.length;
+            for(let i=0; i<count; i++) {
+                const x = L_PADDING + i*L_SPACING;
+                lctx.beginPath(); lctx.moveTo(x,0); lctx.lineTo(x,ladderCanvas.height); lctx.stroke();
+            }
+            for(let r=0; r<L_ROWS; r++) {
+                const y = (r+1)*L_ROW_H;
+                for(let c=0; c<count-1; c++) {
+                    if(ladderData[r][c]) {
+                        const xs = L_PADDING + c*L_SPACING;
+                        lctx.beginPath(); lctx.moveTo(xs,y); lctx.lineTo(xs+L_SPACING,y); lctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animateLadderPath(idx) {
+            renderLadderBase();
+            const p = ladderPaths[idx];
+            let s = 0;
+            lctx.strokeStyle = '#f43f5e'; lctx.lineWidth = 8;
+            function step() {
+                if(s >= p.length - 1) {
+                    showResultModal(ladderPlayers[idx], ladderResultsArr[p[p.length-1].x]);
+                    return;
+                }
+                lctx.beginPath();
+                lctx.moveTo(L_PADDING + p[s].x*L_SPACING, p[s].y*L_ROW_H);
+                lctx.lineTo(L_PADDING + p[s+1].x*L_SPACING, p[s+1].y*L_ROW_H);
+                lctx.stroke();
+                s++; setTimeout(step, 100);
+            }
+            step();
+        }
+
+        // --- 돌림판 로직 ---
+        const wheelCanvas = document.getElementById('wheel-canvas');
+        const wctx = wheelCanvas.getContext('2d');
+        let wheelItems = ["커피", "간식", "꽝", "점심 쏘기"];
+        let isSpinning = false;
+        let currentRotation = 0;
+        const colors = ['#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe', '#4f46e5', '#3b82f6'];
+
+        function initWheelInputs() {
+            const container = document.getElementById('wheel-inputs');
+            container.innerHTML = '';
+            wheelItems.forEach((item, i) => createWheelInput(item, i));
+            drawWheel();
+        }
+
+        function createWheelInput(val, i) {
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-3 group';
+            div.innerHTML = `
+                <input type="text" class="w-input flex-1 px-4 py-3 border border-gray-200 rounded-xl text-base font-medium focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all outline-none" value="${val}" oninput="updateWheelItems()">
+                <button onclick="removeWheelInput(${i})" class="text-rose-300 hover:text-rose-500 transition-colors p-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            `;
+            document.getElementById('wheel-inputs').appendChild(div);
+        }
+
+        function addWheelInput() {
+            if (wheelItems.length >= 10) return;
+            wheelItems.push("새 항목");
+            initWheelInputs();
+        }
+
+        function removeWheelInput(i) {
+            if (wheelItems.length <= 2) return;
+            wheelItems.splice(i, 1);
+            initWheelInputs();
+        }
+
+        function updateWheelItems() {
+            const inputs = document.querySelectorAll('.w-input');
+            wheelItems = Array.from(inputs).map(i => i.value || '빈 항목');
+            drawWheel();
+        }
+
+        function drawWheel() {
+            const size = wheelCanvas.width;
+            const center = size / 2;
+            const radius = center - 20;
+            const arc = (Math.PI * 2) / wheelItems.length;
+            wctx.clearRect(0, 0, size, size);
+            wheelItems.forEach((text, i) => {
+                const angle = i * arc + currentRotation;
+                wctx.beginPath();
+                wctx.fillStyle = colors[i % colors.length];
+                wctx.moveTo(center, center);
+                wctx.arc(center, center, radius, angle, angle + arc);
+                wctx.fill();
+                wctx.strokeStyle = '#fff';
+                wctx.lineWidth = 3;
+                wctx.stroke();
+                wctx.save();
+                wctx.translate(center, center);
+                wctx.rotate(angle + arc / 2);
+                wctx.textAlign = "right";
+                wctx.fillStyle = "#fff";
+                wctx.font = "bold 20px Pretendard";
+                wctx.fillText(text, radius - 40, 8);
+                wctx.restore();
+            });
+            wctx.beginPath();
+            wctx.fillStyle = '#fff';
+            wctx.arc(center, center, 25, 0, Math.PI * 2);
+            wctx.fill();
+            wctx.strokeStyle = 'rgba(0,0,0,0.05)';
+            wctx.lineWidth = 1;
+            wctx.stroke();
+        }
+
+        function spinWheel() {
+            if (isSpinning) return;
+            isSpinning = true;
+            const spinBtn = document.getElementById('spin-button');
+            spinBtn.disabled = true;
+            spinBtn.innerText = "돌아가는 중...";
+            const rounds = 8 + Math.random() * 5; 
+            const extraAngle = Math.random() * Math.PI * 2;
+            const totalRotation = rounds * Math.PI * 2 + extraAngle;
+            let start = null;
+            const duration = 5000;
+            const initialRotation = currentRotation;
+            function animate(timestamp) {
+                if (!start) start = timestamp;
+                const progress = timestamp - start;
+                const t = Math.min(progress / duration, 1);
+                const easeOut = 1 - Math.pow(1 - t, 4);
+                currentRotation = initialRotation + totalRotation * easeOut;
+                drawWheel();
+                if (t < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    isSpinning = false;
+                    spinBtn.disabled = false;
+                    spinBtn.innerText = "돌리기!";
+                    const arc = (Math.PI * 2) / wheelItems.length;
+                    const finalRotation = (currentRotation) % (Math.PI * 2);
+                    let winningIndex = Math.floor(((Math.PI * 1.5) - finalRotation) % (Math.PI * 2) / arc);
+                    if (winningIndex < 0) winningIndex += wheelItems.length;
+                    showResultModal("", wheelItems[winningIndex % wheelItems.length]);
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+    </script>
+</body>
+</html>
