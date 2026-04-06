@@ -28,7 +28,7 @@
             background-color: #243431;
             width: 100%;
             max-width: 1800px;
-            min-height: 850px;
+            min-height: 800px;
             border-radius: 1.5rem;
             padding: 2.5rem;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
@@ -44,7 +44,6 @@
             background-color: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 1.25rem;
-            transition: all 0.3s ease;
         }
         .formula-inner-box {
             background-color: rgba(0, 0, 0, 0.2);
@@ -57,73 +56,74 @@
         }
         th, td {
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 0.75rem;
+            padding: 0.5rem;
             text-align: center;
         }
         th {
             background-color: rgba(255, 255, 255, 0.05);
             color: #f7dc6f;
         }
-        .katex { font-size: 1.1em !important; }
+        .katex { font-size: 1.05em !important; }
+        .nowrap { white-space: nowrap; }
     </style>
 </head>
 <body>
 
     <div class="chalkboard">
         <!-- 상단 헤더 -->
-        <header class="flex justify-end items-end mb-8 border-b border-white/10 pb-6">
-            <div class="handwriting text-4xl text-white/60 italic tracking-wider">
+        <header class="flex justify-end items-end mb-6 border-b border-white/10 pb-4">
+            <div class="handwriting text-3xl text-white/60 italic tracking-wider">
                 수학의 기본은 원리의 이해!
             </div>
         </header>
 
         <!-- 메인 콘텐츠: 3단 그리드 -->
-        <div class="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1.4fr] gap-10 flex-grow">
+        <div class="grid grid-cols-1 lg:grid-cols-[1.1fr_1.1fr_1.4fr] gap-8 flex-grow">
             
             <!-- 첫 번째 칸: 1번 & 2번 공식 -->
-            <div class="flex flex-col gap-8">
+            <div class="flex flex-col gap-6">
                 <!-- 1. 공통인수 -->
-                <section class="formula-card p-6">
-                    <h2 class="handwriting text-[#f7dc6f] text-4xl mb-4">1. 공통인수로 묶기</h2>
-                    <div class="formula-inner-box p-8 text-center">
-                        <span class="text-3xl text-blue-100">$ma + mb = m(a + b)$</span>
+                <section class="formula-card p-5">
+                    <h2 class="handwriting text-[#f7dc6f] text-3xl mb-3">1. 공통인수로 묶기</h2>
+                    <div class="formula-inner-box p-5 text-center">
+                        <span class="text-xl text-blue-100 nowrap">$ma + mb = m(a + b)$</span>
                     </div>
                 </section>
 
-                <!-- 2. 완전제곱식 -->
-                <section class="formula-card p-6 flex-grow flex flex-col">
-                    <h2 class="handwriting text-[#f7dc6f] text-4xl mb-6">2. 완전제곱식 공식</h2>
-                    <div class="formula-inner-box p-8 text-center space-y-6 border border-white/5">
-                        <div class="text-3xl text-green-100">$a^2 + 2ab + b^2 = (a + b)^2$</div>
-                        <div class="border-t border-white/10 w-2/3 mx-auto"></div>
-                        <div class="text-3xl text-green-100">$a^2 - 2ab + b^2 = (a - b)^2$</div>
+                <!-- 2. 완전제곱식 (각 식을 한 줄로 유지) -->
+                <section class="formula-card p-5 flex-grow flex flex-col">
+                    <h2 class="handwriting text-[#f7dc6f] text-3xl mb-4">2. 완전제곱식 공식</h2>
+                    <div class="formula-inner-box p-5 text-center border border-white/5 mb-4 space-y-4">
+                        <div class="text-xl text-green-100 nowrap">$a^2 + 2ab + b^2 = (a + b)^2$</div>
+                        <div class="border-t border-white/5 w-1/2 mx-auto"></div>
+                        <div class="text-xl text-green-100 nowrap">$a^2 - 2ab + b^2 = (a - b)^2$</div>
                     </div>
                     
                     <!-- Steps -->
-                    <div class="grid grid-cols-1 gap-4 mt-6">
-                        <div class="bg-blue-900/20 border border-blue-400/40 p-4 rounded-xl text-center">
-                            <span class="text-blue-300 font-bold block mb-1 text-xl handwriting">Step 1</span>
-                            <p class="text-sm opacity-80">양 끝항이 어떤 값의 제곱 형태인지 확인합니다.</p>
+                    <div class="grid grid-cols-1 gap-3 mt-auto">
+                        <div class="bg-blue-900/20 border border-blue-400/30 p-3 rounded-xl text-center">
+                            <span class="text-blue-300 font-bold block mb-1 text-lg handwriting">Step 1</span>
+                            <p class="text-xs opacity-80 leading-tight">양 끝항이 어떤 값의 제곱 형태인지 확인합니다.</p>
                         </div>
-                        <div class="bg-yellow-900/20 border border-yellow-400/40 p-4 rounded-xl text-center">
-                            <span class="text-yellow-300 font-bold block mb-1 text-xl handwriting">Step 2</span>
-                            <p class="text-sm opacity-80">가운데 항이 두 값의 곱의 2배가 맞는지 확인합니다.</p>
+                        <div class="bg-yellow-900/20 border border-yellow-400/30 p-3 rounded-xl text-center">
+                            <span class="text-yellow-300 font-bold block mb-1 text-lg handwriting">Step 2</span>
+                            <p class="text-xs opacity-80 leading-tight">가운데 항이 두 값의 곱의 2배가 맞는지 확인합니다.</p>
                         </div>
                     </div>
                 </section>
             </div>
 
-            <!-- 두 번째 칸: 3번 공식 (한 줄로 정리) -->
+            <!-- 두 번째 칸: 3번 공식 -->
             <div class="flex flex-col">
-                <section class="formula-card p-8 h-full flex flex-col">
-                    <h2 class="handwriting text-[#f7dc6f] text-4xl mb-8">3. 합차 공식 (제곱의 차)</h2>
-                    <div class="flex-grow flex flex-col justify-start">
-                        <div class="formula-inner-box p-12 text-center shadow-inner mb-6">
-                            <span class="text-5xl text-purple-100">$a^2 - b^2 = (a + b)(a - b)$</span>
+                <section class="formula-card p-6 h-full flex flex-col">
+                    <h2 class="handwriting text-[#f7dc6f] text-3xl mb-6">3. 합차 공식 (제곱의 차)</h2>
+                    <div class="flex-grow flex flex-col justify-start gap-6">
+                        <div class="formula-inner-box p-8 text-center shadow-inner">
+                            <span class="text-2xl text-purple-100 nowrap">$a^2 - b^2 = (a + b)(a - b)$</span>
                         </div>
                         
-                        <div class="bg-yellow-600/5 border border-dashed border-yellow-600/30 p-6 rounded-2xl text-center">
-                            <p class="text-[#fbd38d] text-xl handwriting">
+                        <div class="bg-yellow-600/5 border border-dashed border-yellow-600/30 p-5 rounded-2xl text-center">
+                            <p class="text-[#fbd38d] text-lg handwriting">
                                 "제곱 마이너스 제곱은 합과 차의 곱으로 변신!"
                             </p>
                         </div>
@@ -133,22 +133,22 @@
 
             <!-- 세 번째 칸: 비교 표 -->
             <div class="flex flex-col">
-                <section class="formula-card border-2 border-[#7fb3d5]/30 p-8 h-full">
+                <section class="formula-card border-2 border-[#7fb3d5]/30 p-6 h-full">
                     <!-- 용어 비교 -->
-                    <div class="mb-12">
-                        <h2 class="handwriting text-[#7fb3d5] text-4xl mb-4 flex items-center gap-2">
+                    <div class="mb-8">
+                        <h2 class="handwriting text-[#7fb3d5] text-3xl mb-3 flex items-center gap-2">
                             <span>★</span> 용어 비교
                         </h2>
                         <div class="overflow-hidden rounded-xl border border-white/10">
-                            <table>
+                            <table class="text-xs">
                                 <thead>
                                     <tr>
-                                        <th>구분</th>
+                                        <th class="w-1/4">구분</th>
                                         <th>소인수분해 (수)</th>
                                         <th>인수분해 (식)</th>
                                     </tr>
                                 </thead>
-                                <tbody class="text-lg">
+                                <tbody class="text-sm">
                                     <tr>
                                         <td class="bg-white/5 font-bold">대상</td>
                                         <td>자연수</td>
@@ -159,6 +159,11 @@
                                         <td class="text-white/60">소수의 곱</td>
                                         <td class="text-white/60">인수의 곱</td>
                                     </tr>
+                                    <tr class="bg-blue-900/10">
+                                        <td class="bg-white/5 font-bold text-blue-300">공통요소</td>
+                                        <td class="text-blue-200">공약수</td>
+                                        <td class="text-blue-200">공통인수</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -166,19 +171,19 @@
 
                     <!-- 형태 비교 -->
                     <div>
-                        <h2 class="handwriting text-[#a2d9ce] text-4xl mb-4 flex items-center gap-2">
+                        <h2 class="handwriting text-[#a2d9ce] text-3xl mb-3 flex items-center gap-2">
                             <span>★</span> 형태 비교
                         </h2>
-                        <div class="overflow-hidden rounded-xl border border-white/10">
+                        <div class="overflow-hidden rounded-xl border border-white/10 text-xs">
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>구분</th>
+                                        <th class="w-1/4">구분</th>
                                         <th>제곱수</th>
                                         <th>완전제곱식</th>
                                     </tr>
                                 </thead>
-                                <tbody class="text-lg">
+                                <tbody class="text-sm">
                                     <tr>
                                         <td class="bg-white/5 font-bold">정의</td>
                                         <td>자연수의 제곱</td>
@@ -198,9 +203,9 @@
         </div>
 
         <!-- 푸터 -->
-        <footer class="mt-8 flex justify-between items-center text-sm text-white/30 border-t border-white/5 pt-6">
+        <footer class="mt-6 flex justify-between items-center text-[10px] text-white/30 border-t border-white/5 pt-4">
             <div>학습 단원: 다항식의 인수분해</div>
-            <div class="handwriting text-xl">페이지 - 1</div>
+            <div class="handwriting text-lg">페이지 - 1</div>
         </footer>
     </div>
 
