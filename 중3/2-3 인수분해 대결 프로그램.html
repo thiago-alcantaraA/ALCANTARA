@@ -104,7 +104,7 @@
 
     <div id="game-main" class="max-w-6xl w-full flex flex-col">
         
-        <!-- 설정 및 대시보드 -->
+        <!-- 대시보드 -->
         <div class="bg-white rounded-[2.5rem] shadow-xl p-5 mb-4 border-b-8 border-blue-200">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
                 
@@ -277,7 +277,7 @@
                 document.getElementById('launch-btn').disabled = true;
                 document.getElementById('launch-btn').classList.add('opacity-50');
             } else {
-                status.innerText = `${n}팀 대기중 (${used + 1}차 가능)`;
+                status.innerText = `${n}팀 대기중 (${used + 1}차 도전)`;
                 status.className = "text-blue-600 font-bold text-sm uppercase";
                 document.getElementById('launch-btn').disabled = false;
                 document.getElementById('launch-btn').classList.remove('opacity-50');
@@ -322,10 +322,8 @@
                 if (engine.time <= 0) stopGame();
             }, 1000);
 
-            if (engine.round >= 1) { // 모든 단계 컨베이어 적용 (속도 차별화 가능)
-                if (engine.animationId) cancelAnimationFrame(engine.animationId);
-                requestAnimationFrame(updateConveyor);
-            }
+            if (engine.animationId) cancelAnimationFrame(engine.animationId);
+            if (engine.round === 3) requestAnimationFrame(updateConveyor);
         }
 
         function nextProblem() {
@@ -352,9 +350,7 @@
                     q = Math.floor(Math.random() * 17) - 8;
                     s = Math.floor(Math.random() * 17) - 8;
                 }
-                const A = p * r;
-                const B = p * s + q * r;
-                const C = q * s;
+                const A = p * r, B = p * s + q * r, C = q * s;
                 currentEqStr = `${A},${B},${C}`;
                 tries++;
             } while (currentEqStr === engine.lastEqStr && tries < 15);
@@ -410,19 +406,28 @@
 
         function initBalloons() {
             const layer = document.getElementById('layer-balloon');
+            const containerWidth = layer.clientWidth || 900;
             layer.innerHTML = '';
             engine.balloons = [];
 
-            const cols = 8; // 화면 밖을 포함하여 더 많은 열 생성
+            const is3 = (engine.round === 3);
+            const cols = is3 ? 8 : 5; 
             const rows = 3;
-            const colSpacing = 200;
+            const colSpacing = is3 ? 200 : 180;
             const rowSpacing = 135;
+
+            // 중앙 정렬을 위한 시작점 계산 (1, 2단계 전용)
+            let startX = 0;
+            if (!is3) {
+                const totalGridWidth = (cols - 1) * colSpacing + 95; 
+                startX = (containerWidth - totalGridWidth) / 2;
+            }
 
             let answers = [0, 1]; 
             
             for (let c = 0; c < cols; c++) {
                 for (let r = 0; r < rows; r++) {
-                    const isAnswer = (c === 3 && answers.length > 0);
+                    const isAnswer = (c === (is3 ? 3 : 2) && answers.length > 0);
                     let text = isAnswer ? engine.currentFactors[answers.shift()] : getWrongF();
                     
                     const bEl = document.createElement('div');
@@ -431,9 +436,12 @@
                     const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e'];
                     bEl.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
                     
+                    const xPos = is3 ? (c * colSpacing) : (startX + c * colSpacing);
+                    const yPos = r * rowSpacing + 30;
+
                     const obj = {
-                        x: c * colSpacing,
-                        y: r * rowSpacing + 30,
+                        x: xPos,
+                        y: yPos,
                         text: text,
                         isTarget: isAnswer,
                         el: bEl
@@ -450,21 +458,20 @@
         }
 
         function updateConveyor() {
-            if (!engine.playing) return;
+            if (!engine.playing || engine.round !== 3) return;
 
             const colSpacing = 200;
             const cols = 8;
             const totalWidth = colSpacing * cols;
-            const currentSpeed = engine.round === 3 ? engine.speed * 1.5 : engine.speed;
 
             engine.balloons.forEach(b => {
-                b.x -= currentSpeed;
+                b.x -= engine.speed;
                 
-                // 화면 왼쪽 끝(-120px) 밖으로 완전히 사라지면 오른쪽 끝으로 순간이동
+                // 화면 왼쪽 밖(-120px)으로 나가면 오른쪽 밖으로 순간이동
                 if (b.x < -120) {
                     b.x += totalWidth;
                     
-                    // 재등장할 때 이미 맞춘 정답이거나 오답이면 텍스트 갱신
+                    // 재등장할 때 이미 찾은 정답이거나 오답이면 식 갱신
                     const factorIdx = engine.currentFactors.indexOf(b.text);
                     const isAlreadyFound = factorIdx !== -1 && engine.foundIndices.includes(factorIdx);
                     
@@ -477,7 +484,6 @@
                         b.el.classList.remove('pop-effect');
                         b.isTarget = false;
 
-                        // 정답 보존: 화면 내에 정답이 너무 없으면 확률적으로 정답 생성
                         if (Math.random() < 0.15 && engine.foundIndices.length < 2) {
                             const unfound = engine.foundIndices.includes(0) ? 1 : 0;
                             b.text = engine.currentFactors[unfound];
@@ -560,7 +566,7 @@
                     <p class="text-8xl font-black text-white">${engine.currentSessionScore}</p>
                 </div>
             `;
-            descEl.innerHTML = `환상적인 실력입니다!<br><span class="text-amber-500 font-black">+${bonus}초 보너스!</span>`;
+            descEl.innerHTML = `대단한 실력입니다!<br><span class="text-amber-500 font-black">+${bonus}초 보너스!</span>`;
             
             btnRetryEl.classList.add('hidden');
             document.getElementById('overlay-btn').innerText = "다음 단계로";
@@ -571,14 +577,6 @@
                 startCycle();
             };
             ui.classList.remove('hidden');
-        }
-
-        function showBonusEffect(s) {
-            const d = document.createElement('div');
-            d.className = 'bonus-notify';
-            d.innerText = `+${s}초 연장!`;
-            document.getElementById('layer-effect').appendChild(d);
-            setTimeout(() => d.remove(), 1500);
         }
 
         function stopGame() {
@@ -610,11 +608,11 @@
             
             const left = 3 - engine.attempts[teamIdx];
             if (left > 0) {
-                descEl.innerHTML = `남은 도전 기회: <span class="text-blue-600">${left}번</span><br>기록 갱신에 도전하세요!`;
+                descEl.innerHTML = `아쉬워요!<br>남은 기회: <span class="text-blue-600">${left}번</span>`;
                 btnRetryEl.classList.remove('hidden');
                 btnRetryEl.onclick = () => startChallenge();
             } else {
-                descEl.innerHTML = `수고하셨습니다!<br><span class="text-slate-400 font-medium text-lg">해당 팀의 모든 기회를 사용했습니다.</span>`;
+                descEl.innerHTML = `도전 완료!<br><span class="text-slate-400 font-medium">모든 기회를 사용했습니다.</span>`;
                 btnRetryEl.classList.add('hidden');
             }
 
@@ -640,6 +638,7 @@
             document.getElementById('launch-btn').disabled = false;
             document.getElementById('launch-btn').classList.remove('opacity-50');
             document.getElementById('equation-view').innerText = "식 표시";
+            document.getElementById('equation-view').className = "text-4xl sm:text-6xl font-black text-slate-300";
             document.getElementById('factor-view').innerHTML = "";
             document.getElementById('status-bar').style.width = "0%";
             document.getElementById('layer-balloon').innerHTML = `
