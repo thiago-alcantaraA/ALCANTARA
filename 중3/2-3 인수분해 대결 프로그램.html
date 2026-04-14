@@ -215,7 +215,7 @@
             </div>
             <div id="layer-effect"></div>
             
-            <!-- 결과창 오버레이 (3단 병렬 레이아웃 적용) -->
+            <!-- 결과창 오버레이 -->
             <div id="ui-overlay" class="hidden absolute inset-0 z-[100] flex items-center justify-center p-8 sm:p-12 overflow-hidden">
                 <div class="flex flex-col md:flex-row items-center justify-between w-full max-w-5xl gap-6 md:gap-12 bg-white/40 p-8 rounded-[3rem]">
                     
@@ -227,10 +227,10 @@
 
                     <!-- 중앙: 도전 점수 정보 -->
                     <div id="overlay-score-info" class="flex-grow flex justify-center">
-                        <!-- 점수 박스가 여기에 렌더링됨 -->
+                        <!-- 점수 박스 렌더링 영역 -->
                     </div>
 
-                    <!-- 우측: 설명 및 버튼 (병렬 배치) -->
+                    <!-- 우측: 설명 및 버튼 -->
                     <div class="flex flex-col items-center md:items-end gap-6 min-w-[250px]">
                         <p id="overlay-desc" class="text-xl sm:text-2xl text-slate-600 font-bold text-center md:text-right"></p>
                         <div class="flex flex-row gap-3 justify-center">
@@ -286,7 +286,7 @@
             currentFactors: [],
             foundIndices: [],
             tracks: Array(7).fill(0),
-            lastEqStr: "" // 중복 방지용
+            lastEqStr: "" 
         };
 
         let timerCore = null;
@@ -399,13 +399,12 @@
 
             do {
                 if (engine.round === 1) {
-                    const cases = [
-                        [Math.floor(Math.random() * 11) - 5, Math.floor(Math.random() * 11) - 5],
-                        [3, -2], [4, -3], [5, -4], [-2, 3], [-3, 4], [1, 0], [2, -1], [-1, 2]
-                    ];
-                    const choice = cases[Math.floor(Math.random() * cases.length)];
-                    q = choice[0];
-                    s = choice[1];
+                    // 1단계: 풍선의 최고차항 계수(p, r)는 무조건 1
+                    p = 1;
+                    r = 1;
+                    // 상수항 범위: -10 ~ 10 무작위
+                    q = Math.floor(Math.random() * 21) - 10;
+                    s = Math.floor(Math.random() * 21) - 10;
                     if (q === 0 && s === 0) s = 1;
                 } else if (engine.round === 2) {
                     p = [1, 2, 3][Math.floor(Math.random() * 3)];
@@ -499,8 +498,16 @@
         }
 
         function getWrongF() {
-            const a = [1, 2, 3][Math.floor(Math.random()*3)];
-            const b = Math.floor(Math.random()*15)-7;
+            let a, b;
+            if (engine.round === 1) {
+                // 1단계 풍선의 최고차항 계수는 1
+                a = 1;
+                // 상수항 무작위 범위: -10 ~ 10
+                b = Math.floor(Math.random() * 21) - 10;
+            } else {
+                a = [1, 2, 3][Math.floor(Math.random()*3)];
+                b = Math.floor(Math.random()*15)-7;
+            }
             if (a === 1) return `x${b >= 0 ? '+' : ''}${b}`;
             return `${a}x${b >= 0 ? '+' : ''}${b}`;
         }
