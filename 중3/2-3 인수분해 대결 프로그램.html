@@ -16,7 +16,7 @@
             overflow-x: hidden;
         }
 
-        /* 전체 화면 비율을 90%로 조정 */
+        /* 전체 화면 비율 90% 조정 */
         #game-main {
             transform: scale(0.9);
             transform-origin: top center;
@@ -94,12 +94,41 @@
             box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
         }
         
+        .team-card {
+            position: relative;
+        }
+
         .team-card.active {
             border-color: #eab308;
             background-color: #fefce8;
             transform: translateY(-8px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
+
+        /* 각 팀 상자 등수 메달 */
+        .rank-medal {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.3rem;
+            color: white;
+            border: 4px solid white;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            z-index: 30;
+            background-color: #cbd5e1;
+            transition: all 0.3s ease;
+        }
+
+        .medal-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+        .medal-2 { background: linear-gradient(135deg, #94a3b8, #64748b); }
+        .medal-3 { background: linear-gradient(135deg, #b45309, #78350f); }
 
         .bonus-notify {
             position: absolute;
@@ -120,13 +149,62 @@
             30% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
             100% { transform: translate(-50%, -100%) scale(1); opacity: 0; }
         }
+
+        /* 대기실 팀 이름 입력 스타일 대폭 확대 */
+        .lobby-input-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            width: 90%;
+            max-width: 900px;
+        }
+        .lobby-input-box {
+            background: #ffffff;
+            padding: 1.5rem;
+            border-radius: 2rem;
+            border: 3px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+        }
+        .lobby-input-box:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1);
+            transform: translateY(-2px);
+        }
+        .lobby-input-box label {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 900;
+            padding-left: 4px;
+        }
+        .lobby-input-box input {
+            background: #f1f5f9;
+            border: 2px solid transparent;
+            border-radius: 1rem;
+            padding: 0.75rem;
+            font-family: 'Jua', sans-serif;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 900;
+            outline: none;
+            color: #1e293b;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .lobby-input-box input:focus {
+            background: #ffffff;
+            border-color: #3b82f6;
+        }
     </style>
 </head>
 <body class="p-4 sm:p-6 bg-slate-100 min-h-screen flex flex-col items-center">
 
     <div id="game-main" class="max-w-6xl w-full flex flex-col">
         
-        <!-- 설정 및 대시보드 -->
+        <!-- 설정 및 대시보드 섹션 -->
         <div class="bg-white rounded-[2.5rem] shadow-xl p-5 mb-4 border-b-8 border-blue-200">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
                 
@@ -150,26 +228,25 @@
                     </div>
                 </div>
 
-                <!-- 메인 컨트롤 (타이머 및 버전 선택 병렬 배치) -->
+                <!-- 메인 컨트롤 -->
                 <div class="flex items-stretch gap-2 h-full">
-                    <!-- 블랙 박스: 타이머 + 도전 시작 -->
                     <div class="bg-slate-800 rounded-3xl p-3 flex flex-col items-center justify-center shadow-lg transform hover:scale-[1.02] transition-transform flex-grow gap-2">
                         <div class="flex items-center gap-3">
                             <span id="round-label" class="bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black">1단계</span>
                             <span class="text-2xl text-white font-black tabular-nums"><span id="timer-display">60</span><small class="text-base ml-1 opacity-60">초</small></span>
                         </div>
-                        <button id="launch-btn" onclick="startChallenge()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-2xl text-sm font-bold transition-all shadow-md active:scale-95">
+                        <button id="launch-btn" onclick="startChallenge()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-2xl text-lg font-black transition-all shadow-md active:scale-95">
                             도전 시작
                         </button>
                     </div>
-                    <!-- 버전 선택: 세로 배치 (글씨 키움) -->
+                    <!-- 버전 선택 세로 배치 -->
                     <div class="flex flex-col gap-1.5 min-w-[100px]">
                         <button onclick="changeScoreMode('best', this)" class="mode-btn active flex-1 px-2 rounded-2xl text-base font-black">최고점</button>
                         <button onclick="changeScoreMode('total', this)" class="mode-btn flex-1 px-2 rounded-2xl text-base font-black">합산</button>
                     </div>
                 </div>
 
-                <!-- 팀 상태 -->
+                <!-- 팀 상태 표시 -->
                 <div class="text-center border-l-4 border-slate-100 pl-4">
                     <p id="team-status" class="text-slate-400 font-bold text-xs mb-1">팀을 선택하세요</p>
                     <div class="flex flex-col items-center">
@@ -180,7 +257,7 @@
             </div>
         </div>
 
-        <!-- 문제 노출 영역 -->
+        <!-- 문제 표시창 -->
         <div class="bg-white rounded-[2.5rem] shadow-lg p-6 mb-4 text-center border-t-8 border-blue-500 relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-1.5 bg-slate-50">
                 <div id="status-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
@@ -193,12 +270,17 @@
         </div>
 
         <!-- 게임 플레이 판 -->
-        <div id="canvas-area" class="h-[440px] bg-white rounded-[3rem] border-4 border-dashed border-slate-200 relative shadow-inner overflow-hidden mb-6">
+        <div id="canvas-area" class="h-[440px] bg-white rounded-[3rem] border-4 border-dashed border-slate-200 relative shadow-inner overflow-hidden mb-6 flex items-center justify-center">
             <div id="layer-balloon" class="relative h-full w-full">
-                <div id="ready-msg" class="absolute inset-0 flex flex-col items-center justify-center text-center p-10">
-                    <div class="text-6xl mb-4">🚀</div>
-                    <h3 class="text-3xl font-black text-slate-800 mb-2">인수분해 대결</h3>
-                    <p class="text-slate-400 text-lg">팀을 고르고 도전 시작!</p>
+                <!-- 초기 대기실 화면 (이름 입력 칸) -->
+                <div id="lobby-ui" class="absolute inset-0 flex flex-col items-center justify-center p-8 bg-white/50">
+                    <div class="text-center mb-8">
+                        <h3 class="text-3xl font-black text-slate-800 mb-2">팀 이름을 설정해 주세요!</h3>
+                        <p class="text-slate-500 text-lg">아래 상자에 이름을 입력하고, 하단에서 팀 카드를 골라 시작하세요.</p>
+                    </div>
+                    <div class="lobby-input-container" id="lobby-inputs-grid">
+                        <!-- 입력 필드가 JS에서 생성됨 -->
+                    </div>
                 </div>
             </div>
             <div id="layer-effect"></div>
@@ -207,8 +289,8 @@
             <div id="ui-overlay" class="hidden absolute inset-0 z-[100] flex items-center justify-center p-6">
                 <div class="flex flex-col md:flex-row items-center justify-between w-full max-w-5xl gap-6 bg-white/95 p-10 rounded-[4rem] shadow-2xl backdrop-blur-md border-4 border-white">
                     <div class="flex flex-col items-center text-center md:text-left md:items-start min-w-[200px]">
-                        <div id="overlay-icon" class="text-8xl mb-2"></div>
-                        <h2 id="overlay-title" class="text-5xl font-black tracking-tight">상태</h2>
+                        <div id="overlay-icon" class="text-8xl mb-2 filter drop-shadow-md"></div>
+                        <h2 id="overlay-title" class="text-5xl font-black tracking-tight">결과</h2>
                     </div>
                     <div id="overlay-score-info" class="flex-grow flex justify-center py-4"></div>
                     <div class="flex flex-col items-center md:items-end gap-8 min-w-[300px]">
@@ -222,17 +304,20 @@
             </div>
         </div>
 
-        <!-- 하단 점수판 -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <!-- 하단 팀 점수판 -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mt-6">
             <script>
                 const colors = ['bg-red-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500', 'bg-rose-500'];
                 for(let i=1; i<=6; i++) {
                     document.write(`
-                        <div onclick="selectTeam(${i})" id="team-card-${i}" class="team-card cursor-pointer bg-white p-4 rounded-[2rem] shadow-lg border-4 border-transparent transition-all">
-                            <div class="flex flex-col items-center">
-                                <div class="flex items-center gap-2 mb-2">
+                        <div onclick="selectTeam(${i})" id="team-card-${i}" class="team-card cursor-pointer bg-white p-4 rounded-[2.5rem] shadow-lg border-4 border-transparent transition-all">
+                            <!-- 개별 등수 메달 -->
+                            <div id="rank-badge-${i}" class="rank-medal">-</div>
+                            
+                            <div class="flex flex-col items-center mt-3">
+                                <div class="flex items-center gap-2 mb-2 group">
                                     <div class="w-3 h-3 rounded-full ${colors[i-1]}"></div>
-                                    <span class="text-xs font-black text-slate-500 uppercase">${i}팀 최고</span>
+                                    <span id="team-name-label-${i}" class="text-xs font-black text-slate-500 uppercase">${i}팀</span>
                                 </div>
                                 <span id="score-val-${i}" class="text-4xl font-black text-blue-600 leading-none mb-3">0</span>
                                 <div class="grid grid-cols-3 gap-1 w-full border-t border-slate-100 pt-3 text-[10px] text-center font-bold text-slate-400">
@@ -257,6 +342,7 @@
             solved: 0,
             goal: 7,
             team: null,
+            teamNames: ["1팀", "2팀", "3팀", "4팀", "5팀", "6팀"],
             playing: false,
             scoreMode: 'best', 
             isTransitioning: false,
@@ -306,21 +392,33 @@
             updateAllTeamScoresUI();
         }
 
+        // 대기실 입력칸에서 팀 이름 실시간 업데이트
+        function updateTeamName(teamNum, val) {
+            if (val.trim() === "") {
+                engine.teamNames[teamNum-1] = teamNum + "팀";
+            } else {
+                engine.teamNames[teamNum-1] = val.trim();
+            }
+            document.getElementById(`team-name-label-${teamNum}`).innerText = engine.teamNames[teamNum-1];
+            updateAllTeamScoresUI();
+        }
+
         function selectTeam(n) {
-            if (engine.playing) return;
+            if (engine.playing || !n) return;
             engine.team = n;
             document.querySelectorAll('.team-card').forEach(c => c.classList.remove('active'));
-            document.getElementById(`team-card-${n}`).classList.add('active');
+            const selectedCard = document.getElementById(`team-card-${n}`);
+            if (selectedCard) selectedCard.classList.add('active');
             
             const status = document.getElementById('team-status');
             const used = engine.attempts[n-1];
             if (used >= 3) {
-                status.innerText = `${n}팀 모든 기회 사용`;
+                status.innerText = `${engine.teamNames[n-1]} 도전 완료`;
                 status.className = "text-red-500 font-bold text-sm uppercase";
                 document.getElementById('launch-btn').disabled = true;
                 document.getElementById('launch-btn').classList.add('opacity-50');
             } else {
-                status.innerText = `${n}팀 대기중 (${used + 1}차 도전)`;
+                status.innerText = `${engine.teamNames[n-1]} 선택됨 (${used + 1}차 시도 가능)`;
                 status.className = "text-blue-600 font-bold text-sm uppercase";
                 document.getElementById('launch-btn').disabled = false;
                 document.getElementById('launch-btn').classList.remove('opacity-50');
@@ -336,31 +434,42 @@
         }
 
         function updateAllTeamScoresUI() {
+            const teamSummary = [];
             for(let i=1; i<=6; i++) {
                 const teamIdx = i - 1;
                 const h = engine.history[teamIdx];
-                
-                // 차수별 점수 UI 업데이트
                 for(let j=0; j<3; j++) {
-                    const hSpan = document.getElementById(`h-${i}-${j}`);
-                    if (hSpan) hSpan.innerText = h[j] ?? '-';
+                    const cell = document.getElementById(`h-${i}-${j}`);
+                    if (cell) cell.innerText = h[j] ?? '-';
                 }
-
-                // 최종 계산 점수 업데이트
-                const scores = h.filter(v => v !== null);
-                let finalScore = 0;
-                if (scores.length > 0) {
-                    if (engine.scoreMode === 'best') {
-                        finalScore = Math.max(...scores);
+                const activeScores = h.filter(v => v !== null);
+                let currentTotalScore = 0;
+                if (activeScores.length > 0) {
+                    currentTotalScore = (engine.scoreMode === 'best') ? Math.max(...activeScores) : activeScores.reduce((a, b) => a + b, 0);
+                }
+                document.getElementById(`score-val-${i}`).innerText = currentTotalScore;
+                teamSummary.push({ num: i, score: currentTotalScore });
+            }
+            const ranked = [...teamSummary].sort((a, b) => b.score - a.score);
+            teamSummary.forEach(team => {
+                const rank = ranked.findIndex(t => t.num === team.num) + 1;
+                const badge = document.getElementById(`rank-badge-${team.num}`);
+                if (badge) {
+                    if (team.score === 0) {
+                        badge.innerText = "-";
+                        badge.className = "rank-medal bg-slate-300";
                     } else {
-                        finalScore = scores.reduce((a, b) => a + b, 0);
+                        badge.className = `rank-medal medal-${rank > 3 ? 'etc' : rank}`;
+                        if (rank === 1) badge.innerText = "🥇";
+                        else if (rank === 2) badge.innerText = "🥈";
+                        else if (rank === 3) badge.innerText = "🥉";
+                        else {
+                            badge.innerText = rank;
+                            badge.style.backgroundColor = "#94a3b8";
+                        }
                     }
                 }
-                document.getElementById(`score-val-${i}`).innerText = finalScore;
-                
-                const titleSpan = document.querySelector(`#team-card-${i} span.text-xs`);
-                if (titleSpan) titleSpan.innerText = (engine.scoreMode === 'best' ? `${i}팀 최고` : `${i}팀 합산`);
-            }
+            });
         }
 
         function startChallenge() {
@@ -384,7 +493,6 @@
             document.getElementById('round-label').innerText = `${engine.round}단계`;
             updateUI();
             nextProblem();
-            
             if(timerCore) clearInterval(timerCore);
             timerCore = setInterval(() => {
                 if (!engine.playing) return;
@@ -392,7 +500,6 @@
                 document.getElementById('timer-display').innerText = Math.max(0, engine.time);
                 if (engine.time <= 0) stopGame();
             }, 1000);
-
             if (engine.animationId) cancelAnimationFrame(engine.animationId);
             if (engine.round === 3) requestAnimationFrame(updateConveyor);
         }
@@ -402,7 +509,6 @@
             let p=1, q, r=1, s;
             let currentEqStr = "";
             let tries = 0;
-
             do {
                 if (engine.round === 1) {
                     p = 1; r = 1;
@@ -410,12 +516,9 @@
                     s = Math.floor(Math.random() * 21) - 10;
                     if (q === 0 && s === 0) s = 1;
                 } else if (engine.round === 2) {
-                    // 2단계: p*r이 절대 1이 되지 않도록 2 이상의 조합 선택
-                    const coeffs = [[2,1], [1,2], [3,1], [1,3], [2,2], [3,2], [2,3]];
-                    const pair = coeffs[Math.floor(Math.random() * coeffs.length)];
-                    p = pair[0];
-                    r = pair[1];
-                    
+                    const coeffPairs = [[2,1], [1,2], [3,1], [1,3], [2,2], [4,1], [1,4]];
+                    const pair = coeffPairs[Math.floor(Math.random() * coeffPairs.length)];
+                    p = pair[0]; r = pair[1];
                     q = Math.floor(Math.random() * 11) - 5;
                     s = Math.floor(Math.random() * 11) - 5;
                     if (q === 0 && s === 0) s = 2;
@@ -429,19 +532,15 @@
                 currentEqStr = `${A},${B},${C}`;
                 tries++;
             } while (currentEqStr === engine.lastEqStr && tries < 15);
-
             engine.lastEqStr = currentEqStr;
-
             const getF = (a, b) => {
                 if (a === 0) return b.toString();
                 let ap = (a === 1 ? "x" : (a === -1 ? "-x" : a + "x"));
                 if (b === 0) return ap;
                 return ap + (b > 0 ? "+" + b : b);
             };
-
             engine.currentFactors = [getF(p, q), getF(r, s)];
             engine.foundIndices = [];
-
             let eqStr = "";
             const A = p * r, B = p * s + q * r, C = q * s;
             if (A !== 0) eqStr += (A === 1 ? "x²" : (A === -1 ? "-x²" : A + "x²"));
@@ -452,7 +551,6 @@
             }
             if (C !== 0) eqStr += (C > 0 ? " + " : " - ") + Math.abs(C);
             if (!eqStr) eqStr = "0";
-
             document.getElementById('equation-view').innerHTML = mathFormat(eqStr);
             drawFactorSlots();
             initBalloons();
@@ -475,10 +573,7 @@
         function getWrongF() {
             let a, b;
             if (engine.round === 1) { a = 1; b = Math.floor(Math.random() * 21) - 10; }
-            else { 
-                a = [1, 2, 3][Math.floor(Math.random() * 3)]; 
-                b = Math.floor(Math.random() * 21) - 10; 
-            }
+            else { a = [1, 2, 3][Math.floor(Math.random() * 3)]; b = Math.floor(Math.random() * 21) - 10; }
             return (a === 1 ? "x" : a + "x") + (b === 0 ? "" : (b > 0 ? "+" + b : b));
         }
 
@@ -487,53 +582,36 @@
             const containerWidth = layer.clientWidth || 900;
             layer.innerHTML = '';
             engine.balloons = [];
-
             const is3 = (engine.round === 3);
             const cols = is3 ? 8 : 5; 
             const rows = 3;
             const colSpacing = is3 ? 200 : 180;
             const rowSpacing = 135;
-
             let positions = [];
             for (let c = 0; c < cols; c++) {
-                for (let r = 0; r < rows; r++) {
-                    positions.push({c, r});
-                }
+                for (let r = 0; r < rows; r++) positions.push({c, r});
             }
             positions.sort(() => Math.random() - 0.5);
-
             let startX = 0;
             if (!is3) {
                 const totalGridWidth = (cols - 1) * colSpacing + 95; 
                 startX = (containerWidth - totalGridWidth) / 2;
             }
-
             for (let i = 0; i < positions.length; i++) {
                 const pos = positions[i];
                 const isAnswer = i < 2; 
                 let text = isAnswer ? engine.currentFactors[i] : getWrongF();
-
                 const bEl = document.createElement('div');
                 bEl.className = 'balloon';
                 bEl.innerHTML = mathFormat(`(${text})`);
-                const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e'];
-                bEl.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                
+                const colorsArr = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e'];
+                bEl.style.backgroundColor = colorsArr[Math.floor(Math.random() * colorsArr.length)];
                 const xPos = is3 ? (pos.c * colSpacing) : (startX + pos.c * colSpacing);
                 const yPos = pos.r * rowSpacing + 30;
-
-                const obj = {
-                    x: xPos,
-                    y: yPos,
-                    text: text,
-                    isTarget: isAnswer,
-                    el: bEl
-                };
-                
+                const obj = { x: xPos, y: yPos, text: text, isTarget: isAnswer, el: bEl };
                 bEl.style.left = obj.x + 'px';
                 bEl.style.top = obj.y + 'px';
                 bEl.onclick = () => onPop(obj);
-                
                 layer.appendChild(bEl);
                 engine.balloons.push(obj);
             }
@@ -541,8 +619,7 @@
 
         function updateConveyor() {
             if (!engine.playing || engine.round !== 3) return;
-            const colSpacing = 200, cols = 8;
-            const totalWidth = colSpacing * cols;
+            const colSpacing = 200, cols = 8, totalWidth = colSpacing * cols;
             engine.balloons.forEach(b => {
                 b.x -= engine.speed;
                 if (b.x < -120) {
@@ -638,8 +715,8 @@
             clearInterval(timerCore);
             if (engine.animationId) cancelAnimationFrame(engine.animationId);
             const teamIdx = engine.team - 1;
-            const attemptIdx = engine.attempts[teamIdx] - 1;
-            engine.history[teamIdx][attemptIdx] = engine.currentSessionScore;
+            const currentAttempt = engine.attempts[teamIdx] - 1;
+            engine.history[teamIdx][currentAttempt] = engine.currentSessionScore;
             const ui = document.getElementById('ui-overlay');
             document.getElementById('overlay-icon').innerText = "⏰";
             document.getElementById('overlay-title').innerText = "시간 종료";
@@ -684,15 +761,34 @@
             document.getElementById('equation-view').className = "text-4xl sm:text-6xl font-black text-slate-300";
             document.getElementById('factor-view').innerHTML = "";
             document.getElementById('status-bar').style.width = "0%";
-            document.getElementById('layer-balloon').innerHTML = `
-                <div id="ready-msg" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
-                    <div class="text-6xl mb-4">🚀</div>
-                    <h3 class="text-3xl font-black text-slate-800">준비 완료</h3>
-                    <p class="text-slate-400 text-lg">팀을 선택하고 도전을 시작하세요!</p>
+            // 대기실 UI 복구
+            const layer = document.getElementById('layer-balloon');
+            layer.innerHTML = `
+                <div id="lobby-ui" class="absolute inset-0 flex flex-col items-center justify-center p-8 bg-white/50">
+                    <div class="text-center mb-8">
+                        <h3 class="text-3xl font-black text-slate-800 mb-2">팀 이름을 설정해 주세요!</h3>
+                        <p class="text-slate-500 text-lg">아래 상자에 이름을 입력하고, 하단에서 팀 카드를 골라 시작하세요.</p>
+                    </div>
+                    <div class="lobby-input-container" id="lobby-inputs-grid"></div>
                 </div>
             `;
-            selectTeam(engine.team);
+            const inputContainer = document.getElementById('lobby-inputs-grid');
+            for(let i=1; i<=6; i++) {
+                const box = document.createElement('div');
+                box.className = 'lobby-input-box';
+                box.innerHTML = `
+                    <label class="text-[14px] font-bold text-slate-400 uppercase tracking-tighter">${i}팀 이름</label>
+                    <input type="text" id="lobby-name-input-${i}" value="${engine.teamNames[i-1]}" maxlength="8" oninput="updateTeamName(${i}, this.value)">
+                `;
+                inputContainer.appendChild(box);
+            }
+            if (engine.team) selectTeam(engine.team);
+            updateAllTeamScoresUI();
         }
+
+        window.onload = () => {
+            resetLobby();
+        };
     </script>
 </body>
 </html>
