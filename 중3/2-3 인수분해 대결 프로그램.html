@@ -16,12 +16,12 @@
             overflow-x: hidden;
         }
 
-        /* 전체 화면 비율 90% 조정 */
+        /* 전체 화면 비율 90% 조정 및 중앙 정렬 최적화 */
         #game-main {
             transform: scale(0.9);
             transform-origin: top center;
             width: 100%;
-            margin-bottom: -5vh; 
+            margin-top: 10px;
         }
 
         .balloon {
@@ -105,7 +105,6 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
-        /* 각 팀 상자 등수 메달 */
         .rank-medal {
             position: absolute;
             top: -15px;
@@ -150,65 +149,52 @@
             100% { transform: translate(-50%, -100%) scale(1); opacity: 0; }
         }
 
-        /* 대기실 팀 이름 입력 스타일 대폭 확대 */
+        /* 대기실 팀 이름 입력 스타일 최적화 */
         .lobby-input-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            width: 90%;
-            max-width: 900px;
+            gap: 1.5rem;
+            width: 95%;
+            max-width: 850px;
         }
         .lobby-input-box {
             background: #ffffff;
-            padding: 1.5rem;
-            border-radius: 2rem;
+            padding: 1.25rem;
+            border-radius: 1.75rem;
             border: 3px solid #e2e8f0;
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 0.5rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
             transition: all 0.2s;
         }
-        .lobby-input-box:focus-within {
-            border-color: #3b82f6;
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1);
-            transform: translateY(-2px);
-        }
         .lobby-input-box label {
-            font-size: 14px;
+            font-size: 13px;
             color: #64748b;
             font-weight: 900;
-            padding-left: 4px;
         }
         .lobby-input-box input {
             background: #f1f5f9;
             border: 2px solid transparent;
-            border-radius: 1rem;
-            padding: 0.75rem;
+            border-radius: 0.75rem;
+            padding: 0.6rem;
             font-family: 'Jua', sans-serif;
             text-align: center;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 900;
             outline: none;
             color: #1e293b;
-            width: 100%;
-            transition: all 0.2s;
-        }
-        .lobby-input-box input:focus {
-            background: #ffffff;
-            border-color: #3b82f6;
         }
     </style>
 </head>
-<body class="p-4 sm:p-6 bg-slate-100 min-h-screen flex flex-col items-center">
+<body class="p-4 bg-slate-100 min-h-screen flex flex-col items-center">
 
     <div id="game-main" class="max-w-6xl w-full flex flex-col">
         
-        <!-- 설정 및 대시보드 섹션 -->
-        <div class="bg-white rounded-[2.5rem] shadow-xl p-5 mb-4 border-b-8 border-blue-200">
+        <!-- 설정 대시보드 -->
+        <div class="bg-white rounded-[2.5rem] shadow-xl p-5 mb-3 border-b-8 border-blue-200">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
                 
-                <!-- 시간 설정 -->
                 <div class="space-y-2">
                     <p class="text-slate-400 text-center text-xs font-bold uppercase tracking-wider">시간 설정</p>
                     <div class="flex gap-2 justify-center">
@@ -218,7 +204,6 @@
                     </div>
                 </div>
 
-                <!-- 단계 설정 -->
                 <div class="space-y-2">
                     <p class="text-slate-400 text-center text-xs font-bold uppercase tracking-wider">시작 단계</p>
                     <div class="flex gap-2 justify-center">
@@ -228,7 +213,6 @@
                     </div>
                 </div>
 
-                <!-- 메인 컨트롤 -->
                 <div class="flex items-stretch gap-2 h-full">
                     <div class="bg-slate-800 rounded-3xl p-3 flex flex-col items-center justify-center shadow-lg transform hover:scale-[1.02] transition-transform flex-grow gap-2">
                         <div class="flex items-center gap-3">
@@ -239,14 +223,12 @@
                             도전 시작
                         </button>
                     </div>
-                    <!-- 버전 선택 세로 배치 -->
                     <div class="flex flex-col gap-1.5 min-w-[100px]">
                         <button onclick="changeScoreMode('best', this)" class="mode-btn active flex-1 px-2 rounded-2xl text-base font-black">최고점</button>
                         <button onclick="changeScoreMode('total', this)" class="mode-btn flex-1 px-2 rounded-2xl text-base font-black">합산</button>
                     </div>
                 </div>
 
-                <!-- 팀 상태 표시 -->
                 <div class="text-center border-l-4 border-slate-100 pl-4">
                     <p id="team-status" class="text-slate-400 font-bold text-xs mb-1">팀을 선택하세요</p>
                     <div class="flex flex-col items-center">
@@ -258,29 +240,27 @@
         </div>
 
         <!-- 문제 표시창 -->
-        <div class="bg-white rounded-[2.5rem] shadow-lg p-6 mb-4 text-center border-t-8 border-blue-500 relative overflow-hidden">
+        <div class="bg-white rounded-[2.5rem] shadow-lg p-5 mb-3 text-center border-t-8 border-blue-500 relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-1.5 bg-slate-50">
                 <div id="status-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
             </div>
-            <div class="flex flex-wrap items-center justify-center gap-6 sm:gap-12 min-h-[100px]">
-                <div id="equation-view" class="text-4xl sm:text-6xl font-black text-slate-800">식 표시</div>
-                <div id="eq-sign" class="text-4xl sm:text-6xl font-bold text-slate-800">=</div>
+            <div class="flex flex-wrap items-center justify-center gap-6 sm:gap-12 min-h-[90px]">
+                <div id="equation-view" class="text-3xl sm:text-5xl font-black text-slate-800">식 표시</div>
+                <div id="eq-sign" class="text-3xl sm:text-5xl font-bold text-slate-800">=</div>
                 <div id="factor-view" class="flex gap-4 sm:gap-6"></div>
             </div>
         </div>
 
-        <!-- 게임 플레이 판 -->
-        <div id="canvas-area" class="h-[440px] bg-white rounded-[3rem] border-4 border-dashed border-slate-200 relative shadow-inner overflow-hidden mb-6 flex items-center justify-center">
+        <!-- 게임 플레이 판 (높이 조절하여 하단 상자 올림) -->
+        <div id="canvas-area" class="h-[410px] bg-white rounded-[3rem] border-4 border-dashed border-slate-200 relative shadow-inner overflow-hidden mb-3 flex items-center justify-center">
             <div id="layer-balloon" class="relative h-full w-full">
                 <!-- 초기 대기실 화면 -->
-                <div id="lobby-ui" class="absolute inset-0 flex flex-col items-center justify-center p-8 bg-white/50">
-                    <div class="text-center mb-8">
-                        <h3 class="text-4xl font-black text-slate-800 mb-2">팀 이름을 설정하세요!</h3>
-                        <p class="text-slate-500 text-xl">아래 상자에 이름을 입력하고, 하단에서 팀 카드를 골라 도전을 시작하세요.</p>
+                <div id="lobby-ui" class="absolute inset-0 flex flex-col items-center justify-center p-6 bg-white/50">
+                    <div class="text-center mb-6">
+                        <h3 class="text-3xl font-black text-slate-800 mb-1">팀 이름을 설정하세요!</h3>
+                        <p class="text-slate-500 text-base">이름을 입력하고, 하단에서 팀 카드를 골라 시작하세요.</p>
                     </div>
-                    <div class="lobby-input-container" id="lobby-inputs-grid">
-                        <!-- 입력 필드가 JS에서 생성됨 -->
-                    </div>
+                    <div class="lobby-input-container" id="lobby-inputs-grid"></div>
                 </div>
             </div>
             <div id="layer-effect"></div>
@@ -304,22 +284,20 @@
             </div>
         </div>
 
-        <!-- 하단 팀 점수판 -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mt-6">
+        <!-- 하단 팀 점수판 (간격 조절) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mt-4">
             <script>
                 const colors = ['bg-red-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500', 'bg-rose-500'];
                 for(let i=1; i<=6; i++) {
                     document.write(`
                         <div onclick="selectTeam(${i})" id="team-card-${i}" class="team-card cursor-pointer bg-white p-4 rounded-[2.5rem] shadow-lg border-4 border-transparent transition-all">
-                            <!-- 개별 등수 메달 -->
                             <div id="rank-badge-${i}" class="rank-medal">-</div>
-                            
                             <div class="flex flex-col items-center mt-3">
                                 <div class="flex items-center gap-2 mb-2 group">
                                     <div class="w-3 h-3 rounded-full ${colors[i-1]}"></div>
                                     <span id="team-name-label-${i}" class="text-xs font-black text-slate-500 uppercase">${i}팀</span>
                                 </div>
-                                <span id="score-val-${i}" class="text-4xl font-black text-blue-600 leading-none mb-3">0</span>
+                                <span id="score-val-${i}" class="text-3xl font-black text-blue-600 leading-none mb-3">0</span>
                                 <div class="grid grid-cols-3 gap-1 w-full border-t border-slate-100 pt-3 text-[10px] text-center font-bold text-slate-400">
                                     <div class="flex flex-col"><span class="opacity-50 text-[8px]">1차</span><span id="h-${i}-0" class="text-slate-700 text-sm">-</span></div>
                                     <div class="flex flex-col border-l border-r border-slate-50"><span class="opacity-50 text-[8px]">2차</span><span id="h-${i}-1" class="text-slate-700 text-sm">-</span></div>
@@ -517,7 +495,6 @@
                     s = Math.floor(Math.random() * 21) - 10;
                     if (q === 0 && s === 0) s = 1;
                 } else if (engine.round === 2) {
-                    // 2단계: 최고차항 p*r이 2 이상
                     const coeffPairs = [[2,1], [1,2], [3,1], [1,3], [2,2], [4,1], [1,4]];
                     const pair = coeffPairs[Math.floor(Math.random() * coeffPairs.length)];
                     p = pair[0]; r = pair[1];
@@ -672,7 +649,6 @@
                 engine.time = Math.max(0, engine.time - 3);
                 engine.currentSessionScore = Math.max(0, engine.currentSessionScore - 5);
                 updateUI();
-                // 오답 풍선 제거를 위한 타임아웃 추가
                 setTimeout(() => { if (obj.el.parentNode) obj.el.parentNode.removeChild(obj.el); }, 400);
             }
         }
@@ -768,10 +744,10 @@
             // 대기실 UI 복구
             const layer = document.getElementById('layer-balloon');
             layer.innerHTML = `
-                <div id="lobby-ui" class="absolute inset-0 flex flex-col items-center justify-center p-8 bg-white/50">
-                    <div class="text-center mb-8">
-                        <h3 class="text-4xl font-black text-slate-800 mb-2">팀 이름을 설정해 주세요!</h3>
-                        <p class="text-slate-500 text-xl">아래 상자에 이름을 입력하고, 하단에서 팀 카드를 골라 시작하세요.</p>
+                <div id="lobby-ui" class="absolute inset-0 flex flex-col items-center justify-center p-6 bg-white/50">
+                    <div class="text-center mb-6">
+                        <h3 class="text-3xl font-black text-slate-800 mb-1">팀 이름을 설정하세요!</h3>
+                        <p class="text-slate-500 text-base">이름을 입력하고, 하단에서 팀 카드를 골라 시작하세요.</p>
                     </div>
                     <div class="lobby-input-container" id="lobby-inputs-grid"></div>
                 </div>
@@ -786,10 +762,7 @@
                 `;
                 inputContainer.appendChild(box);
             }
-            // 이전에 선택된 팀이 있다면 다시 활성화 (null 체크 보강)
-            if (engine.team) {
-                selectTeam(engine.team);
-            }
+            if (engine.team) selectTeam(engine.team);
             updateAllTeamScoresUI();
         }
 
