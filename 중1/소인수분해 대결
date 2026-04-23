@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>소인수분해 마스터</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+        
+        body {
+            font-family: 'Jua', sans-serif;
+            background-color: #f1f5f9;
+            user-select: none;
+            touch-action: manipulation;
+            overflow-x: hidden;
+        }
+
+        #game-main {
+            transform: scale(0.9);
+            transform-origin: top center;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .balloon {
+            width: 110px;
+            height: 130px;
+            border-radius: 50% 50% 50% 50% / 45% 45% 55% 55%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2.5rem;
+            cursor: pointer;
+            box-shadow: inset -5px -7px 0 rgba(0,0,0,0.1), 0 8px 15px rgba(0,0,0,0.1);
+            transition: transform 0.1s, filter 0.2s;
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            border: 4px solid rgba(255,255,255,0.4);
+        }
+
+        .balloon:active {
+            transform: scale(0.85);
+            filter: brightness(0.9);
+        }
+
+        .balloon::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 14px solid currentColor;
+        }
+
+        .config-btn.active {
+            background-color: #2563eb;
+            color: white;
+            border-color: #1d4ed8;
+            transform: scale(1.05);
+        }
+
+        .mode-btn {
+            background-color: #f8fafc;
+            color: #64748b;
+            border: 2px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            background-color: #10b981;
+            color: white;
+            border-color: #059669;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+        }
+        
+        .team-card.active {
+            border-color: #eab308;
+            background-color: #fefce8;
+            transform: translateY(-8px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .rank-medal {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.3rem;
+            color: white;
+            border: 4px solid white;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            z-index: 30;
+            background-color: #cbd5e1;
+        }
+
+        .medal-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+        .medal-2 { background: linear-gradient(135deg, #94a3b8, #64748b); }
+        .medal-3 { background: linear-gradient(135deg, #b45309, #78350f); }
+
+        .bonus-notify {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            color: #fbbf24;
+            font-weight: 900;
+            text-shadow: 3px 3px 0 #b45309;
+            z-index: 110;
+            pointer-events: none;
+            animation: bonusAnim 1.5s ease-out forwards;
+        }
+
+        @keyframes bonusAnim {
+            0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
+            30% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -100%) scale(1); opacity: 0; }
+        }
+
+        .lobby-input-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            width: 95%;
+            max-width: 850px;
+        }
+        .lobby-input-box {
+            background: #ffffff;
+            padding: 1.25rem;
+            border-radius: 1.75rem;
+            border: 3px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .lobby-input-box input {
+            background: #f1f5f9;
+            border: 2px solid transparent;
+            border-radius: 0.75rem;
+            padding: 0.6rem;
+            font-family: 'Jua', sans-serif;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 900;
+            outline: none;
+        }
+
+        .floating {
+            animation: floatAnim 3s ease-in-out infinite alternate;
+        }
+        @keyframes floatAnim {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+
+        /* 지수 위치 조정 */
+        .exponent {
+            vertical-align: top;
+            font-size: 0.6em;
+            position: relative;
+            top: -0.8em;
+            margin-left: 0.1rem;
+            color: #10b981;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .animate-shake {
+            animation: shake 0.2s ease-in-out 0s 2;
+        }
+    </style>
+</head>
+<body class="p-4 bg-slate-100 min-h-screen flex flex-col items-center">
+
+    <div id="game-main" class="max-w-6xl w-full flex flex-col">
+        
+        <!-- 설정 대시보드 (가로 영역 넓게 조정) -->
+        <div class="bg-white rounded-[2.5rem] shadow-xl p-5 mb-3 border-b-8 border-blue-200">
+            <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_2.5fr_1fr] gap-6 items-center">
+                
+                <div class="space-y-2">
+                    <p class="text-slate-400 text-center text-xs font-bold uppercase tracking-wider">시간 설정</p>
+                    <div class="flex gap-2 justify-center">
+                        <button onclick="changeLimit(60, this)" class="config-btn flex-1 py-3 border-2 border-slate-200 rounded-2xl text-sm font-bold active">1분</button>
+                        <button onclick="changeLimit(120, this)" class="config-btn flex-1 py-3 border-2 border-slate-200 rounded-2xl text-sm font-bold">2분</button>
+                        <button onclick="changeLimit(180, this)" class="config-btn flex-1 py-3 border-2 border-slate-200 rounded-2xl text-sm font-bold">3분</button>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <p class="text-slate-400 text-center text-xs font-bold uppercase tracking-wider">시작 단계</p>
+                    <div class="flex gap-2 justify-center">
+                        <button onclick="changeStartRound(1, this)" class="config-btn flex-1 py-3 border-2 border-slate-200 rounded-2xl text-sm font-bold active">1단계</button>
+                        <button onclick="changeStartRound(2, this)" class="config-btn flex-1 py-3 border-2 border-slate-200 rounded-2xl text-sm font-bold">2단계</button>
+                        <button onclick="changeStartRound(3, this)" class="config-btn flex-1 py-3 border-2 border-slate-200 rounded-2xl text-sm font-bold">3단계</button>
+                    </div>
+                </div>
+
+                <!-- 도전 시작 및 타이머 칸 가로 확장 -->
+                <div class="flex items-stretch gap-2 h-full">
+                    <div class="bg-slate-800 rounded-3xl p-3 flex flex-col items-center justify-center shadow-lg transform hover:scale-[1.02] transition-transform flex-grow gap-2 px-8">
+                        <div class="flex items-center justify-center gap-8 w-full">
+                            <div class="flex items-center gap-3">
+                                <span id="round-label" class="bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-black whitespace-nowrap">1단계</span>
+                                <span class="text-3xl text-white font-black tabular-nums whitespace-nowrap"><span id="timer-display">60</span><small class="text-lg ml-1 opacity-60">초</small></span>
+                            </div>
+                        </div>
+                        <button id="launch-btn" onclick="startChallenge()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-2xl text-2xl font-black transition-all shadow-md active:scale-95 whitespace-nowrap">
+                            도전 시작
+                        </button>
+                    </div>
+                    <div class="flex flex-col gap-1.5 min-w-[110px]">
+                        <button onclick="changeScoreMode('best', this)" class="mode-btn active flex-1 px-2 rounded-2xl text-base font-black">최고점</button>
+                        <button onclick="changeScoreMode('total', this)" class="mode-btn flex-1 px-2 rounded-2xl text-base font-black">합산</button>
+                    </div>
+                </div>
+
+                <div class="text-center border-l-4 border-slate-100 pl-4">
+                    <p id="team-status" class="text-slate-400 font-bold text-xs mb-1">팀을 선택하세요</p>
+                    <div class="flex flex-col items-center">
+                        <p class="text-blue-600 text-4xl font-black mb-1" id="solved-status">0 / 5</p>
+                        <div id="chance-display" class="text-xs text-slate-500 font-bold bg-slate-50 px-3 py-1 rounded-full"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 문제 표시창 -->
+        <div class="bg-white rounded-[2.5rem] shadow-lg p-5 mb-3 text-center border-t-8 border-blue-500 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-slate-50">
+                <div id="status-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-6 sm:gap-12 min-h-[110px]">
+                <div id="target-display-area" class="flex flex-col items-center">
+                    <div id="target-title" class="text-sm font-bold text-slate-400 mb-1 uppercase tracking-widest hidden">최대공약수 구하기</div>
+                    <div id="target-number-view" class="text-6xl sm:text-8xl font-black text-slate-800 tracking-tighter">?</div>
+                </div>
+                <div id="equal-sign" class="text-3xl sm:text-5xl font-bold text-slate-300">=</div>
+                <div id="factor-display-area" class="flex gap-4 sm:gap-6 flex-wrap justify-center min-w-[200px]">
+                    <!-- 수식 또는 칸이 표시됨 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 게임 플레이 판 -->
+        <div id="canvas-area" class="h-[550px] bg-white rounded-[3rem] border-4 border-dashed border-slate-200 relative shadow-inner overflow-hidden mb-3 flex items-center justify-center">
+            <div id="layer-balloon" class="grid grid-cols-4 gap-x-12 gap-y-10 p-12 items-center justify-items-center w-full h-full relative">
+                <!-- 초기 대기실 화면 -->
+                <div id="lobby-ui" class="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 bg-white/80">
+                    <div class="text-center mb-8">
+                        <h3 class="text-4xl font-black text-slate-800 mb-2">소인수분해 마스터 도전!</h3>
+                        <p class="text-slate-500 text-lg">팀 이름을 설정하고, 팀 카드를 선택해 도전을 시작하세요.</p>
+                    </div>
+                    <div class="lobby-input-container" id="lobby-inputs-grid"></div>
+                </div>
+            </div>
+            <div id="layer-effect"></div>
+            
+            <!-- 결과창 오버레이 -->
+            <div id="ui-overlay" class="hidden absolute inset-0 z-[100] flex items-center justify-center p-6">
+                <div class="flex flex-col md:flex-row items-center justify-between w-full max-w-5xl gap-6 bg-white/95 p-10 rounded-[4rem] shadow-2xl backdrop-blur-md border-4 border-white">
+                    <div class="flex flex-col items-center text-center md:text-left md:items-start min-w-[200px]">
+                        <div id="overlay-icon" class="text-8xl mb-2 filter drop-shadow-md"></div>
+                        <h2 id="overlay-title" class="text-5xl font-black tracking-tight">결과</h2>
+                    </div>
+                    <div id="overlay-score-info" class="flex-grow flex justify-center py-4"></div>
+                    <div class="flex flex-col items-center md:items-end gap-8 min-w-[300px]">
+                        <p id="overlay-desc" class="text-2xl text-slate-600 font-bold text-center md:text-right leading-tight"></p>
+                        <div class="flex flex-row gap-4">
+                            <button id="overlay-btn-retry" class="hidden bg-emerald-500 text-white px-8 py-5 rounded-[2rem] text-xl font-bold shadow-lg hover:bg-emerald-600 transition-all active:scale-95">다시 도전</button>
+                            <button id="overlay-btn" class="bg-slate-900 text-white px-8 py-5 rounded-[2rem] text-xl font-bold shadow-lg hover:bg-slate-800 transition-all active:scale-95">메인으로</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 하단 팀 점수판 -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mt-4">
+            <script>
+                const teamsArr = ['bg-red-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500', 'bg-rose-500'];
+                for(let i=1; i<=6; i++) {
+                    document.write(`
+                        <div onclick="selectTeam(${i})" id="team-card-${i}" class="team-card cursor-pointer bg-white p-4 rounded-[2.5rem] shadow-lg border-4 border-transparent transition-all">
+                            <div id="rank-badge-${i}" class="rank-medal">-</div>
+                            <div class="flex flex-col items-center mt-3">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-3 h-3 rounded-full ${teamsArr[i-1]}"></div>
+                                    <span id="team-name-label-${i}" class="text-xs font-black text-slate-500 uppercase">${i}팀</span>
+                                </div>
+                                <span id="score-val-${i}" class="text-3xl font-black text-blue-600 leading-none mb-3">0</span>
+                                <div class="grid grid-cols-3 gap-1 w-full border-t border-slate-100 pt-3 text-[10px] text-center font-bold text-slate-400">
+                                    <div class="flex flex-col"><span class="opacity-50 text-[8px]">1차</span><span id="h-${i}-0" class="text-slate-700 text-sm">-</span></div>
+                                    <div class="flex flex-col border-l border-r border-slate-50"><span class="opacity-50 text-[8px]">2차</span><span id="h-${i}-1" class="text-slate-700 text-sm">-</span></div>
+                                    <div class="flex flex-col"><span class="opacity-50 text-[8px]">3차</span><span id="h-${i}-2" class="text-slate-700 text-sm">-</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                }
+            </script>
+        </div>
+    </div>
+
+    <script>
+        const engine = {
+            round: 1,
+            startRound: 1,
+            time: 60,
+            baseTime: 60,
+            solved: 0,
+            goal: 5,
+            team: null,
+            teamNames: ["1팀", "2팀", "3팀", "4팀", "5팀", "6팀"],
+            playing: false,
+            scoreMode: 'best',
+            isTransitioning: false,
+            history: Array(6).fill().map(() => [null, null, null]),
+            attempts: Array(6).fill(0),
+            currentSessionScore: 0,
+            targetNumber: 0,
+            lastTargetNumber: 0, 
+            gcdPair: [0, 0], 
+            targetCounts: {}, 
+            foundCounts: {}, 
+            primes: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37],
+            timerCore: null
+        };
+
+        function changeLimit(s, el) {
+            if (engine.playing) return;
+            engine.baseTime = s;
+            engine.time = s;
+            document.getElementById('timer-display').innerText = s;
+            el.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function changeStartRound(r, el) {
+            if (engine.playing) return;
+            engine.startRound = r;
+            engine.goal = (r === 1) ? 5 : (r === 2 ? 7 : 99);
+            document.getElementById('round-label').innerText = `${r}단계`;
+            document.getElementById('solved-status').innerText = `0 / ${r === 3 ? '∞' : engine.goal}`;
+            el.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function changeScoreMode(mode, el) {
+            if (engine.playing) return;
+            engine.scoreMode = mode;
+            el.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            updateAllTeamScoresUI();
+        }
+
+        function updateTeamName(teamNum, val) {
+            engine.teamNames[teamNum-1] = val.trim() || `${teamNum}팀`;
+            const label = document.getElementById(`team-name-label-${teamNum}`);
+            if (label) label.innerText = engine.teamNames[teamNum-1];
+            updateAllTeamScoresUI();
+        }
+
+        function selectTeam(n) {
+            if (engine.playing || !n) return;
+            engine.team = n;
+            document.querySelectorAll('.team-card').forEach(c => c.classList.remove('active'));
+            document.getElementById(`team-card-${n}`).classList.add('active');
+            
+            const status = document.getElementById('team-status');
+            const used = engine.attempts[n-1];
+            if (used >= 3) {
+                status.innerText = `${engine.teamNames[n-1]} 도전 완료`;
+                status.className = "text-red-500 font-bold text-sm uppercase";
+                document.getElementById('launch-btn').disabled = true;
+                document.getElementById('launch-btn').classList.add('opacity-50');
+            } else {
+                status.innerText = `${engine.teamNames[n-1]} 선택됨 (${used + 1}차 시도 가능)`;
+                status.className = "text-blue-600 font-bold text-sm uppercase";
+                document.getElementById('launch-btn').disabled = false;
+                document.getElementById('launch-btn').classList.remove('opacity-50');
+            }
+            updateSessionUI();
+        }
+
+        function updateSessionUI() {
+            if (!engine.team) return;
+            const container = document.getElementById('chance-display');
+            const h = engine.history[engine.team - 1];
+            container.innerHTML = `기록: ${h[0] ?? '-'}/${h[1] ?? '-'}/${h[2] ?? '-'}`;
+        }
+
+        function updateAllTeamScoresUI() {
+            const teamSummary = [];
+            for(let i=1; i<=6; i++) {
+                const teamIdx = i - 1;
+                const h = engine.history[teamIdx];
+                for(let j=0; j<3; j++) {
+                    document.getElementById(`h-${i}-${j}`).innerText = h[j] ?? '-';
+                }
+                const activeScores = h.filter(v => v !== null);
+                let currentTotalScore = 0;
+                if (activeScores.length > 0) {
+                    currentTotalScore = (engine.scoreMode === 'best') ? Math.max(...activeScores) : activeScores.reduce((a, b) => a + b, 0);
+                }
+                document.getElementById(`score-val-${i}`).innerText = currentTotalScore;
+                teamSummary.push({ num: i, score: currentTotalScore });
+            }
+            const ranked = [...teamSummary].sort((a, b) => b.score - a.score);
+            teamSummary.forEach(team => {
+                const rank = ranked.findIndex(t => t.num === team.num) + 1;
+                const badge = document.getElementById(`rank-badge-${team.num}`);
+                if (team.score === 0) {
+                    badge.innerText = "-";
+                    badge.className = "rank-medal bg-slate-300";
+                } else {
+                    badge.className = `rank-medal medal-${rank > 3 ? 'etc' : rank}`;
+                    badge.innerText = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : rank;
+                }
+            });
+        }
+
+        function startChallenge() {
+            if (!engine.team || engine.attempts[engine.team-1] >= 3) return;
+            engine.attempts[engine.team-1]++;
+            engine.round = engine.startRound;
+            engine.goal = (engine.round === 1) ? 5 : (engine.round === 2 ? 7 : 99);
+            engine.solved = 0;
+            engine.currentSessionScore = 0;
+            engine.playing = true;
+            engine.time = engine.baseTime;
+            document.getElementById('launch-btn').disabled = true;
+            document.getElementById('launch-btn').classList.add('opacity-50');
+            startCycle();
+        }
+
+        function startCycle() {
+            engine.playing = true;
+            document.getElementById('ui-overlay').classList.add('hidden');
+            document.getElementById('round-label').innerText = `${engine.round}단계`;
+            initFixedBalloons();
+            updateUI();
+            nextProblem();
+            if(engine.timerCore) clearInterval(engine.timerCore);
+            engine.timerCore = setInterval(() => {
+                if (!engine.playing) return;
+                engine.time--;
+                document.getElementById('timer-display').innerText = Math.max(0, engine.time);
+                if (engine.time <= 0) stopGame();
+            }, 1000);
+        }
+
+        function getPrimeFactors(n) {
+            let factors = {};
+            let d = 2;
+            let temp = n;
+            while (temp > 1) {
+                while (temp % d === 0) {
+                    factors[d] = (factors[d] || 0) + 1;
+                    temp /= d;
+                }
+                d++;
+                if (d * d > temp) {
+                    if (temp > 1) factors[temp] = (factors[temp] || 0) + 1;
+                    break;
+                }
+            }
+            return factors;
+        }
+
+        function nextProblem() {
+            engine.isTransitioning = false;
+            let product = 1;
+            let tempTarget = {};
+            let tries = 0;
+
+            if (engine.round === 3) {
+                // 3단계: 최대공약수 구하기 (두 자연수 300 이하)
+                document.getElementById('target-title').classList.remove('hidden');
+                let foundValid = false;
+                while (!foundValid && tries < 100) {
+                    tries++;
+                    let gcd = 1;
+                    // GCD 생성 (너무 크지 않게)
+                    let gcdCount = 2;
+                    if (Math.random() > 0.5) gcdCount = 1;
+                    
+                    for(let i=0; i<gcdCount; i++) {
+                        let p = engine.primes[Math.floor(Math.random() * 5)];
+                        if (gcd * p > 100) break;
+                        gcd *= p;
+                    }
+                    if (gcd < 2) gcd = 2; // 최소 GCD 2 확보
+
+                    // 서로소 생성
+                    const coprimes = [[2,3], [3,5], [2,7], [5,7], [4,5], [3,4], [5,6], [2,5]];
+                    const pair = coprimes[Math.floor(Math.random() * coprimes.length)];
+                    let num1 = gcd * pair[0];
+                    let num2 = gcd * pair[1];
+
+                    // 두 숫자가 300 이하인지 확인
+                    if (num1 <= 300 && num2 <= 300 && num1 !== num2 && gcd !== engine.lastTargetNumber) {
+                        engine.gcdPair = [num1, num2];
+                        engine.targetNumber = gcd;
+                        engine.targetCounts = getPrimeFactors(gcd);
+                        foundValid = true;
+                    }
+                }
+                document.getElementById('target-number-view').innerText = `${engine.gcdPair[0]}, ${engine.gcdPair[1]}`;
+                document.getElementById('target-number-view').className = "text-5xl sm:text-7xl font-black text-slate-800 tracking-tighter";
+            } else {
+                // 1, 2단계: 일반 소인수분해
+                document.getElementById('target-title').classList.add('hidden');
+                let foundValid = false;
+                let maxProduct = (engine.round === 1) ? 50 : 500;
+
+                while (!foundValid && tries < 100) {
+                    tries++;
+                    product = 1;
+                    tempTarget = {};
+                    let count = (engine.round === 1) ? 2 : 3;
+                    if (engine.round === 2 && Math.random() > 0.5) count = 4;
+
+                    for(let i=0; i<count; i++) {
+                        let maxIdx = (engine.round === 1) ? 4 : 8;
+                        let p = engine.primes[Math.floor(Math.random() * maxIdx)];
+                        if (product * p > maxProduct) break;
+                        tempTarget[p] = (tempTarget[p] || 0) + 1;
+                        product *= p;
+                    }
+
+                    if (product >= 4 && product <= maxProduct && product !== engine.lastTargetNumber) {
+                        engine.targetNumber = product;
+                        engine.targetCounts = tempTarget;
+                        foundValid = true;
+                    }
+                }
+                document.getElementById('target-number-view').innerText = product;
+                document.getElementById('target-number-view').className = "text-7xl sm:text-9xl font-black text-slate-800 tracking-tighter";
+            }
+
+            engine.lastTargetNumber = engine.targetNumber;
+            engine.foundCounts = {};
+            drawResultArea();
+        }
+
+        function drawResultArea() {
+            const area = document.getElementById('factor-display-area');
+            area.innerHTML = '';
+
+            if (engine.round === 1) {
+                let flatTarget = [];
+                for (let p in engine.targetCounts) {
+                    for (let i=0; i<engine.targetCounts[p]; i++) flatTarget.push(parseInt(p));
+                }
+                flatTarget.sort((a,b) => a - b);
+                let foundSoFar = {...engine.foundCounts};
+
+                flatTarget.forEach((f, i) => {
+                    const s = document.createElement('div');
+                    let isFound = false;
+                    if (foundSoFar[f] > 0) { isFound = true; foundSoFar[f]--; }
+                    s.className = `w-16 h-16 sm:w-24 sm:h-24 rounded-2xl border-4 transition-all duration-500 flex items-center justify-center text-3xl sm:text-5xl font-black ${isFound ? 'bg-blue-600 border-blue-700 text-white shadow-lg scale-110' : 'bg-white border-dashed border-slate-200 text-slate-100'}`;
+                    s.innerText = isFound ? f : '?';
+                    area.appendChild(s);
+                    if (i < flatTarget.length - 1) {
+                        const mult = document.createElement('div');
+                        mult.className = "text-2xl text-slate-300 font-bold self-center";
+                        mult.innerText = "×";
+                        area.appendChild(mult);
+                    }
+                });
+            } else {
+                const sortedPrimes = Object.keys(engine.foundCounts).map(Number).sort((a, b) => a - b);
+                if (sortedPrimes.length === 0) {
+                    area.innerHTML = `<div class="text-3xl text-slate-200 font-black italic">${engine.round === 3 ? '공약수를 터치하세요!' : '소인수를 터치하세요!'}</div>`;
+                } else {
+                    sortedPrimes.forEach((p, idx) => {
+                        const count = engine.foundCounts[p];
+                        const part = document.createElement('div');
+                        part.className = "flex items-baseline text-4xl sm:text-7xl font-black text-blue-600";
+                        if (count > 1) {
+                            part.innerHTML = `${p}<span class="exponent">${count}</span>`;
+                        } else {
+                            part.innerText = p;
+                        }
+                        area.appendChild(part);
+                        if (idx < sortedPrimes.length - 1) {
+                            const mult = document.createElement('div');
+                            mult.className = "text-3xl text-slate-300 font-bold self-center mx-2";
+                            mult.innerText = "×";
+                            area.appendChild(mult);
+                        }
+                    });
+                }
+            }
+            
+            const per = engine.round === 3 ? 100 : Math.min((engine.solved / engine.goal) * 100, 100);
+            document.getElementById('status-bar').style.width = per + '%';
+        }
+
+        function initFixedBalloons() {
+            const layer = document.getElementById('layer-balloon');
+            layer.innerHTML = ''; 
+            const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e', '#06b6d4', '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#84cc16'];
+            engine.primes.forEach((num, i) => {
+                const bEl = document.createElement('div');
+                bEl.className = 'balloon floating';
+                bEl.innerText = num;
+                bEl.style.backgroundColor = colors[i % colors.length];
+                bEl.style.animationDelay = (i * 0.1) + 's';
+                bEl.onclick = () => onBalloonClick(num);
+                layer.appendChild(bEl);
+            });
+        }
+
+        function onBalloonClick(val) {
+            if (!engine.playing || engine.isTransitioning) return;
+            
+            const targetCount = engine.targetCounts[val] || 0;
+            const currentCount = engine.foundCounts[val] || 0;
+            
+            if (currentCount < targetCount) {
+                engine.foundCounts[val] = currentCount + 1;
+                engine.currentSessionScore += 10;
+                drawResultArea();
+                
+                let allFound = true;
+                for (let p in engine.targetCounts) {
+                    if ((engine.foundCounts[p] || 0) !== engine.targetCounts[p]) { allFound = false; break; }
+                }
+
+                if (allFound) {
+                    engine.isTransitioning = true;
+                    engine.solved++;
+                    updateUI();
+                    setTimeout(() => {
+                        if (engine.round === 1 && engine.solved >= 5) clearRound(1);
+                        else if (engine.round === 2 && engine.solved >= 7) clearRound(2);
+                        else nextProblem();
+                    }, 500);
+                }
+            } else {
+                engine.time = Math.max(0, engine.time - 3);
+                engine.currentSessionScore = Math.max(0, engine.currentSessionScore - 5);
+                const box = document.getElementById('target-number-view');
+                box.classList.add('animate-shake');
+                setTimeout(() => box.classList.remove('animate-shake'), 400);
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            if (!engine.team) return;
+            const goalText = engine.round === 3 ? '무한' : engine.goal;
+            document.getElementById('solved-status').innerText = `${engine.solved} / ${goalText}`;
+            updateAllTeamScoresUI();
+            updateSessionUI();
+        }
+
+        function clearRound(r) {
+            engine.playing = false;
+            clearInterval(engine.timerCore);
+            const bonus = 20;
+            engine.time += bonus;
+            showBonusEffect(bonus);
+            const ui = document.getElementById('ui-overlay');
+            document.getElementById('overlay-icon').innerText = "⭐";
+            document.getElementById('overlay-title').innerText = `${r}단계 클리어!`;
+            document.getElementById('overlay-title').className = "text-5xl font-black text-blue-600 tracking-tight";
+            document.getElementById('overlay-score-info').innerHTML = `
+                <div class="bg-blue-600 rounded-[3rem] p-10 inline-block border-8 border-white shadow-2xl scale-110">
+                    <p class="text-blue-100 text-sm font-bold mb-1 uppercase">팀 현재 점수</p>
+                    <p class="text-8xl font-black text-white">${engine.currentSessionScore}</p>
+                </div>
+            `;
+            document.getElementById('overlay-desc').innerHTML = `${r+1}단계로 넘어갑니다!<br><span class="text-amber-500 font-black">+${bonus}초 보너스!</span>`;
+            document.getElementById('overlay-btn-retry').classList.add('hidden');
+            document.getElementById('overlay-btn').innerText = "다음 단계로";
+            document.getElementById('overlay-btn').onclick = () => {
+                engine.round = r + 1;
+                engine.goal = (engine.round === 2) ? 7 : 99;
+                engine.solved = 0;
+                startCycle();
+            };
+            ui.classList.remove('hidden');
+        }
+
+        function stopGame() {
+            engine.playing = false;
+            clearInterval(engine.timerCore);
+            const teamIdx = engine.team - 1;
+            const currentAttempt = engine.attempts[teamIdx] - 1;
+            engine.history[teamIdx][currentAttempt] = engine.currentSessionScore;
+            const ui = document.getElementById('ui-overlay');
+            document.getElementById('overlay-icon').innerText = "⏰";
+            document.getElementById('overlay-title').innerText = "도전 종료";
+            document.getElementById('overlay-title').className = "text-5xl font-black text-red-500 tracking-tight";
+            document.getElementById('overlay-score-info').innerHTML = `
+                <div class="bg-white rounded-[3rem] p-10 inline-block border-8 border-slate-100 shadow-inner scale-110">
+                    <p class="text-slate-400 text-sm font-bold mb-1 uppercase tracking-widest">이번 도전 점수</p>
+                    <p class="text-8xl font-black text-blue-600">${engine.currentSessionScore}</p>
+                </div>
+            `;
+            const left = 3 - engine.attempts[teamIdx];
+            document.getElementById('overlay-desc').innerHTML = left > 0 ? `훌륭한 도전이었습니다!<br>남은 기회: <span class="text-blue-600">${left}번</span>` : `도전 완료!<br><span class="text-slate-400 font-medium">모든 기회를 사용했습니다.</span>`;
+            if (left > 0) {
+                document.getElementById('overlay-btn-retry').classList.remove('hidden');
+                document.getElementById('overlay-btn-retry').onclick = () => startChallenge();
+            } else {
+                document.getElementById('overlay-btn-retry').classList.add('hidden');
+            }
+            document.getElementById('overlay-btn').innerText = "메인으로";
+            document.getElementById('overlay-btn').onclick = () => { ui.classList.add('hidden'); resetLobby(); };
+            ui.classList.remove('hidden');
+            updateUI();
+        }
+
+        function showBonusEffect(s) {
+            const d = document.createElement('div');
+            d.className = 'bonus-notify';
+            d.innerText = `+${s}초 연장!`;
+            document.getElementById('layer-effect').appendChild(d);
+            setTimeout(() => d.remove(), 1500);
+        }
+
+        function resetLobby() {
+            engine.playing = false;
+            document.getElementById('launch-btn').disabled = false;
+            document.getElementById('launch-btn').classList.remove('opacity-50');
+            document.getElementById('target-number-view').innerText = "?";
+            document.getElementById('target-title').classList.add('hidden');
+            document.getElementById('factor-display-area').innerHTML = "";
+            document.getElementById('status-bar').style.width = "0%";
+            const layer = document.getElementById('layer-balloon');
+            layer.innerHTML = `
+                <div id="lobby-ui" class="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 bg-white/80">
+                    <div class="text-center mb-8">
+                        <h3 class="text-4xl font-black text-slate-800 mb-2">소인수분해 마스터 도전!</h3>
+                        <p class="text-slate-500 text-lg">팀 이름을 설정하고, 팀 카드를 선택해 도전을 시작하세요.</p>
+                    </div>
+                    <div class="lobby-input-container" id="lobby-inputs-grid"></div>
+                </div>
+            `;
+            const inputContainer = document.getElementById('lobby-inputs-grid');
+            for(let i=1; i<=6; i++) {
+                const box = document.createElement('div');
+                box.className = 'lobby-input-box';
+                box.innerHTML = `
+                    <label class="text-[12px] font-bold text-slate-400 uppercase tracking-tighter">${i}팀 이름</label>
+                    <input type="text" value="${engine.teamNames[i-1]}" maxlength="8" oninput="updateTeamName(${i}, this.value)">
+                `;
+                inputContainer.appendChild(box);
+            }
+            if (engine.team) selectTeam(engine.team);
+            updateAllTeamScoresUI();
+        }
+
+        window.onload = resetLobby;
+    </script>
+</body>
+</html>
