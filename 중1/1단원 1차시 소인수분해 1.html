@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중1 수학 판서 - 소인수분해 기초</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --chalkboard-bg: #1e3d33; 
+            --chalk-white: rgba(255, 255, 255, 0.95);
+            --chalk-yellow: #fdf08a;
+            --chalk-blue: #a5f3fc;
+            --chalk-pink: #fca5a5;
+            --box-border: rgba(255, 255, 255, 0.1);
+        }
+        body {
+            background-color: #121212;
+            font-family: 'Noto Sans KR', sans-serif;
+            color: var(--chalk-white);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 5px;
+        }
+        .chalkboard-container {
+            width: 98%;
+            max-width: 1800px;
+            padding: 10px;
+            background: #3d2b1f; 
+            border-radius: 8px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .chalkboard {
+            background-color: var(--chalkboard-bg);
+            background-image: url('https://www.transparenttextures.com/patterns/black-chalkboard.png');
+            padding: 25px 40px;
+            position: relative;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            min-height: 650px;
+        }
+        .handwritten { font-family: 'Nanum Pen Script', cursive; }
+        .highlight-yellow { color: var(--chalk-yellow); }
+        .highlight-blue { color: var(--chalk-blue); }
+        .highlight-pink { color: var(--chalk-pink); }
+        
+        .quadrant-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px 50px;
+            flex-grow: 1;
+            position: relative;
+        }
+        
+        /* 십자 가이드라인 */
+        .quadrant-grid::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 0; right: 0;
+            height: 1px;
+            background: rgba(255,255,255,0.08);
+        }
+        .quadrant-grid::after {
+            content: '';
+            position: absolute;
+            left: 50%; top: 0; bottom: 0;
+            width: 1px;
+            background: rgba(255,255,255,0.08);
+        }
+
+        .section-title {
+            font-size: 1.6rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title::before {
+            content: '•';
+        }
+
+        .content-area {
+            padding: 5px;
+        }
+
+        mjx-container { color: inherit !important; font-size: 1.05em !important; }
+        
+        .circle-num {
+            border: 1px solid var(--chalk-pink);
+            border-radius: 50%;
+            width: 22px; height: 22px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 0.75em;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chalkboard-container">
+        <div class="chalkboard">
+            <!-- 제목 영역 -->
+            <header class="mb-6 text-center">
+                <h1 class="text-3xl font-bold handwritten highlight-yellow tracking-widest">1. 소인수분해의 기초 개념</h1>
+            </header>
+
+            <div class="quadrant-grid">
+                <!-- 1구역: 약수와 배수 (수식 아래로 설명 재배치) -->
+                <div class="content-area">
+                    <h2 class="section-title handwritten">약수와 배수</h2>
+                    <div class="handwritten text-2xl mt-1 pl-4">
+                        <p class="opacity-60 text-lg mb-2">예시)</p>
+                        <p class="text-4xl mb-4">$2 \times 3 = 6$</p>
+                        <div class="space-y-2 ml-4">
+                            <p>$\rightarrow$ 2, 3은 6의 <span class="highlight-blue underline underline-offset-4">약수</span></p>
+                            <p>$\rightarrow$ 6은 2, 3의 <span class="highlight-yellow underline underline-offset-4">배수</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2구역: 소수와 합성수 -->
+                <div class="content-area">
+                    <h2 class="section-title handwritten">소수와 합성수 <span class="text-lg opacity-50 ml-2">→ 약수의 개수로 분류</span></h2>
+                    <div class="handwritten text-2xl flex flex-wrap items-center gap-x-8 gap-y-2 mt-1">
+                        <p><span class="highlight-yellow">1</span> : 1개</p>
+                        <p><span class="highlight-blue">소수</span> : 약수 2개</p>
+                        <p><span class="highlight-pink">합성수</span> : 약수 3개 이상</p>
+                        <div class="px-3 py-1 border border-dashed border-pink-400/30 rounded text-lg highlight-pink mt-2">
+                            "2는 소수, 2를 제외한 모든 짝수는 합성수"
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3구역: 1~10 약수 구하기 -->
+                <div class="content-area">
+                    <h2 class="section-title handwritten">1 ~ 10 까지 약수 구하기</h2>
+                    <div class="grid grid-cols-2 gap-x-4 handwritten text-xl">
+                        <div class="space-y-0.5">
+                            <p><span class="circle-num">1</span> 1</p>
+                            <p><span class="highlight-blue">2</span> <span class="underline">1, 2</span></p>
+                            <p><span class="highlight-blue">3</span> 1, 3</p>
+                            <p><span class="highlight-pink">4</span> 1, 2, 4</p>
+                            <p><span class="highlight-blue">5</span> 1, 5</p>
+                        </div>
+                        <div class="space-y-0.5">
+                            <p><span class="highlight-pink">6</span> 1, 2, 3, 6</p>
+                            <p><span class="highlight-blue">7</span> 1, 7</p>
+                            <p><span class="highlight-pink">8</span> 1, 2, 4, 8</p>
+                            <p><span class="highlight-pink">9</span> 1, 3, 9</p>
+                            <p><span class="highlight-pink">10</span> 1, 2, 5, 10</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex gap-4 handwritten text-lg opacity-80">
+                        <p class="highlight-yellow">① 1은 모든 수의 약수</p>
+                        <p class="highlight-blue">② 2는 모든 짝수의 약수</p>
+                    </div>
+                </div>
+
+                <!-- 4구역: 거듭제곱 -->
+                <div class="content-area">
+                    <h2 class="section-title handwritten">거듭제곱 <span class="text-lg opacity-50 ml-2">→ "곱셈을 간단히"</span></h2>
+                    <div class="handwritten flex items-center gap-12 mt-2">
+                        <div class="flex items-center gap-3">
+                            <span class="opacity-50 text-xl">$2 \times 2 \times 2 \times 2 = $</span>
+                            <div class="relative">
+                                <span class="text-5xl">2</span>
+                                <span class="absolute -top-3 -right-5 text-3xl highlight-yellow">4</span>
+                                <div class="absolute -right-16 top-0 text-base">← 지수</div>
+                                <div class="absolute -bottom-6 left-0 text-base">↑ 밑</div>
+                            </div>
+                        </div>
+                        <div class="border-l border-white/10 pl-6">
+                            <p class="text-lg italic opacity-60">2, &nbsp; $2^2$, &nbsp; $2^3$, &nbsp; ...</p>
+                            <p class="highlight-blue text-xl mt-1">"2의 거듭제곱"</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하단 선반 -->
+            <div class="mt-6 flex justify-center">
+                <div class="w-48 h-1.5 bg-white/10 rounded-full"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>
