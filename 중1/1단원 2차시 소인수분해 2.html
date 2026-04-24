@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중1 수학 판서 - 소인수분해와 약수</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --chalkboard-bg: #1e3d33; 
+            --chalk-white: rgba(255, 255, 255, 0.95);
+            --chalk-yellow: #fdf08a;
+            --chalk-blue: #a5f3fc;
+            --chalk-pink: #fca5a5;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        html, body {
+            background-color: #121212;
+            font-family: 'Noto Sans KR', sans-serif;
+            color: var(--chalk-white);
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden; /* 스크롤 절대 발생 방지 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 전체 칠판 프레임: 화면 높이에 100% 맞춤 */
+        .chalkboard-outer {
+            width: 100%;
+            height: 100%;
+            background: #3d2b1f; 
+            padding: 0.8vh; 
+            display: flex;
+            overflow: hidden;
+        }
+
+        .chalkboard-inner {
+            flex: 1;
+            background-color: var(--chalkboard-bg);
+            background-image: url('https://www.transparenttextures.com/patterns/black-chalkboard.png');
+            position: relative;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5vh 2.5vw;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .handwritten { font-family: 'Nanum Pen Script', cursive; line-height: 1.1; }
+        .highlight-yellow { color: var(--chalk-yellow); }
+        .highlight-blue { color: var(--chalk-blue); }
+        .highlight-pink { color: var(--chalk-pink); }
+
+        /* 상단 제목 (높이 고정) */
+        header {
+            height: 9vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px dashed rgba(255,255,255,0.2);
+            margin-bottom: 1vh;
+        }
+
+        /* 4분할 그리드: 높이를 80% 이상 확보하여 내용이 잘리지 않게 함 */
+        .main-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            position: relative;
+            min-height: 0; 
+        }
+
+        /* 중앙 십자선 */
+        .grid-line-h {
+            position: absolute;
+            top: 50%; left: -2.5vw; right: -2.5vw;
+            height: 1px;
+            background: rgba(255,255,255,0.2);
+            z-index: 1;
+        }
+        .grid-line-v {
+            position: absolute;
+            left: 50%; top: -1.5vh; bottom: -1.5vh;
+            width: 1px;
+            background: rgba(255,255,255,0.2);
+            z-index: 1;
+        }
+
+        .quadrant {
+            padding: 1.5vh 2vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* 내용 중앙 정렬 */
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* 폰트 크기: vh 단위를 사용하여 화면 비례 고정 */
+        .section-title {
+            font-size: 3.5vh;
+            margin-bottom: 1.5vh;
+            white-space: nowrap;
+        }
+        .section-title::before { content: '• '; }
+
+        .content-text { font-size: 3vh; }
+        .math-lg { font-size: 4.5vh; }
+        
+        .divisor-table {
+            border-collapse: collapse;
+            font-size: 2.8vh;
+            text-align: center;
+            margin: 0.5vh auto;
+            width: 80%;
+        }
+        .divisor-table td, .divisor-table th {
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 0.4vh 1vw;
+        }
+        .divisor-table th { background: rgba(255,255,255,0.1); }
+
+        .definition-box {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1vh 1.5vw;
+            margin-top: 0.5vh;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .division-box {
+            font-size: 4vh;
+            line-height: 1.1;
+        }
+
+        /* 하단 선반 */
+        .shelf {
+            height: 2vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .shelf-bar {
+            width: 20vw;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+
+        mjx-container { color: inherit !important; font-size: 1.1em !important; }
+    </style>
+</head>
+<body>
+    <div class="chalkboard-outer">
+        <div class="chalkboard-inner">
+            <header>
+                <h1 class="text-[5vh] font-bold handwritten highlight-yellow tracking-widest">2. 소인수분해의 뜻과 활용</h1>
+            </header>
+
+            <div class="main-grid">
+                <div class="grid-line-h"></div>
+                <div class="grid-line-v"></div>
+
+                <!-- 1구역: 소인수와 소인수분해 정의 (좌측 상단) -->
+                <div class="quadrant">
+                    <h2 class="section-title handwritten highlight-yellow">소인수와 소인수분해</h2>
+                    <div class="handwritten content-text space-y-4">
+                        <div>
+                            <p class="highlight-blue text-[3.2vh]">1. 소인수</p>
+                            <div class="definition-box">
+                                <p>인수(약수) 중에서 <span class="highlight-yellow">소수</span>인 것</p>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="highlight-blue text-[3.2vh]">2. 소인수분해</p>
+                            <div class="definition-box">
+                                <p>합성수를 소인수들의 <span class="highlight-yellow">곱</span>으로만 나타내는 것</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2구역: 약수 구하기 (표 활용) (우측 상단) -->
+                <div class="quadrant">
+                    <h2 class="section-title handwritten highlight-blue">약수 구하기 (표 활용)</h2>
+                    <div class="handwritten flex flex-col justify-center">
+                        <table class="divisor-table">
+                            <thead>
+                                <tr class="highlight-blue">
+                                    <th>$\times$</th>
+                                    <th>$1$</th>
+                                    <th>$3$</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><th class="highlight-yellow">$1$</th><td>1</td><td>3</td></tr>
+                                <tr><th class="highlight-yellow">$2$</th><td>2</td><td>6</td></tr>
+                                <tr><th class="highlight-yellow">$2^2(4)$</th><td>4</td><td>12</td></tr>
+                            </tbody>
+                        </table>
+                        <p class="mt-2 text-center text-[3.5vh] highlight-blue">약수: 1, 2, 3, 4, 6, 12</p>
+                    </div>
+                </div>
+
+                <!-- 3구역: 소인수분해 하는 방법 (좌측 하단) -->
+                <div class="quadrant">
+                    <h2 class="section-title handwritten highlight-blue">소인수분해 하는 방법</h2>
+                    <div class="handwritten flex-grow flex justify-around items-center">
+                        <!-- 가지치기 -->
+                        <div class="text-center">
+                            <p class="text-[2.2vh] opacity-60 underline mb-1">가지치기</p>
+                            <div class="mt-1">
+                                <p class="text-[4vh]">12</p>
+                                <p class="text-[2.5vh]">↙ ↘</p>
+                                <p class="text-[4vh]"><span class="highlight-pink">2</span> &nbsp; 6</p>
+                                <p class="text-[2.5vh] ml-8">↙ ↘</p>
+                                <p class="text-[4vh] ml-8"><span class="highlight-pink">2</span> &nbsp; <span class="highlight-pink">3</span></p>
+                            </div>
+                        </div>
+                        <div class="w-[1px] h-[12vh] bg-white/20"></div>
+                        <!-- 거꾸로 나눗셈 -->
+                        <div class="text-center">
+                            <p class="text-[2.2vh] opacity-60 underline mb-2">거꾸로 나눗셈</p>
+                            <div class="division-box text-left inline-block">
+                                <p><span class="highlight-pink">2</span> ) <span class="underline">12</span></p>
+                                <p><span class="highlight-pink">2</span> ) <span class="underline">&nbsp;6</span></p>
+                                <p>&nbsp;&nbsp;&nbsp;&nbsp; <span class="highlight-pink">3</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-center text-[4vh] highlight-yellow mt-2">$12 = 2^2 \times 3$</p>
+                </div>
+
+                <!-- 4구역: 약수의 개수 공식 (우측 하단) -->
+                <div class="quadrant">
+                    <h2 class="section-title handwritten highlight-pink">약수의 개수 공식</h2>
+                    <div class="handwritten flex flex-col justify-center px-4">
+                        <div class="p-4 bg-white/5 border border-dashed border-white/20 rounded-xl text-center">
+                            <p class="text-[3vh] mb-3">$N = a^{\color{#fdf08a}m} \times b^{\color{#a5f3fc}n}$ 일 때,</p>
+                            <p class="text-[5.5vh] highlight-pink">$({\color{#fdf08a}m}+1) \times ({\color{#a5f3fc}n}+1)$ 개</p>
+                        </div>
+                        <div class="mt-6 text-center space-y-2">
+                            <p class="text-[3vh] opacity-80">ex) $12 = 2^{\color{#fdf08a}2} \times 3^{\color{#a5f3fc}1}$</p>
+                            <p class="text-[4vh] highlight-yellow">$\rightarrow (2+1) \times (1+1) = \mathbf{6}$ 개</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="shelf">
+                <div class="shelf-bar"></div>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>
