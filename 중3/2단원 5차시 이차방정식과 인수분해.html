@@ -32,7 +32,7 @@
             width: 100%;
             height: 100%;
             background: #3d2b1f; 
-            padding: 0.8vh; 
+            padding: 0.6vh; 
             display: flex;
             overflow: hidden;
         }
@@ -42,12 +42,11 @@
             background-color: var(--chalkboard-bg);
             background-image: url('https://www.transparenttextures.com/patterns/black-chalkboard.png');
             position: relative;
-            box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
             display: flex;
             flex-direction: column;
-            padding: 1vh 2.5vw;
+            padding: 1vh 2vw;
             border-radius: 4px;
-            overflow: hidden;
         }
 
         .handwritten { font-family: 'Nanum Pen Script', cursive; line-height: 1.1; }
@@ -61,162 +60,195 @@
             justify-content: center;
             align-items: center;
             border-bottom: 1px dashed rgba(255,255,255,0.2);
+            position: relative;
         }
 
         .main-grid {
-            flex: 1;
+            height: 85vh;
             display: grid;
-            grid-template-columns: 1fr 1.2fr; /* 오른쪽 칸을 약간 더 넓게 */
+            grid-template-columns: 46% 54%; 
             grid-template-rows: 1fr 1fr;
             position: relative;
-            min-height: 0; 
         }
 
-        /* 중앙 십자선 (오른쪽은 합치므로 세로선은 아래만 표시되거나 생략 가능하지만 구조상 유지) */
+        /* 구분선 디자인 */
         .grid-line-h {
             position: absolute;
-            top: 50%; left: 0; right: 0;
+            top: 50%; left: 0; width: 46%;
             height: 1px;
-            background: rgba(255,255,255,0.2);
+            border-bottom: 1px dashed rgba(255,255,255,0.2);
             z-index: 1;
         }
         .grid-line-v {
             position: absolute;
-            left: 45.4%; /* 1:1.2 비율에 맞춤 */
-            top: 0; bottom: 0;
+            left: 46%; top: 0; bottom: 0;
             width: 1px;
-            background: rgba(255,255,255,0.2);
+            border-right: 1px dashed rgba(255,255,255,0.2);
             z-index: 1;
         }
 
         .quadrant {
-            padding: 2vh 1.5vw;
+            padding: 3vh 2vw;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
-            min-height: 0;
         }
 
-        /* 오른쪽 통합 칸 전용 스타일 */
-        .quadrant-merged {
+        /* 우측 통합 영역 */
+        .quadrant-right {
             grid-row: 1 / span 2;
             grid-column: 2;
-            padding: 2vh 2.5vw;
-            border-left: 1px solid rgba(255,255,255,0.2);
+            padding: 3vh 3vw;
+            display: flex;
+            flex-direction: column;
         }
 
         .section-title {
-            font-size: 4vh;
+            font-size: 3.8vh;
             margin-bottom: 2vh;
-            white-space: nowrap;
-        }
-        .section-title::before { content: '• '; }
-
-        .content-text { font-size: 3.2vh; }
-        .math-lg { font-size: 4.5vh; }
-        
-        .definition-box {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            padding: 1.5vh 1.5vw;
-            margin-top: 1vh;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .example-box {
-            background: rgba(165, 243, 252, 0.05);
-            border-left: 5px solid var(--chalk-blue);
-            padding: 2vh;
-            margin-top: 2vh;
-        }
-
-        .shelf {
-            height: 3vh;
             display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .section-title::before { content: '•'; font-size: 0.8em; }
+
+        .content-text { font-size: 2.8vh; }
+        .math-lg { font-size: 4.2vh; }
+        
+        /* 박스 디자인들 */
+        .definition-box {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2vh 2vw;
+            margin-top: 1vh;
+        }
+
+        /* 예제 박스 (이미지처럼 좌측 바 포함) */
+        .example-container {
+            margin-top: 3vh;
+            position: relative;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 4px;
+            display: flex;
+        }
+        .example-side-bar {
+            width: 1vh;
+            background: var(--chalk-blue);
+            border-radius: 4px 0 0 4px;
+        }
+        .example-content {
+            padding: 2vh 2.5vw;
+            flex: 1;
+        }
+
+        /* 중근 안내 박스 (점선 테두리) */
+        .junggeun-box {
+            margin-top: 4vh;
+            border: 1.5px dashed rgba(255, 255, 255, 0.25);
+            border-radius: 15px;
+            padding: 3vh;
+            text-align: center;
+        }
+
+        .shelf-footer {
+            height: 5vh;
+            display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
+            position: relative;
         }
-        .shelf-bar {
-            width: 25vw;
-            height: 8px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
+        .footer-note {
+            font-size: 1.8vh;
+            opacity: 0.5;
+            font-style: italic;
         }
 
-        mjx-container { color: inherit !important; font-size: 1.1em !important; }
+        mjx-container { color: inherit !important; font-size: 1em !important; }
     </style>
 </head>
 <body>
     <div class="chalkboard-outer">
         <div class="chalkboard-inner">
+            <!-- 메인 제목 -->
             <header>
                 <h1 class="text-[5vh] font-bold handwritten highlight-yellow tracking-widest">3. 이차방정식의 뜻과 풀이</h1>
             </header>
 
             <div class="main-grid">
-                <!-- 1구역: 이차방정식의 도입 (좌측 상단) -->
+                <!-- 가이드라인 -->
+                <div class="grid-line-h"></div>
+                <div class="grid-line-v"></div>
+
+                <!-- 1구역: 이차방정식의 뜻 (좌측 상단) -->
                 <div class="quadrant">
                     <h2 class="section-title handwritten highlight-yellow">이차방정식의 뜻</h2>
-                    <div class="handwritten content-text space-y-4">
-                        <div>
-                            <p class="text-[2.8vh] opacity-60">비교하기</p>
-                            <div class="definition-box">
-                                <p>일차방정식: $ax + b = 0$ ($a \neq 0$)</p>
-                                <p class="highlight-pink mt-2">이차방정식: $ax^2 + bx + c = 0$ ($a \neq 0$)</p>
-                            </div>
+                    <div class="handwritten content-text">
+                        <p class="text-[2.2vh] opacity-60 mb-2">비교하기</p>
+                        <div class="definition-box">
+                            <p class="mb-2">일차방정식: $ax + b = 0$ ($a \neq 0$)</p>
+                            <p class="highlight-pink">이차방정식: $ax^2 + bx + c = 0$ ($a \neq 0$)</p>
                         </div>
-                        <p class="text-[2.8vh] mt-2">※ 모든 항을 좌변으로 정리했을 때 $x$에 관한 <span class="highlight-yellow">이차식</span>이 되는 방정식</p>
+                        <p class="text-[2.4vh] mt-6 opacity-80">※ 우변을 $0$으로 정리했을 때 좌변이 $x$에 관한 <span class="highlight-yellow">이차식</span>인 방정식</p>
                     </div>
                 </div>
 
-                <!-- 3구역: 두 수의 곱이 0인 성질 (좌측 하단) -->
-                <div class="quadrant" style="grid-row: 2; grid-column: 1;">
+                <!-- 3구역: 두 수의 곱이 0인 경우 (좌측 하단) -->
+                <div class="quadrant">
                     <h2 class="section-title handwritten highlight-blue">두 수의 곱이 0인 경우</h2>
-                    <div class="handwritten content-text pl-4">
-                        <div class="definition-box text-center py-4">
-                            <p class="math-lg">$A \times B = 0$ 이면?</p>
-                            <div class="grid grid-cols-3 gap-2 mt-4 text-[2.5vh]">
-                                <div class="bg-white/5 p-2 rounded">① $A=0, B \neq 0$</div>
-                                <div class="bg-white/5 p-2 rounded">② $A \neq 0, B=0$</div>
-                                <div class="bg-white/5 p-2 rounded">③ $A=0, B=0$</div>
+                    <div class="handwritten content-text">
+                        <div class="definition-box text-center py-6">
+                            <p class="math-lg mb-6">$A \times B = 0$ 이면?</p>
+                            <div class="flex justify-around text-[2.5vh] opacity-90">
+                                <span>① $A=0, B \neq 0$</span>
+                                <span>② $A \neq 0, B=0$</span>
+                                <span>③ $A=0, B=0$</span>
                             </div>
                         </div>
-                        <p class="mt-4 text-center highlight-pink text-[3.5vh]">$\rightarrow A=0$ 또는 $B=0$</p>
+                        <p class="mt-8 text-center highlight-pink text-[4vh]">$\rightarrow A=0$ 또는 $B=0$</p>
                     </div>
                 </div>
 
-                <!-- 2&4구역 통합: 인수분해를 이용한 풀이 (우측 전체) -->
-                <div class="quadrant-merged handwritten">
+                <!-- 2&4 통합구역: 인수분해 풀이 (우측 전체) -->
+                <div class="quadrant-right handwritten">
                     <h2 class="section-title highlight-yellow">인수분해를 이용한 풀이</h2>
-                    <div class="content-text space-y-6">
-                        <div class="space-y-2">
-                            <p class="highlight-blue">풀이 순서:</p>
-                            <p>1. 모든 항을 좌변으로 이항하여 $ax^2 + bx + c = 0$ 꼴로 정리</p>
-                            <p>2. 좌변을 <span class="highlight-yellow">인수분해</span>하여 $(x-\alpha)(x-\beta) = 0$ 꼴로 변형</p>
-                            <p>3. $x-\alpha = 0$ 또는 $x-\beta = 0$ 임을 이용하여 해를 구함</p>
-                        </div>
+                    <div class="content-text pl-4 space-y-3">
+                        <p class="highlight-blue mb-2">풀이 순서:</p>
+                        <p>1. 모든 항을 좌변으로 이항하여 $ax^2 + bx + c = 0$ 정리</p>
+                        <p>2. 좌변을 <span class="highlight-yellow">인수분해</span>하여 $(x-\alpha)(x-\beta) = 0$ 변형</p>
+                        <p>3. $x-\alpha = 0$ 또는 $x-\beta = 0$ 임을 이용</p>
+                    </div>
 
-                        <div class="example-box">
-                            <p class="text-[3vh] mb-4">예제: $x^2 - 5x + 6 = 0$ 을 푸시오.</p>
-                            <div class="pl-6 space-y-3">
-                                <p>단계 1: 인수분해 하기</p>
+                    <!-- 예제 박스 -->
+                    <div class="example-container">
+                        <div class="example-side-bar"></div>
+                        <div class="example-content">
+                            <p class="text-[2.8vh] mb-4 opacity-80 italic">예제: $x^2 - 5x + 6 = 0$ 을 푸시오.</p>
+                            <div class="text-center space-y-2">
                                 <p class="math-lg highlight-yellow">$(x - 2)(x - 3) = 0$</p>
-                                <p>단계 2: 해 구하기</p>
                                 <p class="math-lg">$\therefore x = 2$ 또는 $x = 3$</p>
                             </div>
                         </div>
-                        
-                        <div class="mt-6 p-4 border border-dashed border-white/20 rounded text-center">
-                            <p class="text-[3vh] highlight-pink">※ 이차방정식의 해는 보통 <span class="underline">2개</span>이다!</p>
+                    </div>
+
+                    <!-- 중근 박스 -->
+                    <div class="junggeun-box">
+                        <p class="text-[3.2vh] highlight-pink mb-4">
+                            ※ 두 해가 중복될 때 <span class="underline underline-offset-[12px] decoration-2">중근</span>이라 한다.
+                        </p>
+                        <div class="flex justify-around text-[2.4vh] opacity-90 mt-4">
+                            <p>• 서로 다른 근의 개수 : <span class="highlight-yellow">1개</span></p>
+                            <p>• 근의 개수 : <span class="highlight-blue">2개</span></p>
                         </div>
                     </div>
                 </div>
-                
-                <div class="grid-line-h"></div>
             </div>
             
-            <footer class="shelf">
-                <div class="shelf-bar"></div>
+            <!-- 푸터 및 선반 -->
+            <footer class="shelf-footer">
+                <p class="footer-note handwritten">※ 이차방정식의 해는 보통 2개이다!</p>
+                <div class="w-48 h-1.5 bg-white/10 rounded-full mt-2"></div>
             </footer>
         </div>
     </div>
