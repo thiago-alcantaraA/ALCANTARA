@@ -159,7 +159,7 @@
             </div>
         </div>
 
-        <!-- Pause Overlay (Two options as requested) -->
+        <!-- Pause Overlay -->
         <div id="game-pause-overlay" class="hidden absolute inset-0 bg-black/80 flex items-center justify-center backdrop-blur-md z-30">
             <div class="text-center bg-slate-900 p-10 md:p-14 rounded-[3rem] border-2 border-slate-700 shadow-2xl max-w-md w-full m-4">
                 <h2 class="text-4xl md:text-5xl font-black text-white mb-10">경기가 중단됨</h2>
@@ -174,9 +174,23 @@
             </div>
         </div>
 
-        <!-- Start Overlay -->
-        <div id="game-ready-overlay" class="absolute inset-0 bg-black/70 flex items-center justify-center backdrop-blur-md z-40">
-            <button id="btn-game-start" class="bg-emerald-500 hover:bg-emerald-600 text-white px-16 py-6 rounded-full text-4xl font-black shadow-2xl pointer-events-auto">경기 시작</button>
+        <!-- Start Overlay: Time Selection -->
+        <div id="game-ready-overlay" class="absolute inset-0 bg-black/80 flex items-center justify-center backdrop-blur-md z-40">
+            <div class="text-center bg-slate-900/50 p-10 md:p-16 rounded-[4rem] border-2 border-slate-700 shadow-2xl max-w-xl w-full m-4">
+                <h2 class="text-4xl md:text-5xl font-black text-white mb-4 italic">준비되셨나요?</h2>
+                <p class="text-slate-400 mb-10 text-xl font-bold">경기 시간을 선택하면 바로 시작됩니다!</p>
+                <div class="flex flex-col gap-4">
+                    <button onclick="startGameEngine(60)" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-3xl text-3xl font-black shadow-xl transition-all transform hover:scale-105 active:scale-95">
+                        1분 경기 시작
+                    </button>
+                    <button onclick="startGameEngine(120)" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-5 rounded-3xl text-3xl font-black shadow-xl transition-all transform hover:scale-105 active:scale-95">
+                        2분 경기 시작
+                    </button>
+                    <button onclick="startGameEngine(180)" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-5 rounded-3xl text-3xl font-black shadow-xl transition-all transform hover:scale-105 active:scale-95">
+                        3분 경기 시작
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Result Overlay -->
@@ -203,7 +217,7 @@
     let db = null, auth = null, user = null, isOffline = true;
     let tournament = null, currentMatchIdx = null;
     let teamNames = ['팀 A', '팀 B', '팀 C', '팀 D', '팀 E', '팀 F'];
-    let gameData = { scores: [0, 0], timeLeft: 45, gameState: 'ready', baskets: [], numbers: [], touches: {}, lastSpawn: 0, animId: null };
+    let gameData = { scores: [0, 0], timeLeft: 60, gameState: 'ready', baskets: [], numbers: [], touches: {}, lastSpawn: 0, animId: null };
     let timerInterval = null;
     
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'quadratic-tournament-battle';
@@ -271,7 +285,6 @@
         document.getElementById('btn-game-pause-top').onclick = pauseGame;
         
         // Game Overlays
-        document.getElementById('btn-game-start').onclick = startGameEngine;
         document.getElementById('btn-resume-game').onclick = resumeGame;
         document.getElementById('btn-cancel-game').onclick = () => {
             gameData.gameState = 'ended';
@@ -295,7 +308,7 @@
                     renderBracket();
                 }
             }
-        });
+        }, (err) => console.error(err));
     };
 
     const saveData = async (data) => {
@@ -466,14 +479,13 @@
         canvas.width = window.innerWidth; 
         canvas.height = window.innerHeight;
         gameData.scores = [0, 0]; 
-        gameData.timeLeft = 45; 
         gameData.gameState = 'ready'; 
         gameData.numbers = []; 
         gameData.touches = {};
         
         document.getElementById('hud-p1-score').innerText = '0'; 
         document.getElementById('hud-p2-score').innerText = '0';
-        document.getElementById('hud-timer').innerText = '45';
+        document.getElementById('hud-timer').innerText = '--';
         document.getElementById('game-ready-overlay').classList.remove('hidden'); 
         document.getElementById('game-end-overlay').classList.add('hidden');
         document.getElementById('game-pause-overlay').classList.add('hidden');
@@ -493,8 +505,11 @@
         gameData.animId = requestAnimationFrame(gameLoop);
     };
 
-    const startGameEngine = () => {
+    // Global Function to start game with selected time
+    window.startGameEngine = (seconds) => {
+        gameData.timeLeft = seconds;
         gameData.gameState = 'playing'; 
+        document.getElementById('hud-timer').innerText = seconds;
         document.getElementById('game-ready-overlay').classList.add('hidden');
         startTimer();
     };
@@ -503,8 +518,8 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         // Background zones
-        ctx.fillStyle = 'rgba(59, 130, 246, 0.1)'; ctx.fillRect(0, 0, canvas.width/2, canvas.height);
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.1)'; ctx.fillRect(canvas.width/2, 0, canvas.width/2, canvas.height);
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.08)'; ctx.fillRect(0, 0, canvas.width/2, canvas.height);
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.08)'; ctx.fillRect(canvas.width/2, 0, canvas.width/2, canvas.height);
         
         // Draw baskets
         gameData.baskets.forEach(b => {
