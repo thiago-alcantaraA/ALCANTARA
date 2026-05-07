@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>중3 수학 판서 - 이차방정식의 풀이 (2)</title>
+    <title>중3 수학 판서 - 제곱근을 이용한 풀이</title>
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -66,40 +66,40 @@
         .main-grid {
             height: 85vh;
             display: grid;
-            grid-template-columns: 44% 56%; 
-            grid-template-rows: 1fr 1fr;
+            grid-template-columns: 48% 52%; 
+            grid-template-rows: 48% 52%;
             position: relative;
         }
 
         .grid-line-h {
             position: absolute;
-            top: 50%; left: 0; width: 44%;
+            top: 48%; left: 0; width: 100%;
             height: 1px;
             border-bottom: 1px dashed rgba(255,255,255,0.2);
             z-index: 1;
         }
         .grid-line-v {
             position: absolute;
-            left: 44%; top: 0; bottom: 0;
+            left: 48%; top: 0; bottom: 0;
             width: 1px;
             border-right: 1px dashed rgba(255,255,255,0.2);
             z-index: 1;
         }
 
         .quadrant {
-            padding: 2.5vh 1.5vw;
+            padding: 2vh 2vw;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
         }
 
-        .quadrant-right {
-            grid-row: 1 / span 2;
+        .quadrant-bottom-right {
+            grid-row: 2;
             grid-column: 2;
-            padding: 2vh 2.5vw;
+            padding: 2vh 2vw;
             display: flex;
             flex-direction: column;
-            justify-content: space-between; 
+            justify-content: center;
         }
 
         .section-title {
@@ -118,22 +118,9 @@
             padding: 1.2vh 1.5vw;
         }
 
-        .derivation-box {
-            font-size: 2.8vh; 
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 12px;
-            padding: 2vh;
-            border-left: 5px solid rgba(255, 255, 255, 0.15);
+        .math-step {
+            font-size: 2.6vh;
             line-height: 1.4;
-        }
-
-        .formula-highlight-box {
-            border: 2px dashed var(--chalk-pink);
-            border-radius: 15px;
-            padding: 2vh;
-            text-align: center;
-            background: rgba(252, 165, 165, 0.05);
-            margin-bottom: 1vh;
         }
 
         .shelf-footer {
@@ -151,99 +138,118 @@
     <div class="chalkboard-outer">
         <div class="chalkboard-inner">
             <header>
-                <h1 class="text-[5vh] font-bold handwritten highlight-yellow tracking-widest">4. 이차방정식의 풀이 (2)</h1>
+                <h1 class="text-[5vh] font-bold handwritten highlight-yellow tracking-widest">4. 제곱근을 이용한 풀이</h1>
             </header>
 
             <div class="main-grid">
                 <div class="grid-line-h"></div>
                 <div class="grid-line-v"></div>
 
+                <!-- 1구역: 기본형 (좌측 상단) -->
                 <div class="quadrant">
-                    <h2 class="section-title handwritten highlight-yellow">제곱근을 이용한 풀이</h2>
+                    <h2 class="section-title handwritten highlight-yellow">1) 기본형 풀이</h2>
                     <div class="handwritten space-y-4">
                         <div class="definition-box">
-                            <p class="mb-1 text-[2.2vh] opacity-70">1. 기본형 : $x^2 = k$</p>
+                            <p class="mb-1 text-[2.2vh] opacity-70">① \(x^2 = k\) (\(k \ge 0\))</p>
                             <p class="highlight-pink text-[3.8vh] text-center">\( x = \pm \sqrt{k} \)</p>
                         </div>
                         <div class="definition-box">
-                            <p class="mb-1 text-[2.2vh] opacity-70">2. 변형 : \((x+p)^2 = k\)</p>
+                            <p class="mb-1 text-[2.2vh] opacity-70">② \(ax^2 = b\) (\(ab > 0\))</p>
                             <div class="text-center mt-1">
-                                <p class="text-[2.8vh]">\(x+p = \pm \sqrt{k}\)</p>
-                                <p class="highlight-pink text-[3.8vh] mt-2">\( x = -p \pm \sqrt{k} \)</p>
+                                <p class="math-step">\(x^2 = \frac{b}{a}\)</p>
+                                <p class="highlight-pink text-[3.8vh] mt-2">\( x = \pm \sqrt{\frac{b}{a}} \)</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- 3구역: 계수가 있는 완전제곱식 (우측 상단) -->
                 <div class="quadrant">
-                    <h2 class="section-title handwritten highlight-blue">완전제곱식 만들기</h2>
+                    <h2 class="section-title handwritten highlight-blue">3) 계수가 있는 완전제곱식</h2>
                     <div class="handwritten space-y-2">
-                        <div class="pl-4 space-y-2 text-[2.6vh]">
-                            <p>① \(x^2\)의 계수를 \(1\)로 <span class="highlight-yellow">만들기</span></p>
-                            <p>② 상수항을 우변으로 이항</p>
-                            <p>③ 양변에 <span class="highlight-yellow">\( (\frac{x \text{계수}}{2})^2 \)</span>를 더하기</p>
-                            <p>④ \((x+p)^2 = k\) 꼴로 고치기</p>
-                        </div>
-                        <div class="mt-6 p-4 bg-white/5 rounded-lg border border-white/10 text-center">
-                            <p class="text-[2.4vh] opacity-80">이 과정은 <span class="highlight-yellow">근의 공식</span>의 토대가 됨!</p>
+                        <div class="definition-box">
+                            <p class="mb-1 text-[2.2vh] opacity-70">④ \(a(x-p)^2 = q\) (\(aq > 0\))</p>
+                            <div class="text-center mt-1 space-y-2">
+                                <p class="math-step">\( (x-p)^2 = \frac{q}{a} \)</p>
+                                <p class="math-step">\( x-p = \pm \sqrt{\frac{q}{a}} \)</p>
+                                <p class="highlight-pink text-[3.8vh] mt-2">\( x = p \pm \sqrt{\frac{q}{a}} \)</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="quadrant-right handwritten">
-                    <div class="flex justify-between items-center">
-                        <h2 class="section-title highlight-yellow mb-0">근의 공식 유도와 완성</h2>
-                        <div class="definition-box py-1 px-4 border-blue-400/30">
-                            <span class="text-[2.2vh] opacity-70 mr-3">일차방정식 \(ax+b=0\) 의 해 :</span>
-                            <span class="highlight-blue text-[3vh]">\(x = -\frac{b}{a}\)</span>
+                <!-- 2구역: 완전제곱식 풀이 (좌측 하단) -->
+                <div class="quadrant">
+                    <h2 class="section-title handwritten highlight-yellow">2) 완전제곱식 풀이</h2>
+                    <div class="handwritten space-y-4">
+                        <div class="definition-box">
+                            <p class="mb-1 text-[2.2vh] opacity-70">③ \((x-p)^2 = q\) (\(q \ge 0\))</p>
+                            <div class="text-center mt-1">
+                                <p class="math-step">\(x-p = \pm \sqrt{q}\)</p>
+                                <p class="highlight-pink text-[3.8vh] mt-2">\( x = p \pm \sqrt{q} \)</p>
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="derivation-box">
-                        <p class="highlight-blue mb-2 text-[3vh]">※ 근의 공식 유도 과정 (\(ax^2+bx+c=0\))</p>
-                        <div class="pl-4 space-y-2 opacity-90">
-                            <p>1. 양변을 \(a\)로 나누기 : \(x^2 + \frac{b}{a}x + \frac{c}{a} = 0\)</p>
-                            <p>2. 상수항 이항 : \(x^2 + \frac{b}{a}x = -\frac{c}{a}\)</p>
-                            <p>3. 양변에 \((\frac{b}{2a})^2\) 더하기 : \(x^2 + \frac{b}{a}x + (\frac{b}{2a})^2 = \frac{b^2}{4a^2} -\frac{c}{a}\)</p>
-                            <p>4. 완전제곱식으로 정리 : \((x + \frac{b}{2a})^2 = \frac{b^2 - 4ac}{4a^2}\)</p>
-                            <p>5. 제곱근 구하기 : \(x + \frac{b}{2a} = \pm \frac{\sqrt{b^2 - 4ac}}{2a}\)</p>
+                <!-- 4구역: 완전제곱식 만들기 원리 (우측 하단) -->
+                <div class="quadrant-bottom-right handwritten">
+                    <h2 class="section-title highlight-blue mb-4">완전제곱식 구조 이해</h2>
+                    
+                    <div class="p-4 bg-white/5 border border-dashed border-white/20 rounded-lg text-center">
+                        <p class="text-[3.5vh] mb-4">
+                            \( (x + \color{#fdf08a}{\triangle} )^2 = x^2 + 2x \color{#fdf08a}{\triangle} + \color{#fdf08a}{\triangle}^2 \)
+                        </p>
+                        
+                        <div class="flex justify-center gap-8 mt-6 relative">
+                            <div class="text-center">
+                                <p class="text-[2.2vh] opacity-70 mb-1">\(x\)항의 계수</p>
+                                <p class="text-[3vh] highlight-blue">\(2 \times \color{#fdf08a}{\triangle}\)</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[2.2vh] opacity-70 mb-1">상수항</p>
+                                <p class="text-[3vh] highlight-yellow">\(\color{#fdf08a}{\triangle}^2\)</p>
+                            </div>
+                            <!-- 화살표 표시 -->
+                            <svg class="absolute top-0 left-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M 35% 40 Q 50% 5 65% 40" stroke="rgba(253, 240, 138, 0.5)" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                            </svg>
                         </div>
-                    </div>
 
-                    <div class="formula-highlight-box">
-                        <p class="text-[2.5vh] mb-2 opacity-70 underline decoration-dashed underline-offset-8">이차방정식의 근의 공식</p>
-                        <p class="text-[7.5vh] highlight-pink">
-                            \( x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} \)
+                        <p class="text-[2.6vh] mt-6">
+                            <span class="highlight-blue">\( \Rightarrow \)</span> 완전제곱식을 만들 때 <span class="highlight-yellow">\(\triangle\)</span>만 찾으면 된다!
                         </p>
                     </div>
                 </div>
             </div>
             
             <footer class="shelf-footer">
-                <p class="footer-note handwritten opacity-50 italic text-[2.2vh]">※ 근의 공식 하나면 모든 이차방정식을 풀 수 있다!</p>
-                <div class="w-48 h-1.5 bg-white/10 rounded-full mt-1"></div>
+                <div class="w-48 h-1.5 bg-white/10 rounded-full mb-1"></div>
             </footer>
         </div>
     </div>
 
+    <!-- 화살표 마커 정의 -->
+    <svg style="position: absolute; width: 0; height: 0; overflow: hidden;">
+        <defs>
+            <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+            refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="rgba(253, 240, 138, 0.5)" />
+            </marker>
+        </defs>
+    </svg>
+
     <script>
-        // MathJax 설정 보완
         window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
                 displayMath: [['$$', '$$'], ['\\[', '\\]']],
-                processEscapes: true,
-                tags: 'ams'
-            },
-            options: {
-                renderActions: {
-                    addMenu: [] // 메뉴 우클릭 방지 (선택 사항)
-                }
+                processEscapes: true
             },
             startup: {
                 pageReady: () => {
                     return MathJax.startup.defaultPageReady().then(() => {
-                        console.log('MathJax 초기 렌더링 완료');
+                        console.log('MathJax 렌더링 완료');
                     });
                 }
             }
@@ -251,7 +257,6 @@
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>
-        // 혹시 모를 로딩 지연을 위해 페이지 로드 후 재렌더링 시도
         window.addEventListener('load', function() {
             if (window.MathJax && window.MathJax.typeset) {
                 window.MathJax.typeset();
