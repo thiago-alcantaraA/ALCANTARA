@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중3 수학 판서 - 근의 공식 유도와 일반화</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --chalkboard-bg: #1e3d33; 
+            --chalk-white: rgba(255, 255, 255, 0.95);
+            --chalk-yellow: #fdf08a;
+            --chalk-blue: #a5f3fc;
+            --chalk-pink: #fca5a5;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        html, body {
+            background-color: #121212;
+            font-family: 'Noto Sans KR', sans-serif;
+            color: var(--chalk-white);
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chalkboard-outer {
+            width: 100%;
+            height: 100%;
+            background: #3d2b1f; 
+            padding: 0.6vh; 
+            display: flex;
+        }
+
+        .chalkboard-inner {
+            flex: 1;
+            background-color: var(--chalkboard-bg);
+            background-image: url('https://www.transparenttextures.com/patterns/black-chalkboard.png');
+            position: relative;
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            padding: 1vh 2vw;
+            border-radius: 4px;
+        }
+
+        .handwritten { font-family: 'Nanum Pen Script', cursive; line-height: 1.1; }
+        .highlight-yellow { color: var(--chalk-yellow); }
+        .highlight-blue { color: var(--chalk-blue); }
+        .highlight-pink { color: var(--chalk-pink); }
+
+        header {
+            height: 8vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px dashed rgba(255,255,255,0.2);
+        }
+
+        .main-grid {
+            height: 88vh;
+            display: grid;
+            grid-template-columns: 44% 56%; 
+            grid-template-rows: 1fr 1fr;
+            position: relative;
+        }
+
+        .grid-line-h {
+            position: absolute;
+            top: 50%; left: 0; width: 44%;
+            height: 1px;
+            border-bottom: 1px dashed rgba(255,255,255,0.2);
+            z-index: 1;
+        }
+        .grid-line-v {
+            position: absolute;
+            left: 44%; top: 0; bottom: 0;
+            width: 1px;
+            border-right: 1px dashed rgba(255,255,255,0.2);
+            z-index: 1;
+        }
+
+        .quadrant {
+            padding: 2vh 1.5vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .quadrant-right {
+            grid-row: 1 / span 2;
+            grid-column: 2;
+            padding: 2vh 2.5vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around; 
+        }
+
+        .section-title {
+            font-size: 3.5vh;
+            margin-bottom: 1.5vh;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title::before { content: '•'; font-size: 0.8em; }
+
+        .definition-box {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5vh 2vw;
+            margin-top: 0.5vh;
+        }
+
+        .derivation-container {
+            font-size: 2.6vh; 
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            padding: 1.5vh 2vw;
+            border-left: 5px solid var(--chalk-blue);
+        }
+
+        .formula-card {
+            padding: 2vh;
+            border: 2.5px dashed var(--chalk-pink);
+            background: rgba(252, 165, 165, 0.05);
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .katex { font-size: 1.1em !important; }
+        .katex .vlist-t2 { margin-right: 0.1em !important; } /* 지수 간격 확보 */
+    </style>
+</head>
+<body>
+    <div class="chalkboard-outer">
+        <div class="chalkboard-inner">
+            <header>
+                <h1 class="text-[4.5vh] font-bold handwritten highlight-yellow tracking-widest">5. 이차방정식의 근의 공식</h1>
+            </header>
+
+            <div class="main-grid">
+                <div class="grid-line-h"></div>
+                <div class="grid-line-v"></div>
+
+                <div class="quadrant">
+                    <h2 class="section-title handwritten highlight-yellow">1) 일차방정식의 근의 공식</h2>
+                    <div class="handwritten space-y-2">
+                        <p class="text-[2.2vh] opacity-60">일반화의 시작</p>
+                        <div class="definition-box text-center">
+                            <p class="text-[3vh]">\( ax + b = 0 \)</p>
+                            <!-- 핑크색 식 크기 줄임 -->
+                            <p class="text-[4.5vh] highlight-pink mt-2">\( x = -\frac{b}{a} \)</p>
+                        </div>
+                        <p class="text-[2.2vh] mt-4 text-center italic opacity-80">"계수만 알면 대입해서 바로 답을 찾는다!"</p>
+                    </div>
+                </div>
+
+                <div class="quadrant">
+                    <h2 class="section-title handwritten highlight-blue">2) 근의 공식의 의미</h2>
+                    <div class="handwritten space-y-4 pl-4">
+                        <div class="flex items-start gap-4">
+                            <span class="highlight-yellow text-[3vh]">①</span>
+                            <p class="text-[2.8vh]"><span class="highlight-pink">일반화(Generalization)</span> : 모든 문제를 한 번에!</p>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <span class="highlight-yellow text-[3vh]">②</span>
+                            <p class="text-[2.6vh]">수많은 계산 과정을 <span class="highlight-yellow">패턴화</span>하여 시간을 단축하는 도구</p>
+                        </div>
+                        <div class="mt-2 p-2 bg-white/5 border border-white/10 rounded text-center">
+                            <p class="text-[2vh] opacity-70">"매번 완전제곱식을 만들 필요가 없다!"</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quadrant-right handwritten">
+                    <h2 class="section-title highlight-yellow mb-2">3) 근의 공식 유도 과정</h2>
+                    
+                    <div class="derivation-container space-y-2">
+                        <p class="text-[2vh] opacity-50 italic">이차방정식 기본형: \( ax^2 + bx + c = 0 \)</p>
+                        <div class="pl-4 space-y-1">
+                            <p>1. 양변을 \( a \)로 나누기 : \( x^2 + \frac{b}{a}x + \frac{c}{a} = 0 \)</p>
+                            <p>2. 상수항 이항 : \( x^2 + \frac{b}{a}x = -\frac{c}{a} \)</p>
+                            <p>3. 양변에 \( (\frac{b}{2a})^2 \) 더하기 : \( (x + \frac{b}{2a})^2 = \frac{b^2 - 4ac}{4a^2} \)</p>
+                            <p>4. 양변의 제곱근 구하기 : \( x + \frac{b}{2a} = \pm \frac{\sqrt{b^2 - 4ac}}{2a} \)</p>
+                        </div>
+                    </div>
+
+                    <div class="formula-card">
+                        <p class="text-[2.2vh] mb-1 opacity-70">이차방정식의 근의 공식</p>
+                        <!-- 핑크색 최종 공식 크기 줄임 및 b^2 고정 -->
+                        <p class="text-[6.5vh] highlight-pink leading-tight">
+                            \( x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} \)
+                        </p>
+                    </div>
+                    
+                    <p class="text-center text-[2vh] opacity-40 italic">※ 인수분해가 안 될 때도 이 공식 하나면 끝!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "\\(", right: "\\)", display: false},
+                    {left: "$", right: "$", display: false}
+                ],
+                throwOnError : false
+            });
+        });
+    </script>
+</body>
+</html>
