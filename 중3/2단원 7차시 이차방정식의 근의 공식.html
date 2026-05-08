@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>중3 수학 판서 - 근의 공식 유도와 일반화</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --chalkboard-bg: #1e3d33; 
@@ -121,11 +121,12 @@
         }
 
         .derivation-container {
-            font-size: 2.6vh; 
+            font-size: 3.8vh; 
             background: rgba(255, 255, 255, 0.02);
             border-radius: 12px;
             padding: 1.5vh 2vw;
             border-left: 5px solid var(--chalk-blue);
+            white-space: nowrap; /* 식이 한 줄에 나오도록 강제 */
         }
 
         .formula-card {
@@ -157,7 +158,6 @@
                         <p class="text-[2.2vh] opacity-60">일반화의 시작</p>
                         <div class="definition-box text-center">
                             <p class="text-[3vh]">\( ax + b = 0 \)</p>
-                            <!-- 핑크색 식 크기 줄임 -->
                             <p class="text-[4.5vh] highlight-pink mt-2">\( x = -\frac{b}{a} \)</p>
                         </div>
                         <p class="text-[2.2vh] mt-4 text-center italic opacity-80">"계수만 알면 대입해서 바로 답을 찾는다!"</p>
@@ -185,7 +185,8 @@
                     <h2 class="section-title highlight-yellow mb-2">3) 근의 공식 유도 과정</h2>
                     
                     <div class="derivation-container space-y-2">
-                        <p class="text-[2vh] opacity-50 italic">이차방정식 기본형: \( ax^2 + bx + c = 0 \)</p>
+                        <!-- 기본형 추가 -->
+                        <p class="text-[2.5vh] opacity-50 italic mb-2">이차방정식 기본형: \( ax^2 + bx + c = 0 \)</p>
                         <div class="pl-4 space-y-1">
                             <p>1. 양변을 \( a \)로 나누기 : \( x^2 + \frac{b}{a}x + \frac{c}{a} = 0 \)</p>
                             <p>2. 상수항 이항 : \( x^2 + \frac{b}{a}x = -\frac{c}{a} \)</p>
@@ -196,7 +197,6 @@
 
                     <div class="formula-card">
                         <p class="text-[2.2vh] mb-1 opacity-70">이차방정식의 근의 공식</p>
-                        <!-- 핑크색 최종 공식 크기 줄임 및 b^2 고정 -->
                         <p class="text-[6.5vh] highlight-pink leading-tight">
                             \( x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} \)
                         </p>
