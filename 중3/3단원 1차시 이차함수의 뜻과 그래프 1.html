@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중3 수학 판서 - 함수의 뜻과 이차함수 도입</title>
+    <!-- KaTeX 라이브러리 로드 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"></script>
+    <!-- Tailwind CSS 로드 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 구글 폰트 (손글씨 및 고딕) -->
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --chalkboard-bg: #1e3d33; 
+            --chalk-white: rgba(255, 255, 255, 0.95);
+            --chalk-yellow: #fdf08a;
+            --chalk-blue: #a5f3fc;
+            --chalk-pink: #fca5a5;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        html, body {
+            background-color: #121212;
+            font-family: 'Noto Sans KR', sans-serif;
+            color: var(--chalk-white);
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chalkboard-outer {
+            width: 100%;
+            height: 100%;
+            background: #3d2b1f; /* 나무 프레임 */
+            padding: 0.6vh; 
+            display: flex;
+        }
+
+        .chalkboard-inner {
+            flex: 1;
+            background-color: var(--chalkboard-bg);
+            background-image: url('https://www.transparenttextures.com/patterns/black-chalkboard.png');
+            position: relative;
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            padding: 3vh 3vw;
+            border-radius: 4px;
+        }
+
+        .handwritten { font-family: 'Nanum Pen Script', cursive; }
+        .highlight-yellow { color: var(--chalk-yellow); }
+        .highlight-blue { color: var(--chalk-blue); }
+        .highlight-pink { color: var(--chalk-pink); }
+
+        /* 좌측/우측 2열 레이아웃 (종이 필기 배치 그대로 구현) */
+        .main-grid {
+            height: 100%;
+            display: grid;
+            grid-template-columns: 48% 52%; 
+            position: relative;
+            gap: 4vw;
+        }
+
+        /* 중앙 구분 점선 */
+        .grid-line-v {
+            position: absolute;
+            left: 48%; top: 0; bottom: 0;
+            width: 1px;
+            border-right: 1px dashed rgba(255,255,255,0.15);
+            z-index: 1;
+        }
+
+        .pane {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            overflow-y: auto;
+        }
+
+        /* 칠판 스크롤바 숨김/미세 디자인 */
+        .pane::-webkit-scrollbar {
+            width: 4px;
+        }
+        .pane::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .graph-container {
+            position: relative;
+            height: 32vh;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 1vh 0;
+        }
+
+        .katex { font-size: 1.05em !important; }
+
+        /* 모바일 대응 레이아웃 */
+        @media (max-width: 768px) {
+            html, body { overflow-y: auto; height: auto; }
+            .chalkboard-outer { height: auto; min-height: 100vh; padding: 10px; }
+            .chalkboard-inner { padding: 20px; }
+            .main-grid { grid-template-columns: 1fr; gap: 40px; }
+            .grid-line-v { display: none; }
+            .graph-container { height: 260px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="chalkboard-outer">
+        <div class="chalkboard-inner">
+            <div class="main-grid">
+                <div class="grid-line-v"></div>
+
+                <!-- 왼쪽 단: 함수 및 f(x)의 의미 -->
+                <div class="pane handwritten text-[3.2vh] space-y-6">
+                    <div class="space-y-1">
+                        <p class="text-[4vh] font-bold">• 함수.</p>
+                        <p class="text-[4.5vh] highlight-yellow pl-4">\(y = f(x)\)의 의미.</p>
+                    </div>
+
+                    <!-- ① 비유 및 정의 -->
+                    <div class="pl-4 space-y-2">
+                        <p>① <span class="highlight-yellow">\(x\)</span> : 재료.&nbsp;&nbsp;&nbsp;&nbsp;\(f(x)\) : 요리.&nbsp;&nbsp;&nbsp;&nbsp;<span class="highlight-yellow">\(y\)</span> : 그릇.</p>
+                        <div class="pl-4 space-y-1">
+                            <p class="text-[3.6vh] highlight-blue">\(y = f(x)\) <span class="text-[2.8vh] opacity-90">'그릇에 담긴 요리'</span></p>
+                            <p class="text-[2.8vh] opacity-85">↳ 왜? 재료랑 요리를 구별하기 위해 순서쌍 사용 \((x, y)\)</p>
+                        </div>
+                    </div>
+
+                    <!-- ② 변수 교체 -->
+                    <div class="pl-4 space-y-1">
+                        <p>② <span class="highlight-yellow">\(v = f(u)\)</span>의 경우 \(v\)는 \(u\)에 대한 함수.</p>
+                        <p class="text-[2.8vh] highlight-pink pl-4">'문자 상관 X'</p>
+                    </div>
+
+                    <!-- ③ 대응 수치 예시 -->
+                    <div class="pl-4 space-y-1">
+                        <p>③ \(f(1)=2, \quad f(2)=9, \quad f(3)=10, \quad f(4)=7\)</p>
+                        <p class="text-[2.8vh] opacity-85 pl-4">↳ 식이 없으면 함수가 아닐까? <span class="highlight-pink">No.</span></p>
+                    </div>
+
+                    <!-- ④ x+y=1 논의 -->
+                    <div class="pl-4 space-y-1">
+                        <p>④ \(x+y=1\) 함수일까? 방정식일까?</p>
+                        <p class="text-[2.8vh] pl-4">
+                            <span class="highlight-blue">→ 활용 방식에 따라 다르다.</span> <span class="highlight-yellow">'둘 다 가능'</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 오른쪽 단: 이차함수 정의와 y=x² 그래프 -->
+                <div class="pane handwritten text-[3.2vh] space-y-4">
+                    <!-- 이차함수의 정의 -->
+                    <div class="space-y-1">
+                        <p class="text-[3.5vh]">
+                            • 이차함수 : <span class="highlight-yellow">\(y = (x\text{에 대한 이차식}) = ax^2 + bx + c\)</span>
+                        </p>
+                        <p class="text-[2.8vh] opacity-80 pl-8">
+                            \((a, b, c = \text{수}, \quad a \neq 0)\)
+                        </p>
+                    </div>
+
+                    <!-- y=x² 타이틀 -->
+                    <div class="pt-2 pl-4">
+                        <p class="text-[4vh] highlight-blue">• \(y = x^2\)</p>
+                    </div>
+
+                    <!-- 그래프 영역 -->
+                    <div class="graph-container">
+                        <svg viewBox="0 0 400 240" width="100%" height="100%">
+                            <!-- x, y 좌표축 -->
+                            <line x1="40" y1="180" x2="360" y2="180" stroke="var(--chalk-white)" stroke-width="1.5" />
+                            <line x1="200" y1="20" x2="200" y2="210" stroke="var(--chalk-white)" stroke-width="1.5" />
+                            
+                            <!-- 축 화살표 -->
+                            <path d="M 355 177 L 360 180 L 355 183" fill="none" stroke="var(--chalk-white)" stroke-width="1.5" />
+                            <path d="M 197 25 L 200 20 L 203 25" fill="none" stroke="var(--chalk-white)" stroke-width="1.5" />
+
+                            <!-- 포물선 y = x² 곡선 (분필 느낌 분홍색선 연출) -->
+                            <path d="M 100,60 Q 150,180 200,180 T 300,60" fill="none" stroke="var(--chalk-white)" stroke-width="2.5" />
+
+                            <!-- "두 점을 잇는 선분 아래에 그래프가 있다" 시각화 -->
+                            <!-- 두 점 연결 점선 -->
+                            <line x1="125" y1="96" x2="275" y2="96" stroke="var(--chalk-blue)" stroke-width="1.5" stroke-dasharray="3,3" />
+                            <!-- 두 점 찍기 -->
+                            <circle cx="125" cy="96" r="3" fill="var(--chalk-pink)" />
+                            <circle cx="275" cy="96" r="3" fill="var(--chalk-pink)" />
+                            <!-- 꼭짓점/원점 표기 -->
+                            <circle cx="200" cy="180" r="3" fill="var(--chalk-yellow)" />
+                        </svg>
+                    </div>
+
+                    <!-- 특징 목록 -->
+                    <div class="pl-4 space-y-2">
+                        <div class="flex items-start">
+                            <span class="mr-2">특징</span>
+                            <div class="border-l-2 border-dashed border-white/30 pl-4 space-y-1">
+                                <p>1) <span class="highlight-yellow">\(y\)축 대칭</span></p>
+                                <p>2) 원점 \((0,0)\)을 지난다.</p>
+                                <p>3) <span class="highlight-pink underline decoration-dashed underline-offset-4">아래로 볼록</span></p>
+                                <p class="text-[2.8vh] highlight-pink pl-4 leading-normal">
+                                    ↳ 두 점을 잇는 선분<br>&nbsp;&nbsp;&nbsp;아래에 그래프가 있다.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // KaTeX 정적 수식 렌더러 동작
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "\\(", right: "\\)", display: false},
+                    {left: "$", right: "$", display: false}
+                ],
+                throwOnError : false
+            });
+        });
+    </script>
+</body>
+</html>
