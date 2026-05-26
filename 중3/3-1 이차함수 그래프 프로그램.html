@@ -35,7 +35,7 @@
             <h1 class="text-2xl md:text-3xl font-bold flex items-center gap-2">
                 <span>이차함수 <span id="header-formula">y = ax^2</span> 그래프 탐구기</span>
             </h1>
-            <p class="text-indigo-200 text-sm mt-1">계수 a의 값을 조절하거나 직접 입력하여 그래프의 성질을 실시간으로 탐구해 보세요.</p>
+            <p class="text-indigo-200 text-sm mt-1">계수 a와 좌표 x를 조절하거나 직접 입력하여 그래프의 성질을 실시간으로 탐구해 보세요.</p>
         </div>
     </header>
 
@@ -82,7 +82,7 @@
                         값 조절 및 입력 패널
                     </h3>
                     
-                    <!-- a 값 조절 및 직접 입력 -->
+                    <!-- a 값 조절 및 직접 입력 (단계별 스냅 적용을 위해 step을 0.1로 조정) -->
                     <div class="mb-6">
                         <div class="flex justify-between items-center mb-2">
                             <label for="a-slider" class="text-sm font-semibold text-slate-600 flex items-center gap-1">
@@ -94,7 +94,7 @@
                                 <span class="text-xs text-indigo-400 font-semibold select-none">✏ 입력</span>
                             </div>
                         </div>
-                        <input type="range" id="a-slider" min="-6.0" max="6.0" step="0.5" value="1.0" 
+                        <input type="range" id="a-slider" min="-6.0" max="6.0" step="0.1" value="1.0" 
                                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
                         <div class="flex justify-between text-xs text-slate-400 mt-1">
                             <span>위로 볼록 (-6.0)</span>
@@ -218,6 +218,15 @@
         const aSlider = document.getElementById('a-slider');
         const xSlider = document.getElementById('x-slider');
 
+        // 값 반올림(스냅) 헬퍼 함수 (-1에서 1 사이는 0.1 단위, 그 외는 0.5 단위)
+        function snapValue(val) {
+            if (val >= -1.0 && val <= 1.0) {
+                return parseFloat((Math.round(val * 10) / 10).toFixed(1));
+            } else {
+                return parseFloat((Math.round(val * 2) / 2).toFixed(1));
+            }
+        }
+
         // 수식 렌더링하기 (KaTeX 사용)
         function renderMath() {
             try {
@@ -255,8 +264,8 @@
 
         // a 값 수동 변경
         function setA(val) {
-            aValue = val;
-            aSlider.value = val;
+            aValue = snapValue(val);
+            aSlider.value = aValue;
             updateControls(true);
         }
 
@@ -267,8 +276,7 @@
 
         // 특정 X 좌표에 대한 점 기록 함수
         function recordPoint(x) {
-            // 0.5 단위로 가장 가까운 좌표에 스냅(반올림)
-            const snappedX = Math.round(x * 2) / 2;
+            let snappedX = snapValue(x);
             const y = aValue * snappedX * snappedX;
 
             // 이미 등록된 X값인지 체크
@@ -590,9 +598,11 @@
             e.preventDefault(); 
         }, { passive: false });
 
-        // 슬라이더 조작 시 바인딩
+        // 슬라이더 조작 시 바인딩 (aValue에도 snapValue 적용)
         aSlider.addEventListener('input', (e) => {
-            aValue = parseFloat(e.target.value);
+            let val = parseFloat(e.target.value);
+            aValue = snapValue(val);
+            aSlider.value = aValue;
             updateControls(true);
         });
 
@@ -605,11 +615,11 @@
         aInput.addEventListener('input', (e) => {
             let val = parseFloat(e.target.value);
             if (!isNaN(val)) {
-                // 입력 즉시 슬라이더와 연동 (초과 범위 조절)
+                // 입력 즉시 슬라이더와 연동 (초과 범위 조절 및 스냅)
                 if (val > 6.0) val = 6.0;
                 if (val < -6.0) val = -6.0;
-                aValue = val;
-                aSlider.value = val;
+                aValue = snapValue(val);
+                aSlider.value = aValue;
                 updateControls(false); // 타이핑 중이므로 Input 내부 글씨 리셋 우회
             }
         });
@@ -618,8 +628,8 @@
             let val = parseFloat(e.target.value);
             if (isNaN(val)) val = 1.0;
             val = Math.max(-6.0, Math.min(6.0, val));
-            aValue = val;
-            aSlider.value = val;
+            aValue = snapValue(val);
+            aSlider.value = aValue;
             updateControls(true); // 포커스를 잃었으므로 소수점 깔끔히 포맷팅하여 동기화
         });
 
