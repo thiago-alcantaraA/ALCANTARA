@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>삼각형으로 보는 삼각비 특수각</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="w-screen h-screen overflow-hidden bg-gray-200 flex flex-col items-center justify-center p-2 md:p-6 font-sans text-gray-800">
+
+  <!-- 전자칠판 16:9 비율에 꽉 차도록 전체 높이(h-full) 사용, 스크롤 없앰 -->
+  <div class="w-full h-full max-w-[1920px] bg-white rounded-[2rem] shadow-2xl flex flex-col overflow-hidden border border-gray-300">
+    
+    <!-- 상단 제목 영역 -->
+    <div class="bg-gray-800 p-6 md:p-8 shrink-0 text-white text-center">
+      <h1 class="text-3xl md:text-5xl font-bold mb-2 tracking-tight">삼각형으로 보는 삼각비 특수각</h1>
+      <p class="text-lg md:text-xl text-gray-300">원하는 각도를 선택하여 변의 비율과 삼각비의 원리를 그림으로 확인하세요.</p>
+    </div>
+
+    <!-- 각도 선택 버튼 영역 -->
+    <div id="버튼영역" class="flex bg-gray-100 p-4 md:p-6 justify-center gap-6 border-b border-gray-200 shrink-0">
+      <!-- 자바스크립트로 버튼 생성 -->
+    </div>
+
+    <!-- 메인 내용 영역 -->
+    <div class="flex flex-row p-6 md:p-8 gap-6 items-stretch justify-center flex-1 min-h-0 bg-white">
+      
+      <!-- 도형 영역 (회색 배경 제거, 흰 배경으로 일체감 부여, 패딩 최소화) -->
+      <div id="도형영역" class="w-[65%] flex justify-center items-center bg-white relative h-full">
+        <!-- 자바스크립트로 SVG 생성 -->
+      </div>
+
+      <!-- 수식 설명 영역 -->
+      <div id="수식영역" class="w-[35%] flex flex-col gap-3 justify-between h-full">
+        <!-- 자바스크립트로 수식 생성 -->
+      </div>
+      
+    </div>
+
+    <!-- 0도와 90도에 대한 추가 설명 -->
+    <div class="bg-blue-50 p-6 border-t-[4px] border-blue-100 text-gray-700 shrink-0 flex flex-row items-center gap-8">
+      <p class="font-bold flex items-center gap-3 text-xl md:text-2xl whitespace-nowrap shrink-0">
+        <svg class="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+        0도와 90도는?
+      </p>
+      <p class="text-base md:text-lg leading-relaxed text-gray-600">
+        0도에 가까워질수록 <span class="text-green-600 font-bold">높이</span>는 0이 되고(사인 0° = 0), 
+        90도에 가까워질수록 <span class="text-blue-600 font-bold">밑변</span>이 0이 됩니다(코사인 90° = 0).
+      </p>
+    </div>
+
+  </div>
+
+  <script>
+    // 삼각비 및 삼각형 좌표 데이터
+    const 삼각비정보 = {
+      30: {
+        각도: 30,
+        빗변: { type: 'number', value: 2 },
+        밑변: { type: 'sqrt', value: 3 },
+        높이: { type: 'number', value: 1 },
+        사인: { 분자: { type: 'number', value: 1 }, 분모: { type: 'number', value: 2 } },
+        코사인: { 분자: { type: 'sqrt', value: 3 }, 분모: { type: 'number', value: 2 } },
+        탄젠트: { 분자: { type: 'number', value: 1 }, 분모: { type: 'sqrt', value: 3 } },
+        점B_X: 223.2,
+        점C_Y: 150,
+      },
+      45: {
+        각도: 45,
+        빗변: { type: 'sqrt', value: 2 },
+        밑변: { type: 'number', value: 1 },
+        높이: { type: 'number', value: 1 },
+        사인: { 분자: { type: 'sqrt', value: 2 }, 분모: { type: 'number', value: 2 } },
+        코사인: { 분자: { type: 'sqrt', value: 2 }, 분모: { type: 'number', value: 2 } },
+        탄젠트: { 분자: { type: 'number', value: 1 }, 분모: { type: 'number', value: 1 } },
+        점B_X: 200,
+        점C_Y: 100,
+      },
+      60: {
+        각도: 60,
+        빗변: { type: 'number', value: 2 },
+        밑변: { type: 'number', value: 1 },
+        높이: { type: 'sqrt', value: 3 },
+        사인: { 분자: { type: 'sqrt', value: 3 }, 분모: { type: 'number', value: 2 } },
+        코사인: { 분자: { type: 'number', value: 1 }, 분모: { type: 'number', value: 2 } },
+        탄젠트: { 분자: { type: 'sqrt', value: 3 }, 분모: { type: 'number', value: 1 } },
+        점B_X: 136.6,
+        점C_Y: 100,
+      }
+    };
+
+    // 상태 변수
+    let 선택된각도 = 30;
+
+    // 근호 및 숫자 표시를 위한 HTML 생성 함수
+    function 근호표시(값, 색상 = '') {
+      const 스타일 = 색상 ? `color: ${색상}; text-shadow: 1px 1px 0px white, -1px -1px 0px white, 1px -1px 0px white, -1px 1px 0px white;` : '';
+      if (값.type === 'sqrt') {
+        return `
+          <span class="inline-flex items-start font-bold" style="${스타일}">
+            <span class="text-[1.2em] leading-none mr-[2px] relative top-[0.05em]">√</span>
+            <span class="border-t-[0.1em] border-current pt-[0.1em] leading-none">${값.value}</span>
+          </span>
+        `;
+      }
+      return `<span class="font-bold" style="${스타일}">${값.value}</span>`;
+    }
+
+    // 분수 표시를 위한 HTML 생성 함수
+    function 분수표시(분자, 분모) {
+      return `
+        <div class="inline-flex flex-col items-center mx-2 align-middle overflow-visible">
+          <div class="text-center border-b-[0.08em] border-gray-800 w-full px-2 pb-[0.1em] mb-[0.1em]">
+            ${근호표시(분자)}
+          </div>
+          <div class="text-center w-full px-2 pt-[0.1em]">
+            ${근호표시(분모)}
+          </div>
+        </div>
+      `;
+    }
+
+    // 화면 업데이트 함수
+    function 화면업데이트() {
+      const 정보 = 삼각비정보[선택된각도];
+
+      // 1. 버튼 영역 업데이트
+      const 버튼영역 = document.getElementById('버튼영역');
+      버튼영역.innerHTML = [30, 45, 60].map(각도 => {
+        const 활성화됨 = 선택된각도 === 각도;
+        const 클래스 = 활성화됨 
+          ? 'bg-indigo-600 text-white shadow-indigo-200 ring-[4px] ring-indigo-200' 
+          : 'bg-white text-gray-600 hover:bg-gray-100 hover:text-indigo-600 shadow-md border border-gray-200';
+        return `
+          <button
+            onclick="각도변경(${각도})"
+            class="px-10 py-3 text-2xl font-extrabold rounded-2xl transition-all duration-200 ${클래스}"
+          >
+            ${각도}°
+          </button>
+        `;
+      }).join('');
+
+      // 2. 도형 계산 및 SVG 업데이트
+      const 기준점X = 50;
+      const 기준점Y = 250;
+      const 점A = `${기준점X},${기준점Y}`;
+      const 점B = `${정보.점B_X},${기준점Y}`;
+      const 점C = `${정보.점B_X},${정보.점C_Y}`;
+
+      const 호반지름 = 45; 
+      const 라디안 = (선택된각도 * Math.PI) / 180;
+      const 호끝X = 기준점X + 호반지름 * Math.cos(라디안);
+      const 호끝Y = 기준점Y - 호반지름 * Math.sin(라디안);
+      const 각도호경로 = `M ${기준점X + 호반지름} ${기준점Y} A ${호반지름} ${호반지름} 0 0 0 ${호끝X} ${호끝Y}`;
+
+      const 빗변중점X = (기준점X + 정보.점B_X) / 2;
+      const 빗변중점Y = (기준점Y + 정보.점C_Y) / 2;
+      const 밑변중점X = (기준점X + 정보.점B_X) / 2;
+      const 높이중점Y = (기준점Y + 정보.점C_Y) / 2;
+
+      // 도형의 각도에 맞춰 뷰박스와 글자 좌표를 동적으로 타이트하게 설정 (여백 제거)
+      let viewBoxStr = "";
+      let 빗변텍스트CX, 빗변텍스트CY, 밑변텍스트CX, 밑변텍스트CY, 높이텍스트CX, 높이텍스트CY;
+
+      if (선택된각도 === 30) {
+        viewBoxStr = "0 110 300 190"; 
+        빗변텍스트CX = 빗변중점X - 25; 빗변텍스트CY = 빗변중점Y - 30;
+        밑변텍스트CX = 밑변중점X; 밑변텍스트CY = 기준점Y + 30;
+        높이텍스트CX = 정보.점B_X + 35; 높이텍스트CY = 높이중점Y;
+      } else if (선택된각도 === 45) {
+        viewBoxStr = "5 60 260 250";
+        빗변텍스트CX = 빗변중점X - 30; 빗변텍스트CY = 빗변중점Y - 30;
+        밑변텍스트CX = 밑변중점X; 밑변텍스트CY = 기준점Y + 35;
+        높이텍스트CX = 정보.점B_X + 35; 높이텍스트CY = 높이중점Y;
+      } else { // 60도
+        viewBoxStr = "-5 60 210 240";
+        빗변텍스트CX = 빗변중점X - 35; 빗변텍스트CY = 빗변중점Y - 20;
+        밑변텍스트CX = 밑변중점X; 밑변텍스트CY = 기준점Y + 35;
+        높이텍스트CX = 정보.점B_X + 35; 높이텍스트CY = 높이중점Y;
+      }
+
+      const 도형영역 = document.getElementById('도형영역');
+      도형영역.innerHTML = `
+        <svg viewBox="${viewBoxStr}" class="w-full h-full drop-shadow-sm overflow-visible">
+          <!-- 직각 기호 -->
+          <polyline 
+            points="${정보.점B_X - 20},${기준점Y} ${정보.점B_X - 20},${기준점Y - 20} ${정보.점B_X},${기준점Y - 20}" 
+            fill="none" stroke="#9CA3AF" stroke-width="4" />
+          
+          <polygon points="${점A} ${점B} ${점C}" fill="#EEF2FF" stroke="none" />
+          
+          <!-- 삼각형 선 굵기 (8에서 5로 축소) -->
+          <line x1="${기준점X}" y1="${기준점Y}" x2="${정보.점B_X}" y2="${정보.점C_Y}" stroke="#EF4444" stroke-width="5" stroke-linecap="round" />
+          <line x1="${기준점X}" y1="${기준점Y}" x2="${정보.점B_X}" y2="${기준점Y}" stroke="#3B82F6" stroke-width="5" stroke-linecap="round" />
+          <line x1="${정보.점B_X}" y1="${기준점Y}" x2="${정보.점B_X}" y2="${정보.점C_Y}" stroke="#10B981" stroke-width="5" stroke-linecap="round" />
+
+          <!-- 각도 표시 -->
+          <path d="${각도호경로}" fill="none" stroke="#6366F1" stroke-width="4" />
+          <text x="${기준점X + 60}" y="${기준점Y - 12}" font-size="22" font-weight="bold" fill="#4F46E5">${정보.각도}°</text>
+          <text x="${정보.점B_X + 15}" y="${기준점Y + 25}" font-size="18" font-weight="bold" fill="#9CA3AF">90°</text>
+
+          <!-- 변의 길이 라벨 (글자가 선명하게 보이도록 text-4xl로 조정 및 위치 최적화) -->
+          <foreignObject x="${빗변텍스트CX - 40}" y="${빗변텍스트CY - 40}" width="80" height="80">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="flex justify-center items-center h-full text-4xl font-extrabold overflow-visible">
+              ${근호표시(정보.빗변, '#EF4444')}
+            </div>
+          </foreignObject>
+          <foreignObject x="${밑변텍스트CX - 40}" y="${밑변텍스트CY - 40}" width="80" height="80">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="flex justify-center items-center h-full text-4xl font-extrabold overflow-visible">
+              ${근호표시(정보.밑변, '#3B82F6')}
+            </div>
+          </foreignObject>
+          <foreignObject x="${높이텍스트CX - 40}" y="${높이텍스트CY - 40}" width="80" height="80">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="flex justify-center items-center h-full text-4xl font-extrabold overflow-visible">
+              ${근호표시(정보.높이, '#10B981')}
+            </div>
+          </foreignObject>
+        </svg>
+      `;
+
+      // 3. 수식 영역 업데이트 
+      const 수식영역 = document.getElementById('수식영역');
+      수식영역.innerHTML = `
+        <!-- 사인 -->
+        <div class="bg-white border-[3px] border-gray-100 rounded-2xl p-3 px-5 shadow-sm hover:shadow-md transition-all flex flex-row items-center justify-between flex-1">
+          <div class="flex items-center gap-1 w-1/4">
+            <span class="text-xl xl:text-2xl font-bold text-gray-800">사인</span>
+            <span class="text-xs xl:text-sm text-gray-400 font-normal">(sin)</span>
+          </div>
+          <div class="text-sm xl:text-base text-gray-500 font-bold flex items-center justify-center bg-gray-50 py-2 rounded-xl flex-1 mx-2">
+            <span class="text-green-500 flex items-center">높이(${근호표시(정보.높이)})</span>
+            <span class="mx-2 text-gray-300">/</span>
+            <span class="text-red-500 flex items-center">빗변(${근호표시(정보.빗변)})</span>
+          </div>
+          <div class="text-lg text-gray-300 font-bold mr-2">=</div>
+          <div class="text-3xl xl:text-4xl font-extrabold text-gray-800 w-1/6 flex justify-end pb-1">
+            ${분수표시(정보.사인.분자, 정보.사인.분모)}
+          </div>
+        </div>
+
+        <!-- 코사인 -->
+        <div class="bg-white border-[3px] border-gray-100 rounded-2xl p-3 px-5 shadow-sm hover:shadow-md transition-all flex flex-row items-center justify-between flex-1">
+          <div class="flex items-center gap-1 w-1/4">
+            <span class="text-xl xl:text-2xl font-bold text-gray-800">코사인</span>
+            <span class="text-xs xl:text-sm text-gray-400 font-normal">(cos)</span>
+          </div>
+          <div class="text-sm xl:text-base text-gray-500 font-bold flex items-center justify-center bg-gray-50 py-2 rounded-xl flex-1 mx-2">
+            <span class="text-blue-500 flex items-center">밑변(${근호표시(정보.밑변)})</span>
+            <span class="mx-2 text-gray-300">/</span>
+            <span class="text-red-500 flex items-center">빗변(${근호표시(정보.빗변)})</span>
+          </div>
+          <div class="text-lg text-gray-300 font-bold mr-2">=</div>
+          <div class="text-3xl xl:text-4xl font-extrabold text-gray-800 w-1/6 flex justify-end pb-1">
+            ${분수표시(정보.코사인.분자, 정보.코사인.분모)}
+          </div>
+        </div>
+
+        <!-- 탄젠트 -->
+        <div class="bg-white border-[3px] border-gray-100 rounded-2xl p-3 px-5 shadow-sm hover:shadow-md transition-all flex flex-row items-center justify-between flex-1">
+          <div class="flex items-center gap-1 w-1/4">
+            <span class="text-xl xl:text-2xl font-bold text-gray-800">탄젠트</span>
+            <span class="text-xs xl:text-sm text-gray-400 font-normal">(tan)</span>
+          </div>
+          <div class="text-sm xl:text-base text-gray-500 font-bold flex items-center justify-center bg-gray-50 py-2 rounded-xl flex-1 mx-2">
+            <span class="text-green-500 flex items-center">높이(${근호표시(정보.높이)})</span>
+            <span class="mx-2 text-gray-300">/</span>
+            <span class="text-blue-500 flex items-center">밑변(${근호표시(정보.밑변)})</span>
+          </div>
+          <div class="text-lg text-gray-300 font-bold mr-2">=</div>
+          <div class="text-3xl xl:text-4xl font-extrabold text-gray-800 w-1/6 flex justify-end pb-1">
+            ${분수표시(정보.탄젠트.분자, 정보.탄젠트.분모)}
+          </div>
+        </div>
+      `;
+    }
+
+    // 각도 변경 이벤트 핸들러
+    window.각도변경 = function(각도) {
+      선택된각도 = 각도;
+      화면업데이트();
+    };
+
+    // 초기 화면 그리기
+    window.onload = 화면업데이트;
+  </script>
+</body>
+</html>
