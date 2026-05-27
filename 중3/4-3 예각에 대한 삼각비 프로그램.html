@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>단위원과 삼각비</title>
+    <!-- Tailwind CSS를 사용하여 디자인을 구성합니다 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 터치 기기에서 캔버스를 드래그할 때 화면이 스크롤되는 것을 방지합니다 */
+        canvas {
+            touch-action: none;
+            /* 캔버스 크기를 기존 600px에서 800px로 키워 넓은 화면을 활용합니다 */
+            max-width: 800px;
+            max-height: 800px;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1 / 1;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 md:p-8 font-sans text-slate-800">
+
+    <!-- 좌우 여백을 줄이기 위해 컨테이너의 최대 너비(max-w-6xl -> max-w-[1600px])를 크게 확장했습니다 -->
+    <div class="w-full max-w-[1600px] bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
+        
+        <!-- 왼쪽: 캔버스 영역 -->
+        <div class="relative bg-slate-100 flex-1 flex justify-center items-center p-6 md:p-10 border-b md:border-b-0 md:border-r border-slate-200">
+            <!-- 캔버스 자체 픽셀 해상도도 800x800으로 키웠습니다 -->
+            <canvas id="mathCanvas" width="800" height="800" class="bg-white rounded-xl shadow-sm border border-slate-200 cursor-grab active:cursor-grabbing"></canvas>
+            
+            <!-- 사용자 안내 메시지 -->
+            <div class="absolute top-10 left-1/2 transform -translate-x-1/2 bg-white/80 backdrop-blur px-5 py-2.5 rounded-full shadow-sm text-base font-medium text-slate-600 pointer-events-none">
+                원 위의 검은 점을 잡고 드래그해보세요
+            </div>
+        </div>
+
+        <!-- 오른쪽: 정보 및 수치 표시 영역 (전체 크기 확장에 맞춰 패널 너비도 증가) -->
+        <div class="w-full md:w-[400px] lg:w-[480px] p-8 md:p-10 flex flex-col justify-between">
+            <div>
+                <h1 class="text-4xl font-bold mb-4 text-slate-800">삼각비의 원리</h1>
+                <p class="text-slate-500 mb-10 text-lg">반지름이 1인 단위원의 제1사분면에서 점을 움직여 사인, 코사인, 탄젠트의 변화를 직관적으로 이해해보세요.</p>
+
+                <!-- 수치 표시 패널 -->
+                <div class="space-y-6">
+                    <!-- 각도 -->
+                    <div class="flex justify-between items-center p-5 bg-slate-50 rounded-xl">
+                        <span class="text-lg font-medium text-slate-600 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                            </svg>
+                            각도 (θ)
+                        </span>
+                        <span id="angleValue" class="text-3xl font-bold text-slate-800">45.0°</span>
+                    </div>
+
+                    <!-- 코사인 (밑변) -->
+                    <div class="flex justify-between items-center p-5 bg-blue-50 rounded-xl border border-blue-100">
+                        <span class="text-lg font-medium text-blue-700">코사인 (cos θ)</span>
+                        <span id="cosValue" class="text-3xl font-bold text-blue-700">0.7071</span>
+                    </div>
+
+                    <!-- 사인 (높이) -->
+                    <div class="flex justify-between items-center p-5 bg-red-50 rounded-xl border border-red-100">
+                        <span class="text-lg font-medium text-red-700">사인 (sin θ)</span>
+                        <span id="sinValue" class="text-3xl font-bold text-red-700">0.7071</span>
+                    </div>
+
+                    <!-- 탄젠트 (확장된 높이) -->
+                    <div class="flex justify-between items-center p-5 bg-emerald-50 rounded-xl border border-emerald-100">
+                        <span class="text-lg font-medium text-emerald-700">탄젠트 (tan θ)</span>
+                        <span id="tanValue" class="text-3xl font-bold text-emerald-700">1.0000</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 설명 영역 -->
+            <div class="mt-12 space-y-5 text-slate-600 bg-slate-50 p-6 rounded-xl text-base">
+                <h3 class="font-bold text-slate-700 mb-3 text-lg">시각적 의미</h3>
+                <p class="flex items-center"><span class="w-3.5 h-3.5 bg-blue-500 rounded-full mr-3 shrink-0"></span><span><strong class="text-blue-600 mr-1">코사인:</strong> 빗변이 1일 때의 밑변 길이</span></p>
+                <p class="flex items-center"><span class="w-3.5 h-3.5 bg-red-500 rounded-full mr-3 shrink-0"></span><span><strong class="text-red-600 mr-1">사인:</strong> 빗변이 1일 때의 높이</span></p>
+                <p class="flex items-center"><span class="w-3.5 h-3.5 bg-emerald-500 rounded-full mr-3 shrink-0"></span><span><strong class="text-emerald-600 mr-1">탄젠트:</strong> 밑변이 1일 때의 높이 (90°에 가까울수록 급격히 증가)</span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mathCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const angleEl = document.getElementById('angleValue');
+        const sinEl = document.getElementById('sinValue');
+        const cosEl = document.getElementById('cosValue');
+        const tanEl = document.getElementById('tanValue');
+
+        // 해상도가 커짐에 따라 그리기 설정값들 업데이트
+        const width = canvas.width;
+        const height = canvas.height;
+        const padding = 120; // 캔버스 여백 확대
+        
+        const cx = padding;
+        const cy = height - padding;
+        
+        const R = 520; // 반지름 확대
+
+        let currentAngle = Math.PI / 4;
+        let isDragging = false;
+        const dragHitAreaRadius = 40; // 드래그 감지 영역 확대
+
+        const colors = {
+            axis: '#94a3b8',
+            circle: '#cbd5e1',
+            hypotenuse: '#475569',
+            sin: '#ef4444',
+            cos: '#3b82f6',
+            tan: '#10b981',
+            text: '#334155',
+            point: '#1e293b',
+            pointHighlight: '#3b82f6'
+        };
+
+        draw();
+
+        canvas.addEventListener('mousedown', startInteraction);
+        canvas.addEventListener('mousemove', handleInteraction);
+        window.addEventListener('mouseup', endInteraction);
+        
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startInteraction(e.touches[0]);
+        }, { passive: false });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            handleInteraction(e.touches[0]);
+        }, { passive: false });
+        
+        window.addEventListener('touchend', endInteraction);
+
+        function startInteraction(e) {
+            const pos = getEventPosition(e);
+            
+            const px = cx + R * Math.cos(currentAngle);
+            const py = cy - R * Math.sin(currentAngle);
+            
+            const dist = Math.sqrt(Math.pow(pos.x - px, 2) + Math.pow(pos.y - py, 2));
+
+            if (dist < dragHitAreaRadius) {
+                isDragging = true;
+                canvas.classList.add('cursor-grabbing');
+                canvas.classList.remove('cursor-grab');
+                updateAngleFromPosition(pos);
+            }
+        }
+
+        function handleInteraction(e) {
+            if (!isDragging) return;
+            const pos = getEventPosition(e);
+            updateAngleFromPosition(pos);
+        }
+
+        function endInteraction() {
+            isDragging = false;
+            canvas.classList.add('cursor-grab');
+            canvas.classList.remove('cursor-grabbing');
+            draw();
+        }
+
+        function getEventPosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            return {
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY
+            };
+        }
+
+        function updateAngleFromPosition(pos) {
+            const x = pos.x - cx;
+            const y = cy - pos.y;
+
+            let angle = Math.atan2(y, x);
+
+            if (angle < 0) angle = 0;
+            if (angle > Math.PI / 2) angle = Math.PI / 2;
+
+            currentAngle = angle;
+            draw();
+            updateUI();
+        }
+
+        function updateUI() {
+            const degrees = (currentAngle * 180 / Math.PI).toFixed(1);
+            const sinVal = Math.sin(currentAngle).toFixed(4);
+            const cosVal = Math.cos(currentAngle).toFixed(4);
+            
+            let tanVal;
+            if (currentAngle === Math.PI / 2) {
+                tanVal = '무한대';
+            } else {
+                tanVal = Math.tan(currentAngle).toFixed(4);
+            }
+
+            angleEl.textContent = `${degrees}°`;
+            sinEl.textContent = sinVal;
+            cosEl.textContent = cosVal;
+            tanEl.textContent = tanVal;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+
+            const sin = Math.sin(currentAngle);
+            const cos = Math.cos(currentAngle);
+            const tan = Math.tan(currentAngle);
+
+            // 1. 축 (두께 증가)
+            drawLine(0, cy, width, cy, colors.axis, 3);
+            drawLine(cx, height, cx, 0, colors.axis, 3);
+            
+            // 텍스트 크기 증가
+            drawText('x', width - 40, cy + 40, colors.text, '24px sans-serif');
+            drawText('y', cx - 40, 40, colors.text, '24px sans-serif');
+            drawText('0', cx - 30, cy + 40, colors.text, '20px sans-serif');
+
+            // 2. 단위원 호
+            ctx.beginPath();
+            ctx.arc(cx, cy, R, 0, -Math.PI / 2, true);
+            ctx.strokeStyle = colors.circle;
+            ctx.lineWidth = 3;
+            ctx.setLineDash([10, 10]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            drawText('1', cx + R, cy + 40, colors.text, '20px sans-serif', 'center');
+            drawText('1', cx - 30, cy - R, colors.text, '20px sans-serif');
+            
+            drawLine(cx + R, cy, cx + R, 0, colors.circle, 2, true);
+
+            const px = cx + R * cos;
+            const py = cy - R * sin;
+
+            // 3. 탄젠트
+            if (currentAngle < Math.PI / 2 - 0.01) {
+                const tx = cx + R;
+                const ty = cy - R * tan;
+                
+                drawLine(tx, cy, tx, ty, colors.tan, 5);
+                drawLine(px, py, tx, ty, colors.tan, 3, true);
+                
+                if (tan < 2.5 && tan > 0.1) {
+                    drawText('tan', tx + 20, cy - (R * tan) / 2, colors.tan, 'bold 24px sans-serif');
+                }
+            }
+
+            // 4. 코사인
+            drawLine(cx, cy, px, cy, colors.cos, 5);
+            if (cos > 0.1) {
+                drawText('cos', cx + (R * cos) / 2, cy + 40, colors.cos, 'bold 24px sans-serif', 'center');
+            }
+
+            // 5. 사인
+            drawLine(px, cy, px, py, colors.sin, 5);
+            if (sin > 0.1) {
+                drawText('sin', px + 20, cy - (R * sin) / 2, colors.sin, 'bold 24px sans-serif');
+            }
+
+            // 6. 빗변
+            drawLine(cx, cy, px, py, colors.hypotenuse, 4);
+            
+            const midX = cx + (px - cx) / 2;
+            const midY = cy + (py - cy) / 2;
+            if (currentAngle > 0.1 && currentAngle < Math.PI / 2 - 0.1) {
+                drawText('1', midX - 30, midY - 20, colors.hypotenuse, 'bold 24px sans-serif');
+            }
+
+            // 7. 각도
+            const arcRadius = 80; // 반경 증가
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, arcRadius, 0, -currentAngle, true);
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.15)';
+            ctx.fill();
+            ctx.strokeStyle = colors.hypotenuse;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 세타(θ) 기호 위치 수식을 삼각함수를 활용하여 정확하게 수정했습니다
+            const textAngle = currentAngle / 2;
+            if (currentAngle > 0.1) {
+                const textRadius = arcRadius + 25; // 각도 호 바로 바깥쪽에 위치하도록 설정
+                const thetaX = cx + textRadius * Math.cos(textAngle);
+                const thetaY = cy - textRadius * Math.sin(textAngle);
+                drawText('θ', thetaX, thetaY, colors.text, 'italic 28px sans-serif', 'center');
+            }
+
+            // 8. 점 (크기 증가)
+            drawPoint(cx, cy, colors.axis, 6); // 원점
+
+            if (currentAngle < Math.PI / 2) {
+                drawPoint(cx + R, cy - R * tan, colors.tan, 7); // 탄젠트 점
+            }
+            
+            // 원 위의 점
+            const pointColor = isDragging ? colors.pointHighlight : colors.point;
+            const pointSize = isDragging ? 14 : 10;
+            drawPoint(px, py, pointColor, pointSize);
+            
+            if (isDragging) {
+                ctx.beginPath();
+                ctx.arc(px, py, dragHitAreaRadius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(59, 130, 246, 0.1)';
+                ctx.fill();
+            }
+        }
+
+        function drawLine(x1, y1, x2, y2, color, width, dashed = false) {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            if (dashed) {
+                ctx.setLineDash([10, 10]);
+            } else {
+                ctx.setLineDash([]);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function drawPoint(x, y, color, size = 6) {
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+        }
+
+        function drawText(text, x, y, color, font, align = 'left') {
+            ctx.font = font;
+            ctx.fillStyle = color;
+            ctx.textAlign = align;
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, x, y);
+        }
+        
+        updateUI();
+
+    </script>
+</body>
+</html>
