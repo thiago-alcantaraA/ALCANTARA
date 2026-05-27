@@ -94,16 +94,16 @@
 
     // 근호 및 숫자 표시를 위한 HTML 생성 함수
     function 근호표시(값, 색상 = '') {
-      const 스타일 = 색상 ? `color: ${색상}; text-shadow: 1px 1px 0px white, -1px -1px 0px white, 1px -1px 0px white, -1px 1px 0px white;` : '';
+      const 스타일 = 색상 ? `color: ${색상};` : '';
       if (값.type === 'sqrt') {
         return `
-          <span class="inline-flex items-start font-bold" style="${스타일}">
+          <span class="inline-flex items-start" style="${스타일}">
             <span class="text-[1.2em] leading-none mr-[2px] relative top-[0.05em]">√</span>
-            <span class="border-t-[0.1em] border-current pt-[0.1em] leading-none">${값.value}</span>
+            <span class="border-t-[0.08em] border-current pt-[0.1em] leading-none">${값.value}</span>
           </span>
         `;
       }
-      return `<span class="font-bold" style="${스타일}">${값.value}</span>`;
+      return `<span style="${스타일}">${값.value}</span>`;
     }
 
     // 분수 표시를 위한 HTML 생성 함수
@@ -148,7 +148,19 @@
       const 점B = `${정보.점B_X},${기준점Y}`;
       const 점C = `${정보.점B_X},${정보.점C_Y}`;
 
-      const 호반지름 = 45; 
+      let 호반지름 = 45; 
+      let 각도텍스트X = 기준점X + 55;
+      let 각도텍스트Y = 기준점Y - 10;
+
+      // 60도, 45도일 때 호의 크기와 텍스트 위치를 비율에 맞게 줄임
+      if (선택된각도 === 60) {
+        호반지름 = 25;
+        각도텍스트X = 기준점X + 32;
+      } else if (선택된각도 === 45) {
+        호반지름 = 35;
+        각도텍스트X = 기준점X + 45;
+      }
+
       const 라디안 = (선택된각도 * Math.PI) / 180;
       const 호끝X = 기준점X + 호반지름 * Math.cos(라디안);
       const 호끝Y = 기준점Y - 호반지름 * Math.sin(라디안);
@@ -183,43 +195,45 @@
       const 도형영역 = document.getElementById('도형영역');
       도형영역.innerHTML = `
         <svg viewBox="${viewBoxStr}" class="w-full h-full drop-shadow-sm overflow-visible">
-          <!-- 직각 기호 -->
+          <!-- 직각 기호 (크기 축소 및 두께 얇게) -->
           <polyline 
-            points="${정보.점B_X - 20},${기준점Y} ${정보.점B_X - 20},${기준점Y - 20} ${정보.점B_X},${기준점Y - 20}" 
-            fill="none" stroke="#9CA3AF" stroke-width="4" />
+            points="${정보.점B_X - 15},${기준점Y} ${정보.점B_X - 15},${기준점Y - 15} ${정보.점B_X},${기준점Y - 15}" 
+            fill="none" stroke="#1F2937" stroke-width="2" />
           
-          <polygon points="${점A} ${점B} ${점C}" fill="#EEF2FF" stroke="none" />
+          <!-- 삼각형 바탕색을 무채색으로 변경 -->
+          <polygon points="${점A} ${점B} ${점C}" fill="#F9FAFB" stroke="none" />
           
-          <!-- 삼각형 선 굵기 (8에서 5로 축소) -->
-          <line x1="${기준점X}" y1="${기준점Y}" x2="${정보.점B_X}" y2="${정보.점C_Y}" stroke="#EF4444" stroke-width="5" stroke-linecap="round" />
-          <line x1="${기준점X}" y1="${기준점Y}" x2="${정보.점B_X}" y2="${기준점Y}" stroke="#3B82F6" stroke-width="5" stroke-linecap="round" />
-          <line x1="${정보.점B_X}" y1="${기준점Y}" x2="${정보.점B_X}" y2="${정보.점C_Y}" stroke="#10B981" stroke-width="5" stroke-linecap="round" />
+          <!-- 삼각형 선 굵기 (5에서 2로 얇게 축소) -->
+          <line x1="${기준점X}" y1="${기준점Y}" x2="${정보.점B_X}" y2="${정보.점C_Y}" stroke="#1F2937" stroke-width="2" stroke-linecap="round" />
+          <line x1="${기준점X}" y1="${기준점Y}" x2="${정보.점B_X}" y2="${기준점Y}" stroke="#1F2937" stroke-width="2" stroke-linecap="round" />
+          <line x1="${정보.점B_X}" y1="${기준점Y}" x2="${정보.점B_X}" y2="${정보.점C_Y}" stroke="#1F2937" stroke-width="2" stroke-linecap="round" />
 
-          <!-- 각도 표시 -->
-          <path d="${각도호경로}" fill="none" stroke="#6366F1" stroke-width="4" />
-          <text x="${기준점X + 60}" y="${기준점Y - 12}" font-size="22" font-weight="bold" fill="#4F46E5">${정보.각도}°</text>
-          <text x="${정보.점B_X + 15}" y="${기준점Y + 25}" font-size="18" font-weight="bold" fill="#9CA3AF">90°</text>
+          <!-- 각도 표시 호 (두께 얇게, 색상 검정색) -->
+          <path d="${각도호경로}" fill="none" stroke="#1F2937" stroke-width="2" />
+          <text x="${각도텍스트X}" y="${각도텍스트Y}" font-size="20" fill="#1F2937">${정보.각도}°</text>
+          
+          <!-- 90도 텍스트는 직각 기호만 남기고 제거됨 -->
 
-          <!-- 변의 길이 라벨 (글자가 선명하게 보이도록 text-4xl로 조정 및 위치 최적화) -->
+          <!-- 변의 길이 라벨 (색상 제거, 폰트 두께 얇게, 크기 조정) -->
           <foreignObject x="${빗변텍스트CX - 40}" y="${빗변텍스트CY - 40}" width="80" height="80">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="flex justify-center items-center h-full text-4xl font-extrabold overflow-visible">
-              ${근호표시(정보.빗변, '#EF4444')}
+            <div xmlns="http://www.w3.org/1999/xhtml" class="flex justify-center items-center h-full text-3xl text-gray-800 overflow-visible">
+              ${근호표시(정보.빗변)}
             </div>
           </foreignObject>
           <foreignObject x="${밑변텍스트CX - 40}" y="${밑변텍스트CY - 40}" width="80" height="80">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="flex justify-center items-center h-full text-4xl font-extrabold overflow-visible">
-              ${근호표시(정보.밑변, '#3B82F6')}
+            <div xmlns="http://www.w3.org/1999/xhtml" class="flex justify-center items-center h-full text-3xl text-gray-800 overflow-visible">
+              ${근호표시(정보.밑변)}
             </div>
           </foreignObject>
           <foreignObject x="${높이텍스트CX - 40}" y="${높이텍스트CY - 40}" width="80" height="80">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="flex justify-center items-center h-full text-4xl font-extrabold overflow-visible">
-              ${근호표시(정보.높이, '#10B981')}
+            <div xmlns="http://www.w3.org/1999/xhtml" class="flex justify-center items-center h-full text-3xl text-gray-800 overflow-visible">
+              ${근호표시(정보.높이)}
             </div>
           </foreignObject>
         </svg>
       `;
 
-      // 3. 수식 영역 업데이트 
+      // 3. 수식 영역 업데이트 (수식의 굵은 글씨와 색상도 깔끔하게 통일)
       const 수식영역 = document.getElementById('수식영역');
       수식영역.innerHTML = `
         <!-- 사인 -->
@@ -228,13 +242,13 @@
             <span class="text-xl xl:text-2xl font-bold text-gray-800">사인</span>
             <span class="text-xs xl:text-sm text-gray-400 font-normal">(sin)</span>
           </div>
-          <div class="text-sm xl:text-base text-gray-500 font-bold flex items-center justify-center bg-gray-50 py-2 rounded-xl flex-1 mx-2">
-            <span class="text-green-500 flex items-center">높이(${근호표시(정보.높이)})</span>
-            <span class="mx-2 text-gray-300">/</span>
-            <span class="text-red-500 flex items-center">빗변(${근호표시(정보.빗변)})</span>
+          <div class="text-sm xl:text-base text-gray-600 font-medium flex items-center justify-center bg-gray-50 py-2 rounded-xl flex-1 mx-2">
+            <span class="flex items-center">높이(${근호표시(정보.높이)})</span>
+            <span class="mx-2 text-gray-400">/</span>
+            <span class="flex items-center">빗변(${근호표시(정보.빗변)})</span>
           </div>
           <div class="text-lg text-gray-300 font-bold mr-2">=</div>
-          <div class="text-3xl xl:text-4xl font-extrabold text-gray-800 w-1/6 flex justify-end pb-1">
+          <div class="text-3xl xl:text-4xl font-bold text-gray-800 w-1/6 flex justify-end pb-1">
             ${분수표시(정보.사인.분자, 정보.사인.분모)}
           </div>
         </div>
@@ -245,13 +259,13 @@
             <span class="text-xl xl:text-2xl font-bold text-gray-800">코사인</span>
             <span class="text-xs xl:text-sm text-gray-400 font-normal">(cos)</span>
           </div>
-          <div class="text-sm xl:text-base text-gray-500 font-bold flex items-center justify-center bg-gray-50 py-2 rounded-xl flex-1 mx-2">
-            <span class="text-blue-500 flex items-center">밑변(${근호표시(정보.밑변)})</span>
-            <span class="mx-2 text-gray-300">/</span>
-            <span class="text-red-500 flex items-center">빗변(${근호표시(정보.빗변)})</span>
+          <div class="text-sm xl:text-base text-gray-600 font-medium flex items-center justify-center bg-gray-50 py-2 rounded-xl flex-1 mx-2">
+            <span class="flex items-center">밑변(${근호표시(정보.밑변)})</span>
+            <span class="mx-2 text-gray-400">/</span>
+            <span class="flex items-center">빗변(${근호표시(정보.빗변)})</span>
           </div>
           <div class="text-lg text-gray-300 font-bold mr-2">=</div>
-          <div class="text-3xl xl:text-4xl font-extrabold text-gray-800 w-1/6 flex justify-end pb-1">
+          <div class="text-3xl xl:text-4xl font-bold text-gray-800 w-1/6 flex justify-end pb-1">
             ${분수표시(정보.코사인.분자, 정보.코사인.분모)}
           </div>
         </div>
@@ -262,13 +276,13 @@
             <span class="text-xl xl:text-2xl font-bold text-gray-800">탄젠트</span>
             <span class="text-xs xl:text-sm text-gray-400 font-normal">(tan)</span>
           </div>
-          <div class="text-sm xl:text-base text-gray-500 font-bold flex items-center justify-center bg-gray-50 py-2 rounded-xl flex-1 mx-2">
-            <span class="text-green-500 flex items-center">높이(${근호표시(정보.높이)})</span>
-            <span class="mx-2 text-gray-300">/</span>
-            <span class="text-blue-500 flex items-center">밑변(${근호표시(정보.밑변)})</span>
+          <div class="text-sm xl:text-base text-gray-600 font-medium flex items-center justify-center bg-gray-50 py-2 rounded-xl flex-1 mx-2">
+            <span class="flex items-center">높이(${근호표시(정보.높이)})</span>
+            <span class="mx-2 text-gray-400">/</span>
+            <span class="flex items-center">밑변(${근호표시(정보.밑변)})</span>
           </div>
           <div class="text-lg text-gray-300 font-bold mr-2">=</div>
-          <div class="text-3xl xl:text-4xl font-extrabold text-gray-800 w-1/6 flex justify-end pb-1">
+          <div class="text-3xl xl:text-4xl font-bold text-gray-800 w-1/6 flex justify-end pb-1">
             ${분수표시(정보.탄젠트.분자, 정보.탄젠트.분모)}
           </div>
         </div>
