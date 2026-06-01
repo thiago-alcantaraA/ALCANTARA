@@ -976,8 +976,8 @@
             spawnNumber(b.eq.roots[1], b.side);
         });
 
-        // 서브 오답 패키지 추가 스폰
-        for (let i = 0; i < 6; i++) {
+        // 서브 오답 패키지 추가 스폰 (시작 시 화면 복잡도를 낮추기 위해 기존 6개에서 3개로 축소)
+        for (let i = 0; i < 3; i++) {
             spawnNumber();
         }
 
@@ -1176,9 +1176,11 @@
             ctx.fillText(n.val, n.x, n.y + 8);
         });
 
-        // 실시간 무한 공급망 구축
-        if (gameData.gameState === 'playing' && t - gameData.lastSpawn > 1800) {
-            spawnNumber();
+        // 실시간 무한 공급망 구축 (스폰 간격을 1.8초에서 2.4초로 늘려 복잡도 완화 및 화면 내 최대 풍선 수 15개로 강력히 제한)
+        if (gameData.gameState === 'playing' && t - gameData.lastSpawn > 2400) {
+            if (gameData.numbers.length < 15) {
+                spawnNumber();
+            }
             gameData.lastSpawn = t;
         }
 
