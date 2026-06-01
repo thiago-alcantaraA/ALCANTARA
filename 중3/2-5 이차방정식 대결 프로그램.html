@@ -382,6 +382,10 @@
                 osc.stop(this.ctx.currentTime + duration);
             } catch (e) {}
         }
+        playClick() {
+            // 버튼 클릭 및 대전 시작 등에 쓰이는 가볍고 탄탄한 효과음 구현
+            this.playTone(600, 'sine', 0.08, 0, 0.12);
+        }
         playCorrect() {
             this.playTone(523.25, 'sine', 0.15, 1046.50, 0.2); // 도 -> 높은도 빠른 알림음
         }
@@ -730,7 +734,7 @@
                     <span class="text-xs font-bold truncate max-w-[100px] text-slate-200">${fp1 ? fp1.name : '1위 대기'}</span>
                 </div>
                 <span class="text-slate-700 font-cyber font-black italic text-xl">VS</span>
-                <div onclick="${fp2 && !fm.winner ? `window.manuallySetWinner(${fm.id}, ${fm.p2})` : (fm.winner === (fp2 ? fp2.id : -1) ? `window.manuallySetWinner(${fm.id}, ${fm.p2.id})` : '')}" class="${fp2 ? 'team-winner-btn' : ''} flex flex-col items-center">
+                <div onclick="${fp2 && !fm.winner ? `window.manuallySetWinner(${fm.id}, ${fm.p2})` : (fm.winner === (fp2 ? fp2.id : -1) ? `window.manuallySetWinner(${fm.id}, ${fp2.id})` : '')}" class="${fp2 ? 'team-winner-btn' : ''} flex flex-col items-center">
                     <div class="w-14 h-14 rounded-full bg-slate-950 border-2 border-slate-800 flex items-center justify-center mb-2 transition-all ${fm.winner === (fp2 ? fp2.id : -1) ? 'ring-4 ring-yellow-500 bg-yellow-950/40 border-yellow-500' : ''}">${fm.winner === (fp2 ? fp2.id : -1) ? '🤴' : '🛡️'}</div>
                     <span class="text-xs font-bold truncate max-w-[100px] text-slate-200">${fp2 ? fp2.name : '2위 대기'}</span>
                 </div>
@@ -900,14 +904,20 @@
         // 색상 파스텔톤 랜덤 그라디언트 적용용
         const hue = Math.floor(Math.random() * 360);
 
+        // 최소 이동 속력 보장 장치 도입 (풍선이 우물쭈물 멈추거나 달팽이처럼 가만히 있는 고장 방지)
+        let vx = (Math.random() - 0.5) * 5;
+        if (Math.abs(vx) < 1.8) vx = vx < 0 ? -1.8 : 1.8;
+        let vy = (Math.random() - 0.5) * 5;
+        if (Math.abs(vy) < 1.8) vy = vy < 0 ? -1.8 : 1.8;
+
         gameData.numbers.push({ 
             x: x, 
             y: Math.random() * (canvas.height - 320) + 160,
             val: val !== null ? val : Math.floor(Math.random() * 15) - 7, 
             radius: 36, 
             color: `hsl(${hue}, 80%, 65%)`, 
-            vx: (Math.random() - 0.5) * 5, 
-            vy: (Math.random() - 0.5) * 5, 
+            vx: vx, 
+            vy: vy, 
             dragId: null, // 조작 소유권을 안전하게 null로 초기화합니다.
             pulse: Math.random() * Math.PI
         });
@@ -1254,11 +1264,13 @@
                     const side = n.x < canvas.width / 2 ? 0 : 1;
                     const bx = side === 0 ? 20 : canvas.width - 270;
                     let hit = false;
+                    let basketCollision = false; // 바구니와의 접촉 유무 감지
                     
                     const relevantBaskets = gameData.mode === 'SOLO' ? gameData.baskets.filter(b => b.side === side) : gameData.baskets;
                     
                     relevantBaskets.forEach(b => {
                         if (n.x > bx && n.x < bx + 250 && n.y > b.y && n.y < b.y + b.h) {
+                            basketCollision = true;
                             if (b.eq.roots.includes(n.val) && !b.eq.found.includes(n.val)) {
                                 b.eq.found.push(n.val);
                                 gameData.scores[side] += 20;
@@ -1278,10 +1290,6 @@
                                         spawnNumber(b.eq.roots[1], b.side);
                                     }, 200);
                                 }
-                            } else {
-                                gameData.scores[side] = Math.max(0, gameData.scores[side] - 10);
-                                audio.playWrong();
-                                spawnParticles(n.x, n.y, '#ef4444', 20);
                             }
                         }
                     });
@@ -1293,7 +1301,23 @@
                     if (hit) {
                         gameData.numbers = gameData.numbers.filter(x => x !== n);
                     } else {
-                        n.dragId = null; // 오답이거나 빗나간 경우 다시 소유권을 방출합니다.
+                        if (basketCollision) {
+                            // 잘못된 해를 넣은 경우 감점 처리 및 물리적 반발 이펙트 적용
+                            gameData.scores[side] = Math.max(0, gameData.scores[side] - 10);
+                            audio.playWrong();
+                            spawnParticles(n.x, n.y, '#ef4444', 20);
+
+                            // 오답 판정 시, 풍선이 바구니 입구 위에 멈춰 정체되지 않도록 강제 리바운드 시스템 적용
+                            if (side === 0) {
+                                n.x = 340; // 왼쪽 바구니 경계 바깥쪽 안전 영역으로 강제 밀어내기
+                                n.vx = Math.abs(n.vx) > 3 ? Math.abs(n.vx) : 4; // 화면 중앙(오른쪽) 방향으로 강력하게 튕김
+                            } else {
+                                n.x = canvas.width - 340; // 오른쪽 바구니 경계 바깥쪽 안전 영역으로 강제 밀어내기
+                                n.vx = -Math.abs(n.vx) < -3 ? -Math.abs(n.vx) : -4; // 화면 중앙(왼쪽) 방향으로 강력하게 튕김
+                            }
+                            n.vy = (Math.random() - 0.5) * 6; // Y축으로도 역동성을 위해 약간의 추가 반발 속도 부여
+                        }
+                        n.dragId = null; // 드래그 소유권을 정상적으로 방출하여 다시 조작 가능한 상태로 복구
                     }
                 } else {
                     n.dragId = null;
@@ -1317,7 +1341,7 @@
     
     canvas.addEventListener('touchstart', handleStart, { passive: false });
     window.addEventListener('touchmove', handleMove, { passive: false });
-    window.addEventListener('touchend', handleEnd, { passive: false });
+    canvas.addEventListener('touchend', handleEnd, { passive: false });
 
     window.onload = init;
 </script>
