@@ -24,6 +24,10 @@
         input[type=number] {
             -moz-appearance: textfield;
         }
+        /* 슬라이더 눈금을 위한 여백 조절 */
+        input[type=range] {
+            margin-bottom: 2px;
+        }
     </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
@@ -56,7 +60,7 @@
                 <span id="current-equation-badge" class="px-4 py-1.5 bg-indigo-50 text-indigo-700 rounded-full font-bold text-base border border-indigo-200"></span>
             </div>
             
-            <!-- 그리기 영역 (남은 공간을 모두 차지하도록 설정) -->
+            <!-- 그리기 영역 -->
             <div class="relative w-full flex-grow bg-slate-50 rounded-xl overflow-hidden border border-slate-200">
                 <canvas id="graphCanvas" class="absolute inset-0 w-full h-full block cursor-crosshair"></canvas>
                 
@@ -93,37 +97,65 @@
                 
                 <!-- 계수 조절 -->
                 <div class="mb-8">
-                    <div class="flex justify-between items-center mb-3">
+                    <div class="flex justify-between items-center mb-2">
                         <label for="a-slider" class="text-sm font-semibold text-slate-700 flex items-center gap-1">
                             기울어짐을 결정하는 계수 <span class="text-indigo-600 font-bold text-lg">a</span>
                         </label>
-                        <div class="flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded border border-indigo-100 focus-within:ring-2 focus-within:ring-indigo-500 transition-all">
-                            <input type="number" id="a-input" step="0.1" min="-6.0" max="6.0" value="1.0"
-                                   class="w-16 bg-transparent text-right font-bold text-indigo-700 focus:outline-none text-lg">
+                        <!-- 분수 입력 칸 -->
+                        <div class="flex items-center gap-2 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200 focus-within:ring-2 focus-within:ring-indigo-500 transition-all">
+                            <span class="font-bold text-indigo-700">=</span>
+                            <div class="flex flex-col items-center">
+                                <input type="number" id="a-num" value="1" class="w-8 bg-transparent text-center font-bold text-indigo-700 focus:outline-none text-sm p-0 m-0 leading-none">
+                                <div class="w-full h-px bg-indigo-400 my-1"></div>
+                                <input type="number" id="a-den" value="1" min="1" class="w-8 bg-transparent text-center font-bold text-indigo-700 focus:outline-none text-sm p-0 m-0 leading-none">
+                            </div>
                         </div>
                     </div>
-                    <input type="range" id="a-slider" min="-6.0" max="6.0" step="0.1" value="1.0" 
+                    <!-- a 슬라이더 정수 눈금 -->
+                    <datalist id="a-ticks">
+                        <option value="-6"></option><option value="-5"></option><option value="-4"></option>
+                        <option value="-3"></option><option value="-2"></option><option value="-1"></option>
+                        <option value="0"></option><option value="1"></option><option value="2"></option>
+                        <option value="3"></option><option value="4"></option><option value="5"></option>
+                        <option value="6"></option>
+                    </datalist>
+                    <input type="range" id="a-slider" min="-6.0" max="6.0" step="0.1" value="1.0" list="a-ticks"
                            class="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
-                    <div class="flex justify-between text-xs font-medium text-slate-400 mt-2">
-                        <span>위로 뾰족 (-6.0)</span>
-                        <span class="font-bold cursor-pointer text-slate-500 hover:text-indigo-600 bg-slate-100 px-2 py-0.5 rounded" onclick="setA(0)">0 으로 맞추기</span>
-                        <span>아래로 뾰족 (6.0)</span>
+                    <!-- 눈금 숫자 표시 -->
+                    <div class="flex justify-between w-full px-1 text-[10px] font-medium text-slate-400 mt-1 pointer-events-none">
+                        <span>-6</span><span>-5</span><span>-4</span><span>-3</span><span>-2</span><span>-1</span>
+                        <span class="font-bold text-slate-700">0</span>
+                        <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
                     </div>
                 </div>
 
                 <!-- 위치 탐색 조절 -->
                 <div>
-                    <div class="flex justify-between items-center mb-3">
+                    <div class="flex justify-between items-center mb-2">
                         <label for="x-slider" class="text-sm font-semibold text-slate-700">
                             가로축 위치 <span class="text-amber-600 font-bold text-lg">x</span>
                         </label>
-                        <div class="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded border border-amber-100 focus-within:ring-2 focus-within:ring-amber-500 transition-all">
+                        <div class="flex items-center gap-1 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 focus-within:ring-2 focus-within:ring-amber-500 transition-all">
+                            <span class="font-bold text-amber-700">=</span>
                             <input type="number" id="x-input" step="0.1" min="-5.0" max="5.0" value="1.0"
-                                   class="w-16 bg-transparent text-right font-bold text-amber-700 focus:outline-none text-lg">
+                                   class="w-12 bg-transparent text-center font-bold text-amber-700 focus:outline-none text-sm">
                         </div>
                     </div>
-                    <input type="range" id="x-slider" min="-5.0" max="5.0" step="0.1" value="1.0"
+                    <!-- x 슬라이더 정수 눈금 -->
+                    <datalist id="x-ticks">
+                        <option value="-5"></option><option value="-4"></option><option value="-3"></option>
+                        <option value="-2"></option><option value="-1"></option><option value="0"></option>
+                        <option value="1"></option><option value="2"></option><option value="3"></option>
+                        <option value="4"></option><option value="5"></option>
+                    </datalist>
+                    <input type="range" id="x-slider" min="-5.0" max="5.0" step="0.1" value="1.0" list="x-ticks"
                            class="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500">
+                    <!-- 눈금 숫자 표시 -->
+                    <div class="flex justify-between w-full px-1 text-[10px] font-medium text-slate-400 mt-1 pointer-events-none">
+                        <span>-5</span><span>-4</span><span>-3</span><span>-2</span><span>-1</span>
+                        <span class="font-bold text-slate-700">0</span>
+                        <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                    </div>
                     
                     <div class="mt-4 p-3 bg-amber-50/70 rounded-xl border border-amber-100 flex justify-center items-center text-sm">
                         <div class="flex items-center gap-2 text-base">
@@ -153,7 +185,7 @@
                         <div>
                             <strong class="text-slate-800 block mb-1">축 (대칭축):</strong> 
                             포물선을 반으로 접었을 때 좌우가 완벽하게 포개지도록 하는 가운데 직선입니다.<br>
-                            현재 <span class="font-mono text-xs">y = ax²</span> 그래프의 축은 항상 <span class="bg-white border border-slate-200 px-2 py-0.5 rounded text-indigo-600 font-bold">세로축 (x = 0)</span> 입니다.
+                            현재 그래프의 축은 항상 <span class="bg-white border border-slate-200 px-2 py-0.5 rounded text-indigo-600 font-bold">세로축 (x = 0)</span> 입니다.
                         </div>
                     </li>
                     <li class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
@@ -161,7 +193,7 @@
                         <div>
                             <strong class="text-slate-800 block mb-1">꼭짓점:</strong> 
                             포물선과 축이 만나는 가장 뾰족한 지점입니다.<br>
-                            현재 <span class="font-mono text-xs">y = ax²</span> 그래프의 꼭짓점은 항상 <span class="bg-white border border-slate-200 px-2 py-0.5 rounded text-indigo-600 font-bold">원점 (0, 0)</span> 입니다.
+                            현재 그래프의 꼭짓점은 항상 <span class="bg-white border border-slate-200 px-2 py-0.5 rounded text-indigo-600 font-bold">원점 (0, 0)</span> 입니다.
                         </div>
                     </li>
                 </ul>
@@ -190,10 +222,48 @@
         const ctx = canvas.getContext('2d');
 
         // 화면 요소 가져오기
-        const aInput = document.getElementById('a-input');
+        const aNumInput = document.getElementById('a-num'); // 분자
+        const aDenInput = document.getElementById('a-den'); // 분모
         const xInput = document.getElementById('x-input');
         const aSlider = document.getElementById('a-slider');
         const xSlider = document.getElementById('x-slider');
+
+        // 최대공약수 구하는 함수 (분수 약분용)
+        function gcd(a, b) {
+            return b ? gcd(b, a % b) : Math.abs(a);
+        }
+
+        // 소수를 가장 가까운 분수(분모 10 기준 약분)로 변환
+        function getFraction(decimal) {
+            if (decimal === 0) return { num: 0, den: 1 };
+            let sign = decimal < 0 ? -1 : 1;
+            let val = Math.abs(decimal);
+            
+            // 한 자리 소수이므로 분모를 10으로 잡고 계산
+            let num = Math.round(val * 10);
+            let den = 10;
+            
+            let divisor = gcd(num, den);
+            return {
+                num: sign * (num / divisor),
+                den: den / divisor
+            };
+        }
+
+        // 수식 텍스트 생성을 위한 도우미 함수 (KaTeX 용)
+        function getFractionMathString(decimal) {
+            if (decimal === 0) return "0";
+            if (decimal === 1) return "";
+            if (decimal === -1) return "-";
+            
+            let fraction = getFraction(decimal);
+            let sign = fraction.num < 0 ? "-" : "";
+            let num = Math.abs(fraction.num);
+            let den = fraction.den;
+
+            if (den === 1) return `${sign}${num}`;
+            return `${sign}\\frac{${num}}{${den}}`;
+        }
 
         // 입력한 값을 깔끔한 숫자로 정리해 주는 도우미 함수
         function snapValue(val) {
@@ -209,15 +279,13 @@
             try {
                 katex.render("y = ax^2", document.getElementById('header-formula'), { throwOnError: false });
                 
+                let fractionStr = getFractionMathString(aValue);
                 let equationStr = "";
+                
                 if (aValue === 0) {
                     equationStr = "y = 0";
-                } else if (aValue === 1) {
-                    equationStr = "y = x^2";
-                } else if (aValue === -1) {
-                    equationStr = "y = -x^2";
                 } else {
-                    equationStr = `y = ${aValue.toFixed(2)}x^2`;
+                    equationStr = `y = ${fractionStr}x^2`;
                 }
                 
                 const badgeEl = document.getElementById('current-equation-badge');
@@ -249,9 +317,19 @@
         // 화면의 글자와 그림을 새로운 값에 맞게 새로고침
         function updateControls(updateInputs = true) {
             if (updateInputs) {
-                if (document.activeElement !== aInput) {
-                    aInput.value = Number(aValue.toFixed(2));
+                // a 분자/분모 칸 업데이트 (입력 중이 아닐 때만)
+                if (document.activeElement !== aNumInput && document.activeElement !== aDenInput) {
+                    let fraction = getFraction(aValue);
+                    // 시각적 편의를 위해 분모가 1일 때는 정수처럼 보이게 함
+                    if (fraction.den === 1) {
+                        aNumInput.value = fraction.num;
+                        aDenInput.value = 1;
+                    } else {
+                        aNumInput.value = fraction.num;
+                        aDenInput.value = fraction.den;
+                    }
                 }
+                // x 위치 칸 업데이트
                 if (document.activeElement !== xInput) {
                     xInput.value = Number(traceX.toFixed(2));
                 }
@@ -273,9 +351,14 @@
             
             if (aValue < 0) {
                 const absA = Math.abs(aValue);
-                const formula = absA === 1 ? "y = x²" : `y = ${absA}x²`;
-                hintEl.innerHTML = `a가 음수일 때, 회색 점선은 절댓값이 같은 <span class="font-bold text-pink-300">대칭 모양(${formula})</span>을 나타냅니다.`;
-                legendBaseEl.textContent = `대칭 모양 (${formula})`;
+                const formulaStr = getFractionMathString(absA);
+                const formula = formulaStr === "" ? "y = x²" : `y = ${formulaStr}x²`;
+                
+                // 안내말에만 수학 수식 렌더링 적용을 위해 span 생성
+                hintEl.innerHTML = `a가 음수일 때, 회색 점선은 절댓값이 같은 <span class="font-bold text-pink-300">대칭 모양(<span id="hint-formula"></span>)</span>을 나타냅니다.`;
+                katex.render(formula, document.getElementById('hint-formula'), { throwOnError: false });
+                
+                legendBaseEl.textContent = `대칭 모양`;
             } else {
                 hintEl.innerHTML = `회색 점선은 기본 모양인 <span class="font-bold">y = x²</span>을 나타냅니다.`;
                 legendBaseEl.textContent = `기본 모양 (y = x²)`;
@@ -552,27 +635,29 @@
             updateControls(true);
         });
 
-        // 숫자를 직접 적어 넣을 때 연결
-        aInput.addEventListener('input', (e) => {
-            let val = parseFloat(e.target.value);
-            if (!isNaN(val)) {
-                if (val > 6.0) val = 6.0;
-                if (val < -6.0) val = -6.0;
-                aValue = snapValue(val);
-                aSlider.value = aValue;
-                updateControls(false);
-            }
-        });
-
-        aInput.addEventListener('blur', (e) => {
-            let val = parseFloat(e.target.value);
-            if (isNaN(val)) val = 1.0;
+        // 분수(분자, 분모) 직접 입력 제어
+        function handleFractionInput() {
+            let num = parseFloat(aNumInput.value);
+            let den = parseFloat(aDenInput.value);
+            
+            if (isNaN(num)) num = 1;
+            if (isNaN(den) || den === 0) den = 1; // 분모가 0이 되지 않게 막기
+            
+            let val = num / den;
             val = Math.max(-6.0, Math.min(6.0, val));
+            
             aValue = snapValue(val);
             aSlider.value = aValue;
-            updateControls(true);
-        });
+            updateControls(false); // 입력 중에 글씨가 자꾸 바뀌지 않게 false 전달
+        }
 
+        aNumInput.addEventListener('input', handleFractionInput);
+        aDenInput.addEventListener('input', handleFractionInput);
+
+        aNumInput.addEventListener('blur', () => updateControls(true));
+        aDenInput.addEventListener('blur', () => updateControls(true));
+
+        // 가로축 위치 숫자 직접 입력 제어
         xInput.addEventListener('input', (e) => {
             let val = parseFloat(e.target.value);
             if (!isNaN(val)) {
