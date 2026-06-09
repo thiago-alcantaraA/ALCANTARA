@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>원과 현의 성질 (비교하기)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f4f4f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            touch-action: none; /* 모바일에서 캔버스 드래그 시 화면 스크롤 방지 */
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px 20px 0;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        p {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: #ffe0eb;
+            color: #d81b60;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+        }
+
+        /* 왼쪽 설명과 오른쪽 캔버스를 감싸는 레이아웃 */
+        .content-wrapper {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* 왼쪽 이등변삼각형 성질 설명 패널 */
+        .info-panel {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+            padding: 30px;
+            max-width: 385px; /* 기존 350px에서 1.1배 증가된 385px로 수정 */
+            flex-shrink: 0;
+        }
+
+        .info-panel h2 {
+            margin-top: 0;
+            color: #d81b60;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ffe0eb;
+            padding-bottom: 10px;
+        }
+
+        .info-panel ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .info-panel li {
+            margin-bottom: 24px;
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .info-panel li:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-panel li::before {
+            content: '•';
+            color: #ff4081;
+            font-size: 1.5rem;
+            position: absolute;
+            left: 0;
+            top: -4px;
+        }
+
+        .info-panel strong {
+            color: #333;
+            display: block;
+            font-size: 1.05rem;
+            margin-bottom: 6px;
+        }
+
+        .info-panel span {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            display: block;
+        }
+
+        /* 오른쪽 캔버스 컨테이너 */
+        .canvas-container {
+            position: relative;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 100%;
+        }
+
+        /* 우측 상단 토글 버튼 스타일 */
+        .toggle-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 18px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .toggle-btn:hover {
+            background-color: #555;
+            transform: translateY(-2px);
+        }
+
+        .toggle-btn:active {
+            transform: translateY(0);
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+            cursor: default;
+        }
+
+        /* 화면이 작아질 경우 세로로 배치 */
+        @media (max-width: 900px) {
+            .content-wrapper {
+                flex-direction: column;
+            }
+            .info-panel {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="badge">인터랙티브 도형 (비교 모드)</div>
+        <h1>원과 현의 성질 비교</h1>
+        <p>현을 드래그하여 두 삼각형의 중심거리를 비교해 보세요.</p>
+    </div>
+
+    <div class="content-wrapper">
+        <!-- 왼쪽 성질 설명 패널 -->
+        <div class="info-panel">
+            <h2>이등변삼각형의 성질</h2>
+            <ul>
+                <li>
+                    <strong>두 변의 길이가 같습니다.</strong>
+                    <span>원에서는 중심에서 원주까지의 거리인 반지름이 두 변이 되므로 항상 길이가 같습니다. (OA = OB)</span>
+                </li>
+                <li>
+                    <strong>두 밑각의 크기가 같습니다.</strong>
+                    <span>길이가 같은 두 변이 밑변(현)과 이루는 각의 크기가 동일합니다. (∠OAB = ∠OBA)</span>
+                </li>
+                <li>
+                    <strong>꼭지각의 이등분선은 밑변을 수직이등분합니다.</strong>
+                    <span>원의 중심에서 현에 내린 수선은 그 현을 정확히 반으로 나눕니다. (AM = MB)</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 오른쪽 캔버스 -->
+        <div class="canvas-container">
+            <button id="toggleBtn" class="toggle-btn">현 CD 추가</button>
+            <canvas id="geometryCanvas" width="1000" height="1000"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('geometryCanvas');
+        const ctx = canvas.getContext('2d');
+        const toggleBtn = document.getElementById('toggleBtn');
+
+        // 기본 설정 (원 크기 1.3배 적용)
+        const O = { x: 500, y: 500 }; 
+        const R = 468; // 360 * 1.3 = 468
+
+        // A, B 삼각형의 각도
+        let angleA = Math.PI * 0.75; 
+        let angleB = Math.PI * 0.25;
+
+        // C, D 삼각형의 각도 (버튼 클릭 시 추가됨, 상단에 배치)
+        let angleC = Math.PI * 1.75; 
+        let angleD = Math.PI * 1.25;
+
+        // 점 객체들
+        let A = { x: 0, y: 0 };
+        let B = { x: 0, y: 0 };
+        let M = { x: 0, y: 0 };
+        
+        let C = { x: 0, y: 0 };
+        let D = { x: 0, y: 0 };
+        let N = { x: 0, y: 0 };
+
+        // 상태 변수
+        let showSecondTriangle = false;
+        let draggingPoint = null; 
+        let hoveredPoint = null;  
+        const HIT_RADIUS = 65; // 인식 범위도 1.3배 늘림
+
+        // 토글 버튼 이벤트
+        toggleBtn.addEventListener('click', () => {
+            showSecondTriangle = !showSecondTriangle;
+            toggleBtn.innerText = showSecondTriangle ? '현 CD 숨기기' : '현 CD 추가';
+            
+            // 토글 버튼 스타일에 변화 주기
+            toggleBtn.style.backgroundColor = showSecondTriangle ? '#ff4081' : '#333';
+            
+            if (showSecondTriangle) {
+                const synced = syncOtherChord(angleA, angleB, angleC, angleD);
+                angleC = synced.t1;
+                angleD = synced.t2;
+            }
+
+            updatePoints();
+            draw();
+        });
+
+        // 각도를 기반으로 좌표 업데이트
+        function updatePoints() {
+            A.x = O.x + R * Math.cos(angleA);
+            A.y = O.y + R * Math.sin(angleA);
+            B.x = O.x + R * Math.cos(angleB);
+            B.y = O.y + R * Math.sin(angleB);
+            M.x = (A.x + B.x) / 2;
+            M.y = (A.y + B.y) / 2;
+
+            if (showSecondTriangle) {
+                C.x = O.x + R * Math.cos(angleC);
+                C.y = O.y + R * Math.sin(angleC);
+                D.x = O.x + R * Math.cos(angleD);
+                D.y = O.y + R * Math.sin(angleD);
+                N.x = (C.x + D.x) / 2;
+                N.y = (C.y + D.y) / 2;
+            }
+        }
+
+        // 거리 계산 함수
+        function getDistance(p1, p2) {
+            return Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        }
+
+        // 합동 표시(두 줄) 그리기
+        function drawTicks(p1, p2) {
+            const midX = (p1.x + p2.x) / 2;
+            const midY = (p1.y + p2.y) / 2;
+            
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const len = Math.hypot(dx, dy);
+            const dirX = dx / len;
+            const dirY = dy / len;
+            
+            const perpX = -dirY;
+            const perpY = dirX;
+
+            const gap = 6;       
+            const tickLen = 13;  
+
+            ctx.beginPath();
+            ctx.moveTo(midX - dirX * gap + perpX * tickLen, midY - dirY * gap + perpY * tickLen);
+            ctx.lineTo(midX - dirX * gap - perpX * tickLen, midY - dirY * gap - perpY * tickLen);
+            
+            ctx.moveTo(midX + dirX * gap + perpX * tickLen, midY + dirY * gap + perpY * tickLen);
+            ctx.lineTo(midX + dirX * gap - perpX * tickLen, midY + dirY * gap - perpY * tickLen);
+            
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        // 수직 기호 (직각 표시) 그리기
+        function drawRightAngle(ptCenter, ptRef1, ptRef2) {
+            const dist1 = getDistance(ptCenter, ptRef1);
+            const dist2 = getDistance(ptCenter, ptRef2);
+            if (dist1 > 25 && dist2 > 25) {
+                const uX = (ptRef1.x - ptCenter.x) / dist1;
+                const uY = (ptRef1.y - ptCenter.y) / dist1;
+                const vX = (ptRef2.x - ptCenter.x) / dist2;
+                const vY = (ptRef2.y - ptCenter.y) / dist2;
+                
+                const size = 22; 
+                
+                ctx.beginPath();
+                ctx.moveTo(ptCenter.x + uX * size, ptCenter.y + uY * size);
+                ctx.lineTo(ptCenter.x + uX * size + vX * size, ptCenter.y + uY * size + vY * size);
+                ctx.lineTo(ptCenter.x + vX * size, ptCenter.y + vY * size);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+        }
+
+        // 텍스트 라벨 그리기 헬퍼
+        function drawLabel(text, x, y, offsetX, offsetY) {
+            ctx.fillText(text, x + offsetX, y + offsetY);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. 원
+            ctx.beginPath();
+            ctx.arc(O.x, O.y, R, 0, Math.PI * 2);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // 2. 선 그리기 (반지름과 수직선은 검정, 현은 핑크색)
+            const drawTriangleEdges = (p1, p2, pMid) => {
+                // 반지름
+                ctx.beginPath();
+                ctx.moveTo(O.x, O.y);
+                ctx.lineTo(p1.x, p1.y);
+                ctx.moveTo(O.x, O.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // 중심선
+                ctx.beginPath();
+                ctx.moveTo(O.x, O.y);
+                ctx.lineTo(pMid.x, pMid.y);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // 현 (사진처럼 핑크색)
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.strokeStyle = '#ff4081'; 
+                ctx.lineWidth = 5; // 현을 조금 더 돋보이게 굵기 조정
+                ctx.stroke();
+            };
+
+            // 기본 삼각형 OAB
+            drawTriangleEdges(A, B, M);
+            drawRightAngle(M, O, B);
+            drawTicks(O, A);
+            drawTicks(O, B);
+
+            // 추가 삼각형 OCD
+            if (showSecondTriangle) {
+                drawTriangleEdges(C, D, N);
+                drawRightAngle(N, O, D);
+                drawTicks(O, C);
+                drawTicks(O, D);
+            }
+
+            // 3. 텍스트 라벨
+            ctx.font = 'italic 36px Georgia, "Times New Roman", serif';
+            ctx.fillStyle = '#555';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            drawLabel('O', O.x, O.y, 0, -45);
+
+            const offsetDist = 50; 
+            drawLabel('A', A.x, A.y, Math.cos(angleA) * offsetDist, Math.sin(angleA) * offsetDist);
+            drawLabel('B', B.x, B.y, Math.cos(angleB) * offsetDist, Math.sin(angleB) * offsetDist);
+            
+            if (getDistance(O, M) > 0.1) {
+                const mDirX = (M.x - O.x) / getDistance(O, M);
+                const mDirY = (M.y - O.y) / getDistance(O, M);
+                drawLabel('M', M.x, M.y, mDirX * 45, mDirY * 45 + 5);
+            } else {
+                drawLabel('M', M.x, M.y, 0, 50);
+            }
+
+            if (showSecondTriangle) {
+                drawLabel('C', C.x, C.y, Math.cos(angleC) * offsetDist, Math.sin(angleC) * offsetDist);
+                drawLabel('D', D.x, D.y, Math.cos(angleD) * offsetDist, Math.sin(angleD) * offsetDist);
+                
+                if (getDistance(O, N) > 0.1) {
+                    const nDirX = (N.x - O.x) / getDistance(O, N);
+                    const nDirY = (N.y - O.y) / getDistance(O, N);
+                    drawLabel('N', N.x, N.y, nDirX * 45, nDirY * 45 + 5);
+                } else {
+                    drawLabel('N', N.x, N.y, 0, 50);
+                }
+            }
+
+            // 4. 인터랙션 포인트 (핸들)
+            const drawHandle = (pt, isHovered) => {
+                if (isHovered) {
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, HIT_RADIUS * 0.7, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+                    ctx.fill();
+                }
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = '#333';
+                ctx.fill();
+            };
+
+            ctx.beginPath();
+            ctx.arc(O.x, O.y, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#333';
+            ctx.fill();
+
+            drawHandle(A, hoveredPoint === 'A' || draggingPoint === 'A');
+            drawHandle(B, hoveredPoint === 'B' || draggingPoint === 'B');
+            drawHandle(M, hoveredPoint === 'M' || draggingPoint === 'M');
+
+            if (showSecondTriangle) {
+                drawHandle(C, hoveredPoint === 'C' || draggingPoint === 'C');
+                drawHandle(D, hoveredPoint === 'D' || draggingPoint === 'D');
+                drawHandle(N, hoveredPoint === 'N' || draggingPoint === 'N');
+            }
+        }
+
+        function getPointerPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        // 대상 포인트를 찾는 헬퍼 함수
+        function getClosestTarget(pos) {
+            const targets = [
+                { id: 'M', pt: M }, { id: 'A', pt: A }, { id: 'B', pt: B }
+            ];
+            if (showSecondTriangle) {
+                targets.push({ id: 'N', pt: N }, { id: 'C', pt: C }, { id: 'D', pt: D });
+            }
+
+            let closestId = null;
+            let minDist = HIT_RADIUS;
+
+            for (const t of targets) {
+                const d = getDistance(pos, t.pt);
+                if (d <= minDist) {
+                    minDist = d;
+                    closestId = t.id;
+                }
+            }
+            return closestId;
+        }
+
+        // 두 현의 길이를 동기화하는 함수
+        function syncOtherChord(source1, source2, target1, target2) {
+            let diff = Math.abs(source1 - source2);
+            diff = diff % (Math.PI * 2);
+            if (diff > Math.PI) diff = 2 * Math.PI - diff;
+            let halfAngle = diff / 2;
+
+            let midX = Math.cos(target1) + Math.cos(target2);
+            let midY = Math.sin(target1) + Math.sin(target2);
+            let phi = Math.atan2(midY, midX);
+
+            if (Math.abs(midX) < 1e-6 && Math.abs(midY) < 1e-6) {
+                 phi = target1 + Math.PI/2;
+            }
+
+            let newT1 = phi + halfAngle;
+            let newT2 = phi - halfAngle;
+
+            const normalize = (angle) => Math.atan2(Math.sin(angle), Math.cos(angle));
+            let normNew1 = normalize(newT1);
+            let normNew2 = normalize(newT2);
+            let normT1 = normalize(target1);
+
+            let diff1 = Math.abs(normNew1 - normT1);
+            if (diff1 > Math.PI) diff1 = 2 * Math.PI - diff1;
+            let diff2 = Math.abs(normNew2 - normT1);
+            if (diff2 > Math.PI) diff2 = 2 * Math.PI - diff2;
+
+            if (diff1 < diff2) {
+                return { t1: newT1, t2: newT2 };
+            } else {
+                return { t1: newT2, t2: newT1 };
+            }
+        }
+
+        // 각도 드래그 처리 (M, N 회전 로직)
+        function handleDragCenter(pos, currentAngle1, currentAngle2) {
+            let dx = pos.x - O.x;
+            let dy = pos.y - O.y;
+            let phi = Math.atan2(dy, dx); 
+
+            let diff = Math.abs(currentAngle1 - currentAngle2);
+            diff = diff % (Math.PI * 2);
+            if (diff > Math.PI) {
+                diff = 2 * Math.PI - diff;
+            }
+            let halfAngle = diff / 2;
+
+            let newAngle1 = phi + halfAngle;
+            let newAngle2 = phi - halfAngle;
+
+            const normalize = (angle) => Math.atan2(Math.sin(angle), Math.cos(angle));
+            let normNew1 = normalize(newAngle1);
+            let normNew2 = normalize(newAngle2);
+            let normA1 = normalize(currentAngle1);
+
+            let diff1 = Math.abs(normNew1 - normA1);
+            if (diff1 > Math.PI) diff1 = 2 * Math.PI - diff1;
+            let diff2 = Math.abs(normNew2 - normA1);
+            if (diff2 > Math.PI) diff2 = 2 * Math.PI - diff2;
+
+            if (diff1 < diff2) {
+                return { a1: newAngle1, a2: newAngle2 };
+            } else {
+                return { a1: newAngle2, a2: newAngle1 };
+            }
+        }
+
+        // 이벤트 리스너들
+        canvas.addEventListener('pointerdown', (e) => {
+            const pos = getPointerPos(e);
+            const target = getClosestTarget(pos);
+
+            if (target) {
+                draggingPoint = target;
+                canvas.style.cursor = 'grabbing';
+                e.preventDefault(); 
+            }
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            const pos = getPointerPos(e);
+
+            if (!draggingPoint) {
+                const target = getClosestTarget(pos);
+                if (hoveredPoint !== target) {
+                    hoveredPoint = target;
+                    canvas.style.cursor = hoveredPoint ? 'grab' : 'default';
+                    draw();
+                }
+                return;
+            }
+
+            if (draggingPoint === 'A') {
+                angleA = Math.atan2(pos.y - O.y, pos.x - O.x);
+                if (showSecondTriangle) {
+                    const synced = syncOtherChord(angleA, angleB, angleC, angleD);
+                    angleC = synced.t1; angleD = synced.t2;
+                }
+            } else if (draggingPoint === 'B') {
+                angleB = Math.atan2(pos.y - O.y, pos.x - O.x);
+                if (showSecondTriangle) {
+                    const synced = syncOtherChord(angleA, angleB, angleC, angleD);
+                    angleC = synced.t1; angleD = synced.t2;
+                }
+            } else if (draggingPoint === 'M') {
+                const newAngles = handleDragCenter(pos, angleA, angleB);
+                angleA = newAngles.a1;
+                angleB = newAngles.a2;
+            } else if (draggingPoint === 'C') {
+                angleC = Math.atan2(pos.y - O.y, pos.x - O.x);
+                const synced = syncOtherChord(angleC, angleD, angleA, angleB);
+                angleA = synced.t1; angleB = synced.t2;
+            } else if (draggingPoint === 'D') {
+                angleD = Math.atan2(pos.y - O.y, pos.x - O.x);
+                const synced = syncOtherChord(angleC, angleD, angleA, angleB);
+                angleA = synced.t1; angleB = synced.t2;
+            } else if (draggingPoint === 'N') {
+                const newAngles = handleDragCenter(pos, angleC, angleD);
+                angleC = newAngles.a1;
+                angleD = newAngles.a2;
+            }
+
+            updatePoints();
+            draw();
+        });
+
+        window.addEventListener('pointerup', () => {
+            if (draggingPoint) {
+                draggingPoint = null;
+                canvas.style.cursor = hoveredPoint ? 'grab' : 'default';
+                draw();
+            }
+        });
+
+        updatePoints();
+        draw();
+    </script>
+</body>
+</html>
