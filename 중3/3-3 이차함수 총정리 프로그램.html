@@ -55,8 +55,9 @@
             <h2 class="text-3xl lg:text-4xl font-bold text-slate-800 mb-6 math-text tracking-wider" id="display-equation">y = x²</h2>
             
             <div class="relative border-2 border-slate-300 bg-white rounded-lg shadow-inner overflow-hidden w-full max-w-[880px] aspect-square">
-                <canvas id="graph-canvas" width="880" height="880" class="w-full h-full"></canvas>
+                <canvas id="graph-canvas" width="880" height="880" class="w-full h-full touch-none"></canvas>
             </div>
+            <p class="mt-4 text-slate-500 font-medium">💡 빨간색 꼭짓점을 드래그해서 움직여보세요!</p>
         </div>
 
         <!-- 오른쪽: 입력 영역 -->
@@ -178,6 +179,10 @@
 
         // 상태 변수: 마지막으로 편집한 폼 형태 ('standard' 혹은 'general')
         let lastEditedFormat = 'standard'; 
+        
+        // 드래그 상태 변수
+        let isDragging = false;
+        let isHoveringVertex = false;
 
         // 소수점 연산 오류 방지
         function cleanNum(num) {
@@ -203,21 +208,121 @@
             syncFromM1();
         });
 
+        // --- 캔버스 드래그 로직 ---
+
+        // 마우스 좌표 계산 함수
+        function getMousePos(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            let clientX = evt.clientX;
+            let clientY = evt.clientY;
+            
+            // 터치 이벤트 대응
+            if (evt.touches && evt.touches.length > 0) {
+                clientX = evt.touches[0].clientX;
+                clientY = evt.touches[0].clientY;
+            }
+            
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        // 마우스가 꼭짓점 근처에 있는지 확인
+        function checkVertexHit(mouseX, mouseY) {
+            let p = parseFloat(m1P.value) || 0;
+            let q = parseFloat(m1Q.value) || 0;
+            const unit = 40;
+            const originX = canvas.width / 2;
+            const originY = canvas.height / 2;
+            
+            const vx = originX + p * unit;
+            const vy = originY - q * unit;
+            
+            const dx = mouseX - vx;
+            const dy = mouseY - vy;
+            // 25px 반경 이내면 선택된 것으로 간주 (터치를 위해 조금 넉넉하게)
+            return dx * dx + dy * dy <= 25 * 25; 
+        }
+
+        function handlePointerDown(e) {
+            const pos = getMousePos(canvas, e);
+            if (checkVertexHit(pos.x, pos.y)) {
+                isDragging = true;
+                update(); // 크기 변화를 위해 즉시 업데이트
+            }
+        }
+
+        function handlePointerMove(e) {
+            const pos = getMousePos(canvas, e);
+            
+            const hit = checkVertexHit(pos.x, pos.y);
+            if (hit !== isHoveringVertex && !isDragging) {
+                isHoveringVertex = hit;
+                update(); // 커서 스타일 및 꼭짓점 크기 업데이트
+            }
+
+            if (!isDragging) return;
+
+            const unit = 40;
+            const originX = canvas.width / 2;
+            const originY = canvas.height / 2;
+            
+            // 픽셀을 좌표로 변환
+            let newP = (pos.x - originX) / unit;
+            let newQ = (originY - pos.y) / unit;
+            
+            // 1 단위로 스냅 (정수로만 이동)
+            newP = Math.round(newP);
+            newQ = Math.round(newQ);
+            
+            // 입력칸 업데이트 및 동기화
+            m1P.value = newP;
+            m1Axis.value = newP;
+            m1Q.value = newQ;
+            
+            syncFromM1();
+        }
+
+        function handlePointerUp() {
+            if (isDragging) {
+                isDragging = false;
+                update();
+            }
+        }
+
+        // 이벤트 리스너 등록
+        canvas.addEventListener('mousedown', handlePointerDown);
+        canvas.addEventListener('mousemove', handlePointerMove);
+        canvas.addEventListener('mouseup', handlePointerUp);
+        canvas.addEventListener('mouseleave', handlePointerUp);
+
+        // 모바일 터치 이벤트
+        canvas.addEventListener('touchstart', (e) => { 
+            e.preventDefault(); 
+            handlePointerDown(e); 
+        }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { 
+            e.preventDefault(); 
+            handlePointerMove(e); 
+        }, {passive: false});
+        canvas.addEventListener('touchend', handlePointerUp);
+
         // --- 동기화 로직 ---
 
-        // 방법 1(속성) -> 방법 2, 방법 3 업데이트
         function syncFromM1() {
             lastEditedFormat = 'standard';
             let a = parseFloat(m1A.value) || 0;
             let p = parseFloat(m1P.value) || 0;
             let q = parseFloat(m1Q.value) || 0;
 
-            // 방법 2(일반형) 반영
             m2A.value = cleanNum(a);
             m2B.value = cleanNum(-2 * a * p);
             m2C.value = cleanNum((a * p * p) + q);
 
-            // 방법 3(표준형) 반영
             m3A.value = cleanNum(a);
             m3P.value = cleanNum(p);
             m3Q.value = cleanNum(q);
@@ -225,7 +330,6 @@
             update();
         }
 
-        // 방법 2(일반형) -> 방법 1, 방법 3 업데이트
         function syncFromM2() {
             lastEditedFormat = 'general';
             let a = parseFloat(m2A.value) || 0;
@@ -238,13 +342,11 @@
                 q = c - (b * b) / (4 * a);
             }
 
-            // 방법 1(속성) 반영
             m1A.value = cleanNum(a);
             m1P.value = cleanNum(p);
             m1Axis.value = cleanNum(p);
             m1Q.value = cleanNum(q);
 
-            // 방법 3(표준형) 반영
             m3A.value = cleanNum(a);
             m3P.value = cleanNum(p);
             m3Q.value = cleanNum(q);
@@ -252,20 +354,17 @@
             update();
         }
 
-        // 방법 3(표준형) -> 방법 1, 방법 2 업데이트
         function syncFromM3() {
             lastEditedFormat = 'standard';
             let a = parseFloat(m3A.value) || 0;
             let p = parseFloat(m3P.value) || 0;
             let q = parseFloat(m3Q.value) || 0;
 
-            // 방법 1(속성) 반영
             m1A.value = cleanNum(a);
             m1P.value = cleanNum(p);
             m1Axis.value = cleanNum(p);
             m1Q.value = cleanNum(q);
 
-            // 방법 2(일반형) 반영
             m2A.value = cleanNum(a);
             m2B.value = cleanNum(-2 * a * p);
             m2C.value = cleanNum((a * p * p) + q);
@@ -284,9 +383,19 @@
 
             updateDisplayEquation(a, p, q, b, c);
             drawGraph(a, p, q);
+            updateCursor();
         }
 
-        // 메인 타이틀 수식 변환
+        function updateCursor() {
+            if (isDragging) {
+                canvas.style.cursor = 'grabbing';
+            } else if (isHoveringVertex) {
+                canvas.style.cursor = 'grab';
+            } else {
+                canvas.style.cursor = 'default';
+            }
+        }
+
         function updateDisplayEquation(a, p, q, b, c) {
             let text = `y = `;
             
@@ -318,7 +427,6 @@
                     else if (c < 0) text += (a !== 0 || b !== 0 ? ` - ` : `-`) + `${-c}`;
                 }
             }
-            // "y = x² + 0" 같은 형태가 되지 않도록 정리 (이미 로직에서 처리됨)
             if(text === 'y = ') text = 'y = 0';
             
             displayEquation.textContent = text;
@@ -425,9 +533,17 @@
                 
                 const py = originY - q * unit;
                 if (axisPx >= 0 && axisPx <= width && py >= 0 && py <= height) {
-                    ctx.fillStyle = '#ef4444';
-                    ctx.beginPath(); ctx.arc(axisPx, py, 8, 0, Math.PI * 2); ctx.fill();
-                    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
+                    // 호버 및 드래그 상태에 따라 꼭짓점 크기와 색상 변경
+                    const radius = (isDragging || isHoveringVertex) ? 12 : 8;
+                    ctx.fillStyle = (isDragging || isHoveringVertex) ? '#dc2626' : '#ef4444';
+                    
+                    ctx.beginPath(); 
+                    ctx.arc(axisPx, py, radius, 0, Math.PI * 2); 
+                    ctx.fill();
+                    
+                    ctx.strokeStyle = '#ffffff'; 
+                    ctx.lineWidth = (isDragging || isHoveringVertex) ? 3 : 2; 
+                    ctx.stroke();
                 }
             }
         }
