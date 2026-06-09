@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>원의 접선 그리기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #f8fafc; /* 밝은 회색 배경 */
+        }
+        #canvas-container {
+            width: 100%;
+            height: calc(100% - 80px); /* 상단 헤더 영역 제외 */
+            position: relative;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <!-- 상단 안내 영역 -->
+    <header class="h-20 bg-white shadow-sm flex items-center justify-between px-6 z-10 shrink-0">
+        <div>
+            <h1 class="text-xl font-bold text-slate-800">원의 접선 작도</h1>
+            <p class="text-sm text-slate-500">원 바깥의 빈 공간을 클릭(또는 터치)하여 접선을 그려보세요.</p>
+        </div>
+        <div class="flex gap-2">
+            <button id="mode-btn" class="px-4 py-2 bg-purple-500 text-white font-medium rounded-lg shadow hover:bg-purple-600 transition">
+                사각형 모드
+            </button>
+            <button id="reset-btn" class="px-4 py-2 bg-blue-500 text-white font-medium rounded-lg shadow hover:bg-blue-600 transition">
+                초기화
+            </button>
+        </div>
+    </header>
+
+    <!-- 캔버스 영역 -->
+    <main id="canvas-container" style="touch-action: none;">
+        <canvas id="canvas"></canvas>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const resetBtn = document.getElementById('reset-btn');
+        const modeBtn = document.getElementById('mode-btn');
+
+        // 상태 변수
+        let width = 0;
+        let height = 0;
+        let circleCenter = { x: 0, y: 0 };
+        let circleRadius = 120;
+        
+        let points = []; // 사용자가 클릭/드래그하는 점의 배열 (최대 2개)
+        let isRectMode = false;
+        let draggingPointIndex = -1; // 드래그 중인 점의 인덱스
+
+        // 캔버스 크기 조절
+        function resizeCanvas() {
+            const container = document.getElementById('canvas-container');
+            const dpr = window.devicePixelRatio || 1;
+            
+            width = container.clientWidth;
+            height = container.clientHeight;
+            
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            
+            ctx.scale(dpr, dpr);
+            
+            circleRadius = Math.min(width, height) * 0.3; // 기존 0.15에서 0.3으로 2배 증가
+            if (circleRadius < 100) circleRadius = 100; // 최소 크기도 2배로 증가
+            if (circleRadius > 300) circleRadius = 300; // 최대 크기도 2배로 증가
+
+            circleCenter = { x: width / 2, y: height / 2 };
+            draw();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // 모드 전환 버튼 이벤트
+        modeBtn.addEventListener('click', () => {
+            isRectMode = !isRectMode;
+            if (isRectMode) {
+                modeBtn.textContent = '기본 모드';
+                modeBtn.classList.replace('bg-purple-500', 'bg-slate-600');
+                modeBtn.classList.replace('hover:bg-purple-600', 'hover:bg-slate-700');
+            } else {
+                modeBtn.textContent = '사각형 모드';
+                modeBtn.classList.replace('bg-slate-600', 'bg-purple-500');
+                modeBtn.classList.replace('hover:bg-slate-700', 'hover:bg-purple-600');
+            }
+            points = [];
+            draggingPointIndex = -1;
+            draw();
+        });
+
+        // 초기화 버튼 이벤트
+        resetBtn.addEventListener('click', () => {
+            points = [];
+            draggingPointIndex = -1;
+            draw();
+        });
+
+        // 포인터(마우스/터치) 이벤트 처리
+        canvas.addEventListener('pointerdown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const px = e.clientX - rect.left;
+            const py = e.clientY - rect.top;
+
+            // 기존 점 클릭 여부 확인 (드래그 시작)
+            let clickedExisting = -1;
+            for (let i = 0; i < points.length; i++) {
+                const dx = px - points[i].x;
+                const dy = py - points[i].y;
+                if (Math.sqrt(dx * dx + dy * dy) < 30) { // 터치를 위해 판정 반경을 넉넉히 줌
+                    clickedExisting = i;
+                    break;
+                }
+            }
+
+            if (clickedExisting !== -1) {
+                draggingPointIndex = clickedExisting;
+            } else {
+                // 점을 새로 찍는 로직 (허용 한도 내에서만)
+                const dx = px - circleCenter.x;
+                const dy = py - circleCenter.y;
+                const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
+
+                if (distanceToCenter > circleRadius) { // 원 바깥에만 찍도록
+                    const maxPoints = isRectMode ? 2 : 1;
+                    if (points.length < maxPoints) {
+                        points.push({ x: px, y: py });
+                        draw();
+                    }
+                }
+            }
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            if (draggingPointIndex !== -1) {
+                const rect = canvas.getBoundingClientRect();
+                let px = e.clientX - rect.left;
+                let py = e.clientY - rect.top;
+
+                // 점이 원 안으로 들어가지 못하게 제한
+                const dx = px - circleCenter.x;
+                const dy = py - circleCenter.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist <= circleRadius + 2) {
+                    const angle = Math.atan2(dy, dx);
+                    px = circleCenter.x + (circleRadius + 2) * Math.cos(angle);
+                    py = circleCenter.y + (circleRadius + 2) * Math.sin(angle);
+                }
+
+                points[draggingPointIndex] = { x: px, y: py };
+                draw();
+            }
+        });
+
+        window.addEventListener('pointerup', () => {
+            draggingPointIndex = -1;
+        });
+
+        // 수학적 계산 및 그리기 함수
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. 기본 원 그리기
+            ctx.beginPath();
+            ctx.arc(circleCenter.x, circleCenter.y, circleRadius, 0, Math.PI * 2);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#0ea5e9';
+            ctx.stroke();
+
+            // 중심점 O
+            drawPoint(circleCenter.x, circleCenter.y, '#334155');
+            drawText('O', circleCenter.x - 25, circleCenter.y + 25, '#334155');
+
+            if (points.length === 0) return;
+
+            const pointLabels = ['P', 'Q'];
+            const tangentLabels = ['A', 'B', 'C', 'D'];
+
+            // 점 1개 (기본 모드 또는 사각형 모드에서 1개만 찍혔을 때)
+            if (!isRectMode || points.length === 1) {
+                points.forEach((p, index) => {
+                    const cx = circleCenter.x;
+                    const cy = circleCenter.y;
+                    const r = circleRadius;
+                    const dx = p.x - cx;
+                    const dy = p.y - cy;
+                    const d = Math.sqrt(dx * dx + dy * dy);
+
+                    const alpha = Math.atan2(dy, dx);
+                    const theta = Math.acos(r / d);
+
+                    const t1 = { x: cx + r * Math.cos(alpha + theta), y: cy + r * Math.sin(alpha + theta) };
+                    const t2 = { x: cx + r * Math.cos(alpha - theta), y: cy + r * Math.sin(alpha - theta) };
+
+                    // 중심과 P(또는 Q)를 잇는 보조선
+                    drawLine(cx, cy, p.x, p.y, '#94a3b8', 1, true);
+
+                    // 접점과 중심을 잇는 반지름
+                    drawLine(cx, cy, t1.x, t1.y, '#f59e0b', 2);
+                    drawEqualLengthMarks(circleCenter, t1, '#ea580c'); // 반지름 같음 표시
+                    
+                    drawLine(cx, cy, t2.x, t2.y, '#f59e0b', 2);
+                    drawEqualLengthMarks(circleCenter, t2, '#ea580c'); // 반지름 같음 표시
+
+                    // 접선 그리기
+                    drawLine(p.x, p.y, t1.x, t1.y, '#ef4444', 2);
+                    drawLine(p.x, p.y, t2.x, t2.y, '#ef4444', 2);
+
+                    // 직각 표시
+                    drawRightAngle(t1, circleCenter, p);
+                    drawRightAngle(t2, circleCenter, p);
+
+                    // 라벨과 점 그리기
+                    const lIdx = index * 2;
+                    drawPoint(t1.x, t1.y, '#10b981');
+                    drawLabelOutside(tangentLabels[lIdx], t1, circleCenter, '#10b981');
+                    
+                    drawPoint(t2.x, t2.y, '#10b981');
+                    drawLabelOutside(tangentLabels[lIdx + 1], t2, circleCenter, '#10b981');
+
+                    drawPoint(p.x, p.y, '#ef4444');
+                    drawLabelOutside(pointLabels[index], p, circleCenter, '#ef4444');
+                });
+            } 
+            // 사각형 모드이고 점이 2개일 때
+            else if (isRectMode && points.length === 2) {
+                let allTangents = [];
+                const cx = circleCenter.x;
+                const cy = circleCenter.y;
+                const r = circleRadius;
+
+                // 두 점(P, Q)에 대한 4개의 접점을 구하고 중심 기준 각도로 정렬
+                points.forEach((p, index) => {
+                    const dx = p.x - cx;
+                    const dy = p.y - cy;
+                    const d = Math.sqrt(dx * dx + dy * dy);
+                    const alpha = Math.atan2(dy, dx);
+                    const theta = Math.acos(r / d);
+
+                    const t1 = { x: cx + r * Math.cos(alpha + theta), y: cy + r * Math.sin(alpha + theta) };
+                    const t2 = { x: cx + r * Math.cos(alpha - theta), y: cy + r * Math.sin(alpha - theta) };
+
+                    allTangents.push({ pt: t1, angle: Math.atan2(t1.y - cy, t1.x - cx), parentP: p });
+                    allTangents.push({ pt: t2, angle: Math.atan2(t2.y - cy, t2.x - cx), parentP: p });
+                });
+
+                allTangents.sort((a, b) => a.angle - b.angle);
+
+                const polyVertices = [];
+                // 인접한 접점들의 접선 교점을 구하여 다각형의 꼭짓점 4개를 찾음
+                for (let i = 0; i < 4; i++) {
+                    const tData1 = allTangents[i];
+                    const tData2 = allTangents[(i + 1) % 4];
+                    
+                    // 접선 1 (tData1.pt를 지나고 반지름에 수직)
+                    const dir1 = { x: -(tData1.pt.y - cy), y: tData1.pt.x - cx };
+                    const u1 = { x: tData1.pt.x + dir1.x, y: tData1.pt.y + dir1.y };
+
+                    // 접선 2 (tData2.pt를 지나고 반지름에 수직)
+                    const dir2 = { x: -(tData2.pt.y - cy), y: tData2.pt.x - cx };
+                    const u2 = { x: tData2.pt.x + dir2.x, y: tData2.pt.y + dir2.y };
+
+                    const intersection = getIntersection(tData1.pt, u1, tData2.pt, u2);
+                    if (intersection) {
+                        polyVertices.push(intersection);
+                    }
+                }
+
+                if (polyVertices.length === 4) {
+                    // 사각형 내부 채우기 및 테두리 그리기 (넘어가는 선 없이 딱 맞게)
+                    ctx.beginPath();
+                    ctx.moveTo(polyVertices[0].x, polyVertices[0].y);
+                    for (let i = 1; i < 4; i++) {
+                        ctx.lineTo(polyVertices[i].x, polyVertices[i].y);
+                    }
+                    ctx.closePath();
+                    // ctx.fillStyle = 'rgba(168, 85, 247, 0.15)'; // 사각형 내부 채우기 주석 처리
+                    // ctx.fill(); // 사각형 내부 채우기 주석 처리
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.stroke();
+
+                    // 중심 O와 P, Q를 잇는 보조선
+                    drawLine(cx, cy, points[0].x, points[0].y, '#94a3b8', 1, true);
+                    drawLine(cx, cy, points[1].x, points[1].y, '#94a3b8', 1, true);
+
+                    // 접점 처리 및 그리기
+                    allTangents.forEach((tData, i) => {
+                        const tPoint = tData.pt;
+                        drawLine(cx, cy, tPoint.x, tPoint.y, '#f59e0b', 2); // 반지름
+                        drawEqualLengthMarks(circleCenter, tPoint, '#ea580c'); // 반지름 같음 표시
+
+                        // 직각 표시는 해당 접점을 포함하는 변을 향하도록 (현재 접점에서 다음 꼭짓점 방향)
+                        drawRightAngle(tPoint, circleCenter, polyVertices[i]);
+                        
+                        drawPoint(tPoint.x, tPoint.y, '#10b981');
+                        drawLabelOutside(tangentLabels[i], tPoint, circleCenter, '#10b981'); // A, B, C, D
+                    });
+
+                    // 꼭짓점 라벨링 (P, Q, R, S)
+                    let rsLabels = ['R', 'S'];
+                    let rsIdx = 0;
+                    
+                    polyVertices.forEach(v => {
+                        let label = '';
+                        // 계산된 꼭짓점이 사용자 입력점 P, Q와 일치하는지 확인
+                        if (dist(v, points[0]) < 2) label = 'P';
+                        else if (dist(v, points[1]) < 2) label = 'Q';
+                        else label = rsLabels[rsIdx++]; // 일치하지 않으면 R, S
+
+                        // 시각적 피드백을 위해 P, Q는 빨간색, R, S는 다른 색으로 표시
+                        const color = (label === 'P' || label === 'Q') ? '#ef4444' : '#8b5cf6';
+                        drawPoint(v.x, v.y, color);
+                        drawLabelOutside(label, v, circleCenter, color);
+                    });
+                }
+            }
+        }
+
+        // --- 유틸리티 함수들 ---
+
+        function drawPoint(x, y, color) {
+            ctx.beginPath();
+            ctx.arc(x, y, 6, 0, Math.PI * 2); // 드래그하기 쉽도록 점 크기 약간 키움
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        function drawLine(x1, y1, x2, y2, color, width = 1, dashed = false) {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            if (dashed) ctx.setLineDash([5, 5]);
+            else ctx.setLineDash([]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function drawText(text, x, y, color) {
+            ctx.font = 'bold 22px Pretendard, sans-serif'; // 글자 크기 확대 (16px -> 22px)
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center'; // 중앙 정렬로 변경
+            ctx.textBaseline = 'middle'; 
+            ctx.fillText(text, x, y);
+        }
+
+        // 라벨을 도형의 중심(refPt) 기준 바깥쪽으로 밀어내서 그리는 함수
+        function drawLabelOutside(text, pt, refPt, color) {
+            const dir = normalize(pt.x - refPt.x, pt.y - refPt.y);
+            const offset = 30; // 점에서부터 텍스트를 띄울 거리
+            drawText(text, pt.x + dir.x * offset, pt.y + dir.y * offset, color);
+        }
+
+        // 선분의 길이가 같음을 나타내는 빗금 두 개 그리기
+        function drawEqualLengthMarks(p1, p2, color) {
+            const mx = (p1.x + p2.x) / 2;
+            const my = (p1.y + p2.y) / 2;
+            const dir = normalize(p2.x - p1.x, p2.y - p1.y);
+            
+            // 선분에 수직인 방향 벡터
+            const perp = { x: -dir.y, y: dir.x };
+            const tickLength = 5; // 빗금 길이
+            const gap = 2.5; // 빗금 사이 간격
+
+            // 첫 번째 빗금
+            const mx1 = mx - dir.x * gap;
+            const my1 = my - dir.y * gap;
+            drawLine(mx1 - perp.x * tickLength, my1 - perp.y * tickLength, 
+                     mx1 + perp.x * tickLength, my1 + perp.y * tickLength, color, 2);
+
+            // 두 번째 빗금
+            const mx2 = mx + dir.x * gap;
+            const my2 = my + dir.y * gap;
+            drawLine(mx2 - perp.x * tickLength, my2 - perp.y * tickLength, 
+                     mx2 + perp.x * tickLength, my2 + perp.y * tickLength, color, 2);
+        }
+
+        function drawRightAngle(tPoint, cPoint, targetPoint) {
+            const size = 15;
+            const dirC = normalize(cPoint.x - tPoint.x, cPoint.y - tPoint.y);
+            const dirT = normalize(targetPoint.x - tPoint.x, targetPoint.y - tPoint.y);
+
+            const p1 = { x: tPoint.x + dirC.x * size, y: tPoint.y + dirC.y * size };
+            const p2 = { x: p1.x + dirT.x * size, y: p1.y + dirT.y * size };
+            const p3 = { x: tPoint.x + dirT.x * size, y: tPoint.y + dirT.y * size };
+
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.lineTo(p3.x, p3.y);
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+
+        function normalize(x, y) {
+            const length = Math.sqrt(x * x + y * y);
+            return length === 0 ? {x:0, y:0} : { x: x / length, y: y / length };
+        }
+
+        function dist(p1, p2) {
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function getIntersection(A, B, C, D) {
+            const a1 = B.y - A.y;
+            const b1 = A.x - B.x;
+            const c1 = a1 * A.x + b1 * A.y;
+
+            const a2 = D.y - C.y;
+            const b2 = C.x - D.x;
+            const c2 = a2 * C.x + b2 * C.y;
+
+            const det = a1 * b2 - a2 * b1;
+            if (Math.abs(det) < 0.0001) return null;
+
+            return {
+                x: (b2 * c1 - b1 * c2) / det,
+                y: (a1 * c2 - a2 * c1) / det
+            };
+        }
+
+        // 초기 실행
+        resizeCanvas();
+    </script>
+</body>
+</html>
