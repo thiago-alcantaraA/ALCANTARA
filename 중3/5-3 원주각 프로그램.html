@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>원주각과 중심각</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #f8fafc;
+            user-select: none;
+        }
+        #canvas-container {
+            width: 100%;
+            height: calc(100% - 80px);
+            position: relative;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            pointer-events: none;
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <header class="h-20 bg-white shadow-sm flex items-center justify-between px-6 z-10 shrink-0">
+        <div>
+            <h1 class="text-xl font-bold text-slate-800">원주각과 중심각의 성질</h1>
+            <p class="text-sm text-slate-500">원 위를 클릭하여 점 P, Q를 만들고 드래그하여 각도를 관찰해보세요.</p>
+        </div>
+        <div class="flex gap-2">
+            <button id="reset-btn" class="px-4 py-2 bg-blue-500 text-white font-medium rounded-lg shadow hover:bg-blue-600 transition">
+                초기화
+            </button>
+        </div>
+    </header>
+
+    <main id="canvas-container" style="touch-action: none;">
+        <canvas id="canvas"></canvas>
+        <div id="info-panel">
+            <h2 class="text-lg font-bold text-slate-700 mb-2">각도 비교</h2>
+            <div id="angle-list" class="text-slate-600 font-medium space-y-3"></div>
+            <div class="mt-3 pt-3 border-t border-slate-200">
+                <p id="relation-text" class="text-sm text-slate-500 font-bold">원 테두리를 클릭하여 점을 찍어보세요 (최대 2개).</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const resetBtn = document.getElementById('reset-btn');
+        const angleList = document.getElementById('angle-list');
+        const relationText = document.getElementById('relation-text');
+
+        let width = 0, height = 0, cx = 0, cy = 0;
+        let circleRadius = 150;
+        let angleA = Math.PI * 0.75; 
+        let angleB = Math.PI * 0.25; 
+        let userPoints = [];
+        let draggingPoint = null; 
+
+        function resizeCanvas() {
+            const container = document.getElementById('canvas-container');
+            const dpr = window.devicePixelRatio || 1;
+            width = container.clientWidth; height = container.clientHeight;
+            canvas.width = width * dpr; canvas.height = height * dpr;
+            ctx.scale(dpr, dpr);
+            circleRadius = Math.min(width, height) * 0.3;
+            if (circleRadius < 100) circleRadius = 100;
+            if (circleRadius > 300) circleRadius = 300;
+            cx = width / 2; cy = height / 2;
+            draw();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        resetBtn.addEventListener('click', () => {
+            angleA = Math.PI * 0.75; angleB = Math.PI * 0.25;
+            userPoints = []; draggingPoint = null;
+            draw();
+        });
+
+        function norm(a) {
+            let res = a % (Math.PI * 2);
+            return res < 0 ? res + Math.PI * 2 : res;
+        }
+
+        canvas.addEventListener('pointerdown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const px = e.clientX - rect.left;
+            const py = e.clientY - rect.top;
+
+            const pts = [
+                { id: 'A', x: cx + circleRadius * Math.cos(angleA), y: cy + circleRadius * Math.sin(angleA) },
+                { id: 'B', x: cx + circleRadius * Math.cos(angleB), y: cy + circleRadius * Math.sin(angleB) }
+            ];
+            userPoints.forEach(p => pts.push({ id: p.id, x: cx + circleRadius * Math.cos(p.angle), y: cy + circleRadius * Math.sin(p.angle) }));
+
+            let clicked = null;
+            for (let p of pts) {
+                if (Math.sqrt((px - p.x)**2 + (py - p.y)**2) < 30) { clicked = p.id; break; }
+            }
+
+            if (clicked) {
+                draggingPoint = clicked;
+            } else if (Math.abs(Math.sqrt((px - cx)**2 + (py - cy)**2) - circleRadius) < 50 && userPoints.length < 2) {
+                const newId = userPoints.length === 0 ? 'P' : (userPoints[0].id === 'P' ? 'Q' : 'P');
+                userPoints.push({ id: newId, angle: Math.atan2(py - cy, px - cx) });
+                draggingPoint = newId; 
+                draw();
+            }
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            if (draggingPoint) {
+                const rect = canvas.getBoundingClientRect();
+                const angle = Math.atan2(e.clientY - rect.top - cy, e.clientX - rect.left - cx);
+                if (draggingPoint === 'A') angleA = angle;
+                else if (draggingPoint === 'B') angleB = angle;
+                else {
+                    let p = userPoints.find(up => up.id === draggingPoint);
+                    if (p) p.angle = angle;
+                }
+                draw();
+            }
+        });
+
+        canvas.addEventListener('pointerup', () => draggingPoint = null);
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+            let nA = norm(angleA), nB = norm(angleB), arcLen = norm(nB - nA);
+
+            // 1. 중심각 호 그리기 (내부 투명화)
+            let startArc = arcLen > Math.PI ? nB : nA;
+            let endArc = arcLen > Math.PI ? nA : nB;
+            let subtendedArc = arcLen > Math.PI ? Math.PI * 2 - arcLen : arcLen;
+            
+            ctx.beginPath();
+            ctx.arc(cx, cy, 35, startArc, endArc, false);
+            ctx.strokeStyle = '#ea580c';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            let centralDeg = subtendedArc * 180 / Math.PI;
+            drawText(`${centralDeg.toFixed(1)}°`, cx + 55 * Math.cos(startArc + subtendedArc / 2), cy + 55 * Math.sin(startArc + subtendedArc / 2), '#ea580c');
+
+            // 2. 기본 원 그리기
+            ctx.beginPath();
+            ctx.arc(cx, cy, circleRadius, 0, Math.PI * 2);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.stroke();
+
+            // 3. 반지름 및 현 그리기
+            const pA = { x: cx + circleRadius * Math.cos(angleA), y: cy + circleRadius * Math.sin(angleA) };
+            const pB = { x: cx + circleRadius * Math.cos(angleB), y: cy + circleRadius * Math.sin(angleB) };
+            drawLine(cx, cy, pA.x, pA.y, '#f97316', 2);
+            drawLine(cx, cy, pB.x, pB.y, '#f97316', 2);
+
+            if (userPoints.length > 0) {
+                let htmlContent = '';
+                const styles = [
+                    { line: '#3b82f6', arc: '#2563eb', text: '#2563eb', point: '#ef4444', class: 'text-blue-600' },
+                    { line: '#a855f7', arc: '#9333ea', text: '#9333ea', point: '#f59e0b', class: 'text-purple-600' }
+                ];
+                userPoints.forEach((up, index) => {
+                    const style = styles[index];
+                    const pPt = { x: cx + circleRadius * Math.cos(up.angle), y: cy + circleRadius * Math.sin(up.angle) };
+                    drawLine(pPt.x, pPt.y, pA.x, pA.y, style.line, 2);
+                    drawLine(pPt.x, pPt.y, pB.x, pB.y, style.line, 2);
+                    
+                    const aPA = Math.atan2(pA.y - pPt.y, pA.x - pPt.x), aPB = Math.atan2(pB.y - pPt.y, pB.x - pPt.x);
+                    let diff = norm(aPB - aPA);
+                    ctx.beginPath();
+                    ctx.arc(pPt.x, pPt.y, 45, diff < Math.PI ? aPA : aPB, diff < Math.PI ? aPB : aPA, false);
+                    ctx.strokeStyle = style.arc; ctx.lineWidth = 3; ctx.stroke();
+                    
+                    let inscribedDeg = centralDeg / 2;
+                    drawText(`${inscribedDeg.toFixed(1)}°`, pPt.x + 65 * Math.cos(aPA + (diff < Math.PI ? diff : Math.PI * 2 - diff) / 2), pPt.y + 65 * Math.sin(aPA + (diff < Math.PI ? diff : Math.PI * 2 - diff) / 2), style.text);
+                    drawPoint(pPt.x, pPt.y, style.point);
+                    drawLabelOutside(up.id, pPt, {x: cx, y: cy}, style.point);
+                    htmlContent += `<div><p>중심각: <span class="text-orange-600 font-bold">${centralDeg.toFixed(1)}°</span></p><p>원주각 (${up.id}): <span class="${style.class} font-bold">${inscribedDeg.toFixed(1)}°</span></p></div>`;
+                });
+                angleList.innerHTML = htmlContent;
+                relationText.innerHTML = `중심각 = 2 × 원주각`;
+            }
+            drawPoint(cx, cy, '#334155'); drawLabelOutside('O', {x: cx, y: cy+10}, {x: cx, y: cy-10}, '#334155');
+            drawPoint(pA.x, pA.y, '#10b981'); drawLabelOutside('A', pA, {x: cx, y: cy}, '#10b981');
+            drawPoint(pB.x, pB.y, '#10b981'); drawLabelOutside('B', pB, {x: cx, y: cy}, '#10b981');
+        }
+
+        function drawPoint(x, y, color) { ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); ctx.stroke(); }
+        function drawLine(x1, y1, x2, y2, color, w) { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.stroke(); }
+        function drawText(t, x, y, c) { ctx.font = 'bold 18px Pretendard'; ctx.fillStyle = c; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 4; ctx.strokeStyle = '#ffffff'; ctx.strokeText(t, x, y); ctx.fillText(t, x, y); }
+        function drawLabelOutside(t, pt, ref, c) { const d = Math.sqrt((pt.x-ref.x)**2 + (pt.y-ref.y)**2); drawText(t, pt.x + (pt.x-ref.x)/d*35, pt.y + (pt.y-ref.y)/d*35, c); }
+        resizeCanvas();
+    </script>
+</body>
+</html>
