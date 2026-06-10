@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>접현각과 원주각의 성질</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #f8fafc; font-family: 'Pretendard', sans-serif; user-select: none; }
+        canvas { display: block; cursor: crosshair; }
+        .panel { position: absolute; top: 20px; right: 20px; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid #e2e8f0; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <button id="reset-btn" class="absolute top-5 left-5 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg cursor-pointer z-10 transition">초기화</button>
+    
+    <div class="panel z-10">
+        <h2 class="font-bold text-lg mb-2">접현각과 원주각의 성질</h2>
+        <p class="text-sm text-slate-600 mb-4">점 P와 B를 드래그하여 이동해보세요.<br>기하학적 성질에 의해 두 각은 언제나 일치합니다.</p>
+        <div class="text-lg font-bold">
+            <p>접현각 (∠TAB): <span id="tab-angle" class="text-red-600">0°</span></p>
+            <p>원주각 (∠APB): <span id="apb-angle" class="text-blue-600">0°</span></p>
+        </div>
+    </div>
+    
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let w, h, cx, cy, r = 325; // 원의 크기 1.3배 확대 (250 -> 325)
+        
+        // 캔버스 좌표계: y축은 아래로 갈수록 증가 (각도는 시계방향으로 증가)
+        const A_ANGLE = Math.PI / 2; // 90도 (6시 방향, A 고정 위치)
+        let bAngle = Math.PI * 1.5;  // 270도 (12시 방향, 초기화 시 AB는 지름)
+        let pAngle = Math.PI * 1.15; // 10시 방향쯤 (원주각을 형성하는 점 P)
+        
+        let dragging = null;
+
+        function resizeCanvas() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+            cx = w / 2;
+            cy = h / 2;
+            draw();
+        }
+        window.onresize = resizeCanvas;
+
+        document.getElementById('reset-btn').onclick = () => {
+            // 초기화 시 B를 A의 정반대(지름)로, P를 좌측 호에 위치시킴
+            bAngle = Math.PI * 1.5; 
+            pAngle = Math.PI * 1.15;
+            draw();
+        };
+
+        // 각도를 0 ~ 2PI 범위로 정규화
+        function normalizeAngle(a) {
+            let res = a % (Math.PI * 2);
+            if (res < 0) res += Math.PI * 2;
+            return res;
+        }
+
+        // 특정 각도가 start부터 end까지 시계방향 호 범위 내에 있는지 판별
+        function inRange(angle, start, end) {
+            angle = normalizeAngle(angle);
+            start = normalizeAngle(start);
+            end = normalizeAngle(end);
+            if (start <= end) {
+                return angle >= start && angle <= end;
+            } else {
+                return angle >= start || angle <= end;
+            }
+        }
+
+        // 세 점을 이용해 사이 각도 계산
+        function getAngle(p1, vertex, p2) {
+            let a1 = Math.atan2(p1.y - vertex.y, p1.x - vertex.x);
+            let a2 = Math.atan2(p2.y - vertex.y, p2.x - vertex.x);
+            let diff = Math.abs(a1 - a2) * 180 / Math.PI;
+            if (diff > 180) diff = 360 - diff;
+            return diff;
+        }
+
+        // 각도를 시각적으로 나타내는 호 그리기
+        function drawAngleArc(vertex, p1, p2, color) {
+            let a1 = Math.atan2(p1.y - vertex.y, p1.x - vertex.x);
+            let a2 = Math.atan2(p2.y - vertex.y, p2.x - vertex.x);
+            let diff = a2 - a1;
+            while (diff < -Math.PI) diff += Math.PI * 2;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+            
+            ctx.beginPath();
+            ctx.arc(vertex.x, vertex.y, 55, a1, a1 + diff, diff < 0); // 아크 크기 확대
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        // 직각 기호를 그리는 함수 추가
+        function drawRightAngle(vertex, p1, p2, color) {
+            const size = 25; // 직각 표시 크기 확대
+            const d1 = Math.hypot(p1.x - vertex.x, p1.y - vertex.y);
+            const d2 = Math.hypot(p2.x - vertex.x, p2.y - vertex.y);
+            
+            const ux1 = (p1.x - vertex.x) / d1;
+            const uy1 = (p1.y - vertex.y) / d1;
+            const ux2 = (p2.x - vertex.x) / d2;
+            const uy2 = (p2.y - vertex.y) / d2;
+
+            const pt1 = { x: vertex.x + ux1 * size, y: vertex.y + uy1 * size };
+            const pt2 = { x: pt1.x + ux2 * size, y: pt1.y + uy2 * size };
+            const pt3 = { x: vertex.x + ux2 * size, y: vertex.y + uy2 * size };
+
+            ctx.beginPath();
+            ctx.moveTo(pt1.x, pt1.y);
+            ctx.lineTo(pt2.x, pt2.y);
+            ctx.lineTo(pt3.x, pt3.y);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, w, h);
+            
+            const O = {x: cx, y: cy};
+            const A = {x: cx, y: cy + r}; 
+            const B = {x: cx + r * Math.cos(bAngle), y: cy + r * Math.sin(bAngle)}; 
+            const P = {x: cx + r * Math.cos(pAngle), y: cy + r * Math.sin(pAngle)};
+            const T = {x: cx + 450, y: cy + r}; // 접선 연장선 길이 조정
+
+            // 1. 기본 원 그리기
+            ctx.beginPath(); 
+            ctx.arc(cx, cy, r, 0, Math.PI * 2); 
+            ctx.strokeStyle = '#94a3b8'; 
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 2. 반지름 OA 그리기 (중심 O와 A 연결)
+            ctx.beginPath();
+            ctx.moveTo(O.x, O.y);
+            ctx.lineTo(A.x, A.y);
+            ctx.strokeStyle = '#64748b';
+            ctx.setLineDash([5, 5]); // 점선 처리
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 3. 직각 기호 표시 (∠OAT)
+            ctx.beginPath();
+            ctx.moveTo(A.x, A.y - 20); // 기호 크기 확대
+            ctx.lineTo(A.x + 20, A.y - 20);
+            ctx.lineTo(A.x + 20, A.y);
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 4. 선분 AB, 접선 AT, 현 AP/BP 그리기
+            ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.strokeStyle = '#94a3b8'; ctx.stroke(); 
+            ctx.beginPath(); ctx.moveTo(A.x - 300, A.y); ctx.lineTo(T.x, T.y); ctx.lineWidth = 3; ctx.strokeStyle = '#475569'; ctx.stroke();
+            
+            // 삼각형 APB (원주각 형성)
+            ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(P.x, P.y); ctx.lineTo(B.x, B.y); ctx.closePath(); 
+            ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.stroke();
+
+            // 5. 각도 수치 계산 및 UI 업데이트
+            const tab = getAngle(T, A, B);
+            const apb = getAngle(A, P, B); 
+            document.getElementById('tab-angle').innerText = tab.toFixed(1) + "°";
+            document.getElementById('apb-angle').innerText = apb.toFixed(1) + "°";
+
+            // 6. 각도 아크 표시 (시각적 피드백)
+            const is90 = Math.abs(tab - 90) < 1; // 90도 근처인지 확인
+            
+            if (is90) {
+                // 90도일 경우: 빨간색 접현각 표시는 숨기고(고정 직각과 겹치므로), 파란색 원주각은 직각으로 표시
+                drawRightAngle(P, A, B, '#2563eb');
+            } else {
+                // 90도가 아닐 경우: 일반적인 부채꼴 각도 표시
+                drawAngleArc(A, T, B, '#dc2626'); // 접현각 TAB (빨간색)
+                drawAngleArc(P, A, B, '#2563eb'); // 원주각 APB (파란색)
+            }
+
+            // 7. 점 찍기
+            [O, A, B, P].forEach(pt => {
+                ctx.beginPath(); ctx.arc(pt.x, pt.y, 6, 0, Math.PI*2); ctx.fillStyle = '#1e293b'; ctx.fill();
+            });
+
+            // 8. 텍스트 라벨링 (점 위치에 따라 동적 이동)
+            ctx.font = 'bold 20px Pretendard, sans-serif';
+            ctx.fillText('O', O.x - 20, O.y - 10); 
+            ctx.fillText('A', A.x - 10, A.y + 40); 
+            
+            const distB = Math.sqrt((B.x-O.x)**2 + (B.y-O.y)**2);
+            ctx.fillText('B', B.x + (B.x-O.x)/distB*35 - 6, B.y + (B.y-O.y)/distB*35 + 6);
+            
+            const distP = Math.sqrt((P.x-O.x)**2 + (P.y-O.y)**2);
+            ctx.fillText('P', P.x + (P.x-O.x)/distP*35 - 6, P.y + (P.y-O.y)/distP*35 + 6);
+            
+            ctx.fillText('T', T.x, T.y + 30);
+        }
+
+        // 드래그 및 마우스 제어
+        canvas.onmousedown = (e) => {
+            const P = {x: cx + r * Math.cos(pAngle), y: cy + r * Math.sin(pAngle)};
+            const B = {x: cx + r * Math.cos(bAngle), y: cy + r * Math.sin(bAngle)};
+            if(Math.hypot(e.clientX - P.x, e.clientY - P.y) < 50) dragging = 'P'; // 잡기 쉽도록 반경 확대
+            else if(Math.hypot(e.clientX - B.x, e.clientY - B.y) < 50) dragging = 'B';
+        };
+        
+        canvas.onmousemove = (e) => {
+            if(!dragging) return;
+            const newAngle = Math.atan2(e.clientY - cy, e.clientX - cx);
+            
+            if(dragging === 'B') {
+                // B는 P와 A 사이의 우측 호에만 위치하도록 제한
+                if (inRange(newAngle, pAngle, A_ANGLE)) bAngle = newAngle;
+            }
+            else if(dragging === 'P') {
+                // P는 A와 B 사이의 좌측 호에만 위치하도록 제한
+                if (inRange(newAngle, A_ANGLE, bAngle)) pAngle = newAngle;
+            }
+            draw();
+        };
+        
+        canvas.onmouseup = () => dragging = null;
+        canvas.onmouseleave = () => dragging = null;
+        
+        resizeCanvas();
+    </script>
+</body>
+</html>
