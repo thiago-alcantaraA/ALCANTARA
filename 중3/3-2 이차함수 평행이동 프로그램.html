@@ -8,7 +8,8 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Babel 버전을 안정화된 버전으로 고정하여 모듈 임포트 에러를 방지합니다 -->
+    <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&display=swap');
         body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; overflow: hidden; }
@@ -44,7 +45,7 @@
 <body>
     <div id="root"></div>
 
-    <script type="text/babel">
+    <script type="text/babel" data-presets="react">
         const { useState, useMemo, useEffect } = React;
 
         const App = () => {
