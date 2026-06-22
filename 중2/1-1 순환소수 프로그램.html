@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>순환소수 학습기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 깔끔하고 수학적인 배경과 폰트 */
+        .math-bg {
+            background-color: #fdfbf7;
+            background-image: radial-gradient(#e5e1d8 1px, transparent 1px);
+            background-size: 20px 20px;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.02);
+        }
+        input {
+            font-family: 'Times New Roman', Times, serif;
+        }
+        /* 전자칠판용 두꺼운 스크롤바 디자인 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 16px;
+            height: 16px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 8px;
+            border: 4px solid #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+    </style>
+</head>
+<body class="bg-slate-800 font-sans p-2 md:p-6 text-gray-800 h-screen w-screen flex flex-col items-center overflow-hidden">
+
+    <div class="max-w-[1600px] w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-700 flex flex-col">
+        <!-- 상단 헤더 -->
+        <div class="bg-teal-600 p-5 text-white text-center shadow-inner shrink-0 z-10">
+            <h1 class="text-4xl font-bold tracking-tight">순환소수 세로셈 학습기</h1>
+        </div>
+
+        <!-- 메인 콘텐츠 영역: 좌우 분할 -->
+        <div class="flex flex-row flex-1 overflow-hidden bg-slate-100 p-4 md:p-6 gap-4 md:gap-6">
+            
+            <!-- 왼쪽 패널: 숫자 입력 폼 -->
+            <div class="w-1/3 min-w-[350px] flex flex-col justify-center gap-6 bg-white p-8 md:p-10 rounded-2xl border border-slate-200 shadow-md shrink-0">
+                <h2 class="text-3xl font-bold text-slate-700 text-center border-b-2 border-slate-100 pb-6 mb-2">나눗셈 입력</h2>
+                
+                <div class="flex flex-col items-center gap-8">
+                    <div class="w-full">
+                        <label class="block text-xl font-bold text-slate-500 mb-3 text-center">나누어지는 수 (분자)</label>
+                        <input type="number" id="dividend" min="1" class="w-full text-center text-5xl p-5 border-2 border-slate-300 rounded-xl focus:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-100 transition-all bg-slate-50" placeholder="1">
+                    </div>
+                    
+                    <div class="text-6xl font-black text-slate-300">÷</div>
+                    
+                    <div class="w-full">
+                        <label class="block text-xl font-bold text-slate-500 mb-3 text-center">나누는 수 (분모)</label>
+                        <input type="number" id="divisor" min="1" class="w-full text-center text-5xl p-5 border-2 border-slate-300 rounded-xl focus:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-100 transition-all bg-slate-50" placeholder="7">
+                    </div>
+                </div>
+
+                <button onclick="runCalculation()" class="mt-10 w-full bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold py-6 rounded-xl shadow-lg transition duration-200 text-3xl">
+                    계산하기
+                </button>
+
+                <div id="error-msg" class="hidden mt-6 bg-red-50 border-l-8 border-red-500 text-red-700 p-5 rounded-lg text-left" role="alert">
+                    <span id="error-text" class="font-bold text-xl"></span>
+                </div>
+            </div>
+
+            <!-- 오른쪽 패널: 캔버스 결과 출력 -->
+            <div class="w-2/3 bg-white rounded-2xl border border-slate-200 shadow-md flex flex-col overflow-hidden relative">
+                <!-- 결과 나오기 전 안내 화면 -->
+                <div id="placeholder-section" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-50/80 z-10">
+                    <svg class="w-32 h-32 mb-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    <p class="text-3xl font-bold text-center leading-relaxed">왼쪽 칸에 숫자를 입력하고<br>계산하기를 눌러주세요</p>
+                </div>
+
+                <!-- 캔버스 영역 (결과 길어지면 내부 스크롤) -->
+                <div id="output-section" class="hidden flex-1 overflow-auto p-10 math-bg w-full h-full custom-scrollbar">
+                    <div class="flex justify-center items-start min-h-full min-w-full">
+                        <canvas id="division-canvas" class="block"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function runCalculation() {
+            const errorDiv = document.getElementById('error-msg');
+            const errorText = document.getElementById('error-text');
+            const outputSection = document.getElementById('output-section');
+            const placeholderSection = document.getElementById('placeholder-section');
+            const canvas = document.getElementById('division-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            errorDiv.classList.add('hidden');
+            outputSection.classList.add('hidden');
+            placeholderSection.classList.remove('hidden');
+
+            const n = parseInt(document.getElementById('dividend').value);
+            const d = parseInt(document.getElementById('divisor').value);
+
+            if (isNaN(n) || isNaN(d) || n <= 0 || d <= 0) {
+                errorText.textContent = "자연수를 입력해주세요.";
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            drawMathematically(canvas, ctx, n, d);
+            
+            placeholderSection.classList.add('hidden');
+            outputSection.classList.remove('hidden');
+        }
+
+        function drawMathematically(canvas, ctx, n, d) {
+            const cellW = 26; // 글자당 차지하는 가로 폭 (격자)
+            const cellH = 44; // 줄바꿈 높이
+            const startX = 140; // 왼쪽 화살표를 그리기 위한 여백
+            const startY = 100; // 위쪽 몫을 그리기 위한 여백
+            
+            let dividendDigits = n.toString().split('');
+            let decIndex = dividendDigits.length;
+            
+            // 소수점 스킵용 컬럼 계산 함수
+            let getCol = (idx) => idx >= decIndex ? idx + 1 : idx;
+
+            let currentVal = 0;
+            let steps = [];
+            let qDigits = [];
+            let remaindersAt = {};
+            let repeatStartRem = null;
+            let repeatStartStep = null;
+            let hasDec = n % d !== 0;
+
+            // 나눗셈 시뮬레이션
+            for (let i = 0; i < dividendDigits.length + 20; i++) {
+                let isDec = i >= dividendDigits.length;
+                if (isDec && currentVal === 0) break; // 나누어 떨어짐
+
+                if (isDec) {
+                    if (remaindersAt[currentVal] !== undefined) {
+                        repeatStartRem = currentVal;
+                        repeatStartStep = remaindersAt[currentVal];
+                        break;
+                    }
+                    remaindersAt[currentVal] = steps.length;
+                }
+
+                let nextDigit = parseInt(i < dividendDigits.length ? dividendDigits[i] : '0');
+                let previousVal = currentVal;
+                currentVal = currentVal * 10 + nextDigit;
+
+                let q = Math.floor(currentVal / d);
+                let rem = currentVal % d;
+
+                qDigits.push({ char: q.toString(), col: getCol(i) });
+
+                let isZeroStep = (q === 0 && !isDec && i < dividendDigits.length - 1);
+                
+                if (!isZeroStep) {
+                    // 각 숫자가 들어갈 격자 열(Column)을 정확히 매핑
+                    let valChars = [];
+                    let valStr = currentVal.toString();
+                    let cIdx = i;
+                    for (let j = valStr.length - 1; j >= 0; j--) {
+                        valChars.unshift({ char: valStr[j], col: getCol(cIdx) });
+                        cIdx--;
+                    }
+
+                    let subChars = [];
+                    let subStr = (q * d).toString();
+                    cIdx = i;
+                    for (let j = subStr.length - 1; j >= 0; j--) {
+                        subChars.unshift({ char: subStr[j], col: getCol(cIdx) });
+                        cIdx--;
+                    }
+
+                    steps.push({
+                        digitIdx: i,
+                        valChars: valChars,
+                        subChars: subChars,
+                        previousRem: previousVal,
+                        isDec: isDec
+                    });
+                }
+                currentVal = rem;
+            }
+
+            // 캔버스 크기 계산 및 해상도(Retina) 처리
+            const requiredWidth = startX + getCol(dividendDigits.length + 22) * cellW;
+            const requiredHeight = startY + steps.length * cellH * 2 + 150;
+            const dpr = window.devicePixelRatio || 1;
+            
+            canvas.style.width = `${requiredWidth}px`;
+            canvas.style.height = `${requiredHeight}px`;
+            canvas.width = requiredWidth * dpr;
+            canvas.height = requiredHeight * dpr;
+            
+            ctx.scale(dpr, dpr);
+            ctx.clearRect(0, 0, requiredWidth, requiredHeight);
+
+            // 렌더링 큐
+            let drawQueue = [];
+            let addText = (text, col, y, isGray=false) => {
+                drawQueue.push({text, x: startX + col * cellW + cellW/2, y, isGray});
+            };
+
+            let currentY = startY;
+            let targetBox = null;
+            let sourceBox = null;
+
+            // 1. 나누는 수와 나누어지는 수
+            let dStr = d.toString();
+            for(let i=0; i<dStr.length; i++) {
+                addText(dStr[i], i - dStr.length - 0.5, startY);
+            }
+            drawQueue.push({text: ')', x: startX - cellW * 0.2, y: startY, isSymbol: true});
+            
+            for(let i=0; i<dividendDigits.length; i++) {
+                addText(dividendDigits[i], getCol(i), startY);
+            }
+            if (hasDec) {
+                addText('.', decIndex, startY);
+                let usedZeros = qDigits.length - dividendDigits.length;
+                for(let i=0; i<usedZeros; i++) {
+                    addText('0', getCol(decIndex + i), startY);
+                }
+            }
+
+            // 2. 몫
+            let firstNonZero = false;
+            for(let i=0; i<qDigits.length; i++) {
+                let q = qDigits[i];
+                if (q.col < decIndex - 1 && q.char === '0' && !firstNonZero) continue;
+                firstNonZero = true;
+                addText(q.char, q.col, startY - cellH + 5);
+            }
+            if (hasDec) {
+                addText('.', decIndex, startY - cellH + 5);
+            }
+
+            // 순환소수 점(또는 생략기호) 표시
+            if (repeatStartRem !== null) {
+                let maxQCol = getCol(qDigits[qDigits.length - 1].col); // 대략 마지막 위치
+                drawQueue.push({text: '...', x: startX + (maxQCol + 1.5) * cellW, y: startY - cellH + 5});
+            }
+
+            // 가로선 (루트기호 위)
+            let lineStart = startX - cellW * 0.2;
+            let lineEnd = startX + getCol(qDigits.length) * cellW;
+            drawQueue.push({line: true, x1: lineStart, y1: startY - cellH * 0.4, x2: lineEnd, y2: startY - cellH * 0.4});
+
+            // 3. 계산 과정
+            for(let i=0; i<steps.length; i++) {
+                let step = steps[i];
+                let isEntirelyInDividend = step.digitIdx < dividendDigits.length;
+
+                // 나누어지는 값 (처음 단계는 제일 윗줄에 있으므로 생략)
+                if (!isEntirelyInDividend) {
+                    currentY += cellH;
+                    for(let v of step.valChars) addText(v.char, v.col, currentY);
+                }
+
+                // 타겟 형광펜 (순환이 시작되는 원래 나머지 부분)
+                if (repeatStartRem !== null && i === repeatStartStep) {
+                    let prevRemStr = step.previousRem.toString();
+                    let startCol = step.valChars[0].col;
+                    let endCol = step.valChars[prevRemStr.length - 1].col;
+                    targetBox = {
+                        x: startX + startCol * cellW - 5,
+                        y: currentY - cellH * 0.5,
+                        w: (endCol - startCol + 1) * cellW + 10,
+                        h: cellH * 0.9
+                    };
+                }
+
+                currentY += cellH;
+                // 빼는 값
+                for(let s of step.subChars) addText(s.char, s.col, currentY);
+
+                // 빼기 밑줄
+                let sCol = step.subChars[0].col;
+                let eCol = step.subChars[step.subChars.length - 1].col;
+                drawQueue.push({line: true, x1: startX + sCol * cellW - 10, y1: currentY + 12, x2: startX + eCol * cellW + cellW - 10, y2: currentY + 12});
+            }
+
+            // 4. 마지막 나머지
+            currentY += cellH;
+            let finalRemStr = currentVal.toString();
+            let lastDigitIdx = steps[steps.length - 1].digitIdx;
+            let fIdx = lastDigitIdx;
+            let finalRemCols = [];
+            for(let j = finalRemStr.length - 1; j >= 0; j--) {
+                let c = getCol(fIdx);
+                addText(finalRemStr[j], c, currentY);
+                finalRemCols.unshift(c);
+                fIdx--;
+            }
+
+            // 소스 형광펜 (마지막 반복되는 나머지)
+            if (repeatStartRem !== null) {
+                let startCol = finalRemCols[0];
+                let endCol = finalRemCols[finalRemCols.length - 1];
+                sourceBox = {
+                    x: startX + startCol * cellW - 5,
+                    y: currentY - cellH * 0.5,
+                    w: (endCol - startCol + 1) * cellW + 10,
+                    h: cellH * 0.9
+                };
+                drawQueue.push({text: '⋮', x: startX + endCol * cellW + cellW/2, y: currentY + cellH});
+            }
+
+
+            // === 실제 캔버스 그리기 ===
+            
+            // 1) 형광펜 효과 (가장 아래에 깔림)
+            if (targetBox && sourceBox) {
+                ctx.fillStyle = 'rgba(187, 247, 208, 0.8)'; // Tailwind green-200
+                fillRoundRect(ctx, targetBox.x, targetBox.y, targetBox.w, targetBox.h, 15);
+                
+                ctx.fillStyle = 'rgba(24bc, 207, 232, 0.8)'; // Tailwind pink-200
+                fillRoundRect(ctx, sourceBox.x, sourceBox.y, sourceBox.w, sourceBox.h, 15);
+
+                // 연결 화살표
+                let sx = sourceBox.x - 10;
+                let sy = sourceBox.y + sourceBox.h / 2;
+                let tx = targetBox.x - 10;
+                let ty = targetBox.y + targetBox.h / 2;
+
+                ctx.strokeStyle = '#16a34a'; // Tailwind green-600
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(sx, sy);
+                // 직각으로 꺾이는 세련된 선
+                ctx.lineTo(startX - 60, sy);
+                ctx.lineTo(startX - 60, ty);
+                ctx.lineTo(tx - 5, ty);
+                ctx.stroke();
+
+                // 화살표 머리
+                ctx.fillStyle = '#16a34a';
+                ctx.beginPath();
+                ctx.moveTo(tx - 3, ty);
+                ctx.lineTo(tx - 12, ty - 5);
+                ctx.lineTo(tx - 12, ty + 5);
+                ctx.fill();
+
+                // "같다" 텍스트
+                ctx.fillStyle = '#14532d';
+                ctx.font = `bold 16px 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText("같다.", startX - 90, (sy + ty)/2);
+            }
+
+            // 2) 텍스트 및 선 그리기
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            drawQueue.forEach(item => {
+                if (item.line) {
+                    ctx.strokeStyle = '#334155';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(item.x1, item.y1);
+                    ctx.lineTo(item.x2, item.y2);
+                    ctx.stroke();
+                } else if (item.isSymbol) {
+                    ctx.fillStyle = '#334155';
+                    ctx.font = `30px 'Times New Roman', serif`;
+                    ctx.fillText(item.text, item.x, item.y);
+                } else {
+                    ctx.fillStyle = item.isGray ? '#94a3b8' : '#1e293b';
+                    ctx.font = `italic 28px 'Times New Roman', Georgia, serif`;
+                    ctx.fillText(item.text, item.x, item.y);
+                }
+            });
+        }
+
+        // 둥근 사각형 그리기 헬퍼 함수
+        function fillRoundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.fill();
+        }
+    </script>
+</body>
+</html>
