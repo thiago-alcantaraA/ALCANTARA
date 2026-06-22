@@ -51,11 +51,12 @@
                 if (n === 0) return "0";
                 if (Math.abs(Math.round(n) - n) < 1e-6) return Math.round(n).toString();
                 
+                const sign = n < 0 ? "-" : "";
                 const absN = Math.abs(n);
                 for (let d = 2; d <= 6; d++) {
                     if (Math.abs(Math.round(absN * d) - absN * d) < 1e-6) {
                         const numVal = Math.round(absN * d);
-                        return <Fraction num={n < 0 ? `-${numVal}` : numVal} den={d} />;
+                        return <span className="inline-flex items-center">{sign}<Fraction num={numVal} den={d} /></span>;
                     }
                 }
                 return n.toFixed(2);
@@ -69,6 +70,10 @@
                 const sign = val < 0 ? "-" : "";
                 const absVal = Math.abs(val);
                 
+                if (Math.abs(Math.round(absVal) - absVal) < 1e-6) {
+                    return <span className="inline-flex items-center">{sign}{Math.round(absVal)}</span>;
+                }
+                
                 for (let d = 2; d <= 6; d++) {
                     if (Math.abs(Math.round(absVal * d) - absVal * d) < 1e-6) {
                         const numVal = Math.round(absVal * d);
@@ -81,14 +86,12 @@
 
             const basePoints = [-2, -1, 0, 1, 2];
             
-            // 한 칸의 간격을 50에서 25로 줄임 (-10부터 10까지 보이게 됨)
             const scale = 25; 
             const size = 500;
             const center = size / 2;
 
             const generatePath = (isOriginal) => {
                 let d = "";
-                // 간격을 줄였으므로 더 넓은 범위를 그리도록 설정 (-10 ~ 10)
                 for (let x = -10; x <= 10; x += 0.1) {
                     const y = isOriginal ? a * Math.pow(x, 2) : a * Math.pow(x - p, 2) + q;
                     const sx = center + x * scale;
@@ -98,7 +101,6 @@
                 return d;
             };
 
-            // 격자선을 그리기 위한 배열 생성 (10칸씩)
             const gridLines = Array.from({ length: 21 }, (_, i) => i - 10);
 
             return (
@@ -112,19 +114,39 @@
                                 <input type="range" min="0" max={aList.length - 1} step="1" value={aIndex} onChange={(e) => setAIndex(parseInt(e.target.value))} className="w-full mb-4 cursor-pointer" />
                                 
                                 <label className="block text-sm mb-2 text-slate-300">x축 이동 (p): {p}</label>
-                                {/* p 범위 수정 (-6 ~ 6) */}
                                 <input type="range" min="-6" max="6" step="1" value={p} onChange={(e) => setP(parseInt(e.target.value))} className="w-full mb-4 cursor-pointer" />
                                 
                                 <label className="block text-sm mb-2 text-slate-300">y축 이동 (q): {q}</label>
-                                {/* q 범위 수정 (-6 ~ 6) */}
                                 <input type="range" min="-6" max="6" step="1" value={q} onChange={(e) => setQ(parseInt(e.target.value))} className="w-full cursor-pointer" />
                                 
-                                <div className="mt-6 bg-slate-900 py-5 rounded-xl border border-slate-700 text-center font-mono text-xl flex flex-col gap-3">
-                                    <div className="flex justify-center items-center gap-1">
-                                        y = {renderA(a)}(x - <span className="text-red-400">{p}</span>)² + <span className="text-green-400">{q}</span>
-                                    </div>
-                                    <div className="flex justify-center items-center gap-1 text-yellow-400 text-lg">
-                                        y - <span className="text-green-400">{q}</span> = {renderA(a)}(x - <span className="text-red-400">{p}</span>)²
+                                <div className="mt-6 flex gap-3 items-stretch">
+                                    <button 
+                                        onClick={() => { setAIndex(14); setP(0); setQ(0); }}
+                                        className="bg-slate-700/50 hover:bg-slate-600 text-slate-300 transition-colors rounded-xl border border-slate-600 flex flex-col justify-center items-center w-20 shrink-0 shadow-sm"
+                                        title="기본값(y=x²)으로 초기화"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        <span className="text-xs font-bold">초기화</span>
+                                    </button>
+                                    
+                                    <div className="flex-grow bg-slate-900 py-4 rounded-xl border border-slate-700 text-center font-mono text-xl flex flex-col justify-center gap-3">
+                                        <div className="flex justify-center items-center gap-1">
+                                            y = {renderA(a)}
+                                            {p === 0 ? <span>x²</span> : (
+                                                <span>(x {p > 0 ? "-" : "+"} <span className="text-red-400">{Math.abs(p)}</span>)²</span>
+                                            )}
+                                            {q !== 0 && (
+                                                <span>{q > 0 ? "+" : "-"} <span className="text-green-400">{Math.abs(q)}</span></span>
+                                            )}
+                                        </div>
+                                        <div className="flex justify-center items-center gap-1 text-yellow-400 text-lg">
+                                            y {q !== 0 && <span>{q > 0 ? "-" : "+"} <span className="text-green-400">{Math.abs(q)}</span></span>} = {renderA(a)}
+                                            {p === 0 ? <span>x²</span> : (
+                                                <span>(x {p > 0 ? "-" : "+"} <span className="text-red-400">{Math.abs(p)}</span>)²</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -150,9 +172,10 @@
                                                     <td className="py-4 font-bold rounded-r-xl w-2/3">
                                                         <div className="flex flex-row items-center justify-center gap-2">
                                                             <div className="flex items-center text-slate-300">
-                                                                ({x} <span className="text-red-400 mx-1">{p >= 0 ? `+ ${p}` : `- ${Math.abs(p)}`}</span>, 
+                                                                ({x}
+                                                                {p !== 0 && <span className="text-red-400 mx-1">{p > 0 ? `+ ${p}` : `- ${Math.abs(p)}`}</span>}, 
                                                                 <span className="mx-1 flex items-center">{renderNum(y)}</span>
-                                                                <span className="text-green-400 mr-1">{q >= 0 ? `+ ${q}` : `- ${Math.abs(q)}`}</span>)
+                                                                {q !== 0 && <span className="text-green-400 mr-1">{q > 0 ? `+ ${q}` : `- ${Math.abs(q)}`}</span>})
                                                             </div>
                                                             <div className="text-blue-300 flex items-center">
                                                                 = ({x + p}, {renderNum(y + q)})
@@ -175,7 +198,6 @@
                                     </marker>
                                 </defs>
 
-                                {/* 옅은 모눈 격자선 */}
                                 {gridLines.map((i) => (
                                     <g key={`grid-${i}`}>
                                         <line x1="0" y1={center + i * scale} x2={size} y2={center + i * scale} stroke="#e2e8f0" strokeWidth="1" />
@@ -183,7 +205,6 @@
                                     </g>
                                 ))}
                                 
-                                {/* 기준선(x, y축) 및 원점 */}
                                 <line x1="0" y1={center} x2={size} y2={center} stroke="#94a3b8" strokeWidth="2" markerEnd="url(#arrow)" />
                                 <line x1={center} y1={size} x2={center} y2="0" stroke="#94a3b8" strokeWidth="2" markerEnd="url(#arrow)" />
                                 <circle cx={center} cy={center} r="4" fill="#64748b" />
