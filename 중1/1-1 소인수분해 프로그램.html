@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>소인수분해 계산기</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center; /* 세로 중앙 정렬 */
+            min-height: 100vh;
+        }
+
+        /* 좌우 배치를 위한 전체 틀 추가 */
+        .main-wrapper {
+            display: flex;
+            flex-direction: row;
+            gap: 30px;
+            width: 100%;
+            max-width: 1100px; /* 전체 화면을 적절히 채우도록 최대 너비 설정 */
+            justify-content: center;
+            align-items: flex-start; /* 두 상자의 위쪽 선을 맞춤 */
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            flex: 1; /* 공간 나누기 */
+        }
+
+        h1 {
+            color: #333333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="number"] {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="number"]:focus {
+            border-color: #3b82f6;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #3b82f6;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #2563eb;
+        }
+
+        .result-box {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            min-height: 150px;
+        }
+
+        /* 세로셈 그리드 디자인 */
+        .division-grid {
+            display: grid;
+            grid-template-columns: max-content max-content;
+            justify-content: center;
+            align-items: end;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 22px;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+
+        .divisor {
+            padding-right: 10px;
+            padding-bottom: 4px;
+            text-align: right;
+            color: #ea580c; /* 주황색 */
+            font-weight: bold;
+        }
+
+        .dividend {
+            border-left: 2px solid #333333;
+            border-bottom: 2px solid #333333;
+            padding-left: 10px;
+            padding-bottom: 4px;
+            padding-right: 20px;
+            text-align: left;
+            color: #333333;
+        }
+
+        .remainder {
+            padding-left: 12px;
+            padding-top: 6px;
+            text-align: left;
+            color: #ea580c;
+            font-weight: bold;
+        }
+
+        .final-answer {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1e293b;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px dashed #cbd5e1;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-weight: bold;
+        }
+
+        /* 1~100 숫자 격자 디자인 추가 */
+        .sieve-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            flex: 1.5; /* 오른쪽 칸이 조금 더 넓은 비율을 갖게 설정 */
+        }
+
+        .sieve-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .sieve-controls button {
+            background-color: #10b981;
+            font-size: 14px;
+            padding: 8px 12px;
+        }
+
+        .sieve-controls button:hover {
+            background-color: #059669;
+        }
+
+        .sieve-controls button.reset-btn {
+            background-color: #64748b;
+        }
+
+        .sieve-controls button.reset-btn:hover {
+            background-color: #475569;
+        }
+
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 5px;
+        }
+
+        .grid-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            color: #334155;
+            user-select: none;
+            transition: all 0.2s;
+        }
+
+        .grid-cell:hover {
+            background-color: #e2e8f0;
+        }
+
+        .grid-cell.crossed {
+            background-color: #cbd5e1;
+            color: #94a3b8;
+            text-decoration: line-through;
+            border-color: #cbd5e1;
+        }
+
+        .grid-cell.prime {
+            background-color: #fde047;
+            color: #854d0e;
+            border-color: #eab308;
+            text-decoration: none;
+            font-weight: 900;
+        }
+
+        /* 화면이 좁을 때 (스마트폰 등) 위아래로 다시 배치되도록 설정 */
+        @media (max-width: 900px) {
+            .main-wrapper {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-wrapper">
+        <!-- 왼쪽: 소인수분해 계산기 영역 -->
+        <div class="container">
+            <h1>소인수분해 계산기</h1>
+            <div class="input-group">
+                <input type="number" id="numberInput" placeholder="자연수를 입력하세요" min="2" onkeypress="엔터키처리(event)">
+                <button onclick="계산하기()">계산</button>
+            </div>
+            
+            <div id="resultContainer" class="result-box">
+                <div style="color: #64748b; margin-top: 40px;">결과가 이곳에 표시됩니다.</div>
+            </div>
+        </div>
+
+        <!-- 오른쪽: 1~100 숫자 격자 (에라토스테네스의 체) 영역 -->
+        <div class="sieve-container">
+            <h2>소수 찾기 (에라토스테네스의 체)</h2>
+            <p style="color: #64748b; font-size: 14px; margin-bottom: 15px;">숫자를 직접 눌러서 지우거나 아래 단추를 순서대로 눌러보세요.</p>
+            <div class="sieve-controls">
+                <button onclick="배수지우기(1)">1 지우기</button>
+                <button onclick="배수지우기(2)">2의 배수 지우기</button>
+                <button onclick="배수지우기(3)">3의 배수 지우기</button>
+                <button onclick="배수지우기(5)">5의 배수 지우기</button>
+                <button onclick="배수지우기(7)">7의 배수 지우기</button>
+                <button onclick="남은수소수표시()">남은 수 소수 확인</button>
+                <button class="reset-btn" onclick="격자초기화()">모두 초기화</button>
+            </div>
+            <div id="numberGrid" class="number-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        function 엔터키처리(이벤트) {
+            if (이벤트.key === 'Enter') {
+                계산하기();
+            }
+        }
+
+        function 계산하기() {
+            const 입력창 = document.getElementById('numberInput');
+            const 결과창 = document.getElementById('resultContainer');
+            const 입력값 = parseInt(입력창.value);
+
+            // 초기화
+            결과창.innerHTML = '';
+
+            // 예외 처리
+            if (isNaN(입력값)) {
+                결과창.innerHTML = '<div class="error-message">숫자를 입력해주세요.</div>';
+                return;
+            }
+            if (입력값 < 2) {
+                결과창.innerHTML = '<div class="error-message">2 이상의 자연수를 입력해주세요.<br>(1은 소수도 합성수도 아닙니다)</div>';
+                return;
+            }
+
+            let 현재값 = 입력값;
+            let 나누는수 = 2;
+            let 계산과정 = [];
+            let 소인수목록 = {};
+
+            // 소인수분해 로직
+            while (나누는수 * 나누는수 <= 현재값) {
+                if (현재값 % 나누는수 === 0) {
+                    계산과정.push({ 소수: 나누는수, 대상: 현재값 });
+                    소인수목록[나누는수] = (소인수목록[나누는수] || 0) + 1;
+                    현재값 = 현재값 / 나누는수;
+                } else {
+                    나누는수++;
+                }
+            }
+
+            // 마지막 남은 수가 1보다 크면 소수임
+            if (현재값 > 1) {
+                소인수목록[현재값] = (소인수목록[현재값] || 0) + 1;
+            }
+
+            출력하기(입력값, 계산과정, 현재값, 소인수목록, 결과창);
+        }
+
+        function 출력하기(원래숫자, 계산과정, 마지막수, 소인수목록, 결과창) {
+            let 화면코드 = '';
+
+            // 소수인 경우 처리
+            if (계산과정.length === 0) {
+                화면코드 += `<div style="font-size: 24px; font-weight: bold; color: #ea580c; margin-bottom: 10px;">${원래숫자}</div>`;
+                화면코드 += `<div class="final-answer">${원래숫자}은(는) 자기 자신이 소수입니다.</div>`;
+                결과창.innerHTML = 화면코드;
+                return;
+            }
+
+            // 세로셈 화면 구성
+            화면코드 += '<div class="division-grid">';
+            for (let i = 0; i < 계산과정.length; i++) {
+                화면코드 += `<div class="divisor">${계산과정[i].소수}</div>`;
+                화면코드 += `<div class="dividend">${계산과정[i].대상}</div>`;
+            }
+            
+            // 마지막 몫(소수)
+            화면코드 += `<div></div>`;
+            화면코드 += `<div class="remainder">${마지막수}</div>`;
+            화면코드 += '</div>';
+
+            // 정답 수식 만들기 (거듭제곱 표현)
+            let 수식 = `${원래숫자} = `;
+            let 인수문자열배열 = [];
+            
+            for (let 소수 in 소인수목록) {
+                let 지수 = 소인수목록[소수];
+                if (지수 > 1) {
+                    인수문자열배열.push(`${소수}<sup>${지수}</sup>`);
+                } else {
+                    인수문자열배열.push(`${소수}`);
+                }
+            }
+            
+            수식 += 인수문자열배열.join(' &times; ');
+
+            화면코드 += `<div class="final-answer">${수식}</div>`;
+            
+            결과창.innerHTML = 화면코드;
+        }
+
+        // --- 여기서부터 에라토스테네스의 체 관련 자바스크립트 코드 ---
+
+        function 격자초기화() {
+            const 격자 = document.getElementById('numberGrid');
+            격자.innerHTML = '';
+            for (let i = 1; i <= 100; i++) {
+                const 칸 = document.createElement('div');
+                칸.className = 'grid-cell';
+                칸.textContent = i;
+                칸.id = 'cell-' + i;
+                // 칸을 누르면 지워진 상태와 기본 상태를 왔다갔다 할 수 있습니다.
+                칸.onclick = () => {
+                    if (칸.classList.contains('crossed')) {
+                        칸.classList.remove('crossed');
+                    } else {
+                        칸.classList.add('crossed');
+                        칸.classList.remove('prime'); // 소수 표시가 되어있었다면 제거
+                    }
+                };
+                격자.appendChild(칸);
+            }
+        }
+
+        function 배수지우기(숫자) {
+            if (숫자 === 1) {
+                const 일칸 = document.getElementById('cell-1');
+                if (일칸) 일칸.classList.add('crossed');
+                return;
+            }
+
+            // 기준이 되는 숫자는 소수로 표시 (예: 2, 3, 5, 7)
+            const 기준칸 = document.getElementById('cell-' + 숫자);
+            if (기준칸) {
+                기준칸.classList.remove('crossed');
+                기준칸.classList.add('prime');
+            }
+
+            // 그 숫자의 배수들을 모두 지움
+            for (let i = 숫자 * 2; i <= 100; i += 숫자) {
+                const 칸 = document.getElementById('cell-' + i);
+                if (칸) {
+                    칸.classList.add('crossed');
+                    칸.classList.remove('prime');
+                }
+            }
+        }
+
+        function 남은수소수표시() {
+            for (let i = 2; i <= 100; i++) {
+                const 칸 = document.getElementById('cell-' + i);
+                if (칸 && !칸.classList.contains('crossed')) {
+                    칸.classList.add('prime');
+                }
+            }
+        }
+
+        // 문서가 처음 열릴 때 격자를 만듭니다.
+        window.onload = function() {
+            격자초기화();
+        };
+    </script>
+</body>
+</html>
