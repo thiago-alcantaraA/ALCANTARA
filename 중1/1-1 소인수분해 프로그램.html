@@ -532,6 +532,34 @@
             return 화면코드;
         }
 
+        // --- 공약수와 공배수를 구하기 위한 함수 추가 ---
+        function 약수구하기(n) {
+            let 약수 = [];
+            for (let i = 1; i <= Math.sqrt(n); i++) {
+                if (n % i === 0) {
+                    약수.push(i);
+                    if (i !== n / i) 약수.push(n / i);
+                }
+            }
+            return 약수.sort((a, b) => a - b);
+        }
+
+        function 배수구하기(n, 개수 = 5) {
+            let 배수 = [];
+            for (let i = 1; i <= 개수; i++) {
+                배수.push(n * i);
+            }
+            return 배수;
+        }
+
+        // 공약수, 공배수 숫자들을 소인수분해 수식으로 바꿔주는 함수
+        function 숫자포맷팅(num) {
+            if (num === 1) return "1";
+            const 수식 = 수식만들기(소인수분해데이터구하기(num).소인수);
+            // 소수여서 수식과 숫자가 같으면 그대로 출력, 거듭제곱이나 곱셈이 있으면 원래 숫자도 괄호로 표시
+            return 수식 === String(num) ? 수식 : `${수식} <span style="font-size: 0.85em; color: #64748b;">(=${num})</span>`;
+        }
+
         function toggleGcd() {
             const resultDiv = document.getElementById('compareResult');
             const labelBtn = document.getElementById('gcdLabelBtn');
@@ -629,20 +657,36 @@
                 let 공약수수식 = 최대공약수 === 1 ? "1 (서로소)" : 수식만들기(공약수데이터.소인수) + ` = ${최대공약수}`;
                 let 공배수수식 = 수식만들기(공배수데이터.소인수) + ` = ${최소공배수}`;
 
+                // 공약수, 공배수 목록 만들기 (소인수분해 형태로 변환)
+                const 공약수목록 = 약수구하기(최대공약수).map(숫자포맷팅).join(', ');
+                const 공배수목록 = 배수구하기(최소공배수, 5).map(숫자포맷팅).join(', ') + ', ...';
+
                 요약영역.innerHTML = `
-                    <div class="summary-item">
-                        <div id="gcdLabelBtn" class="summary-label clickable-label" onclick="toggleGcd()">
-                            최대공약수
-                            <span style="font-size: 14px; font-weight: normal; color: #16a34a; margin-left: 8px;">👆 눌러서 확인</span>
+                    <div class="summary-item" style="flex-direction: column; align-items: stretch; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div id="gcdLabelBtn" class="summary-label clickable-label" onclick="toggleGcd()">
+                                최대공약수
+                                <span style="font-size: 14px; font-weight: normal; color: #16a34a; margin-left: 8px;">👆 눌러서 확인</span>
+                            </div>
+                            <div class="summary-value" style="color: #16a34a;">${공약수수식}</div>
                         </div>
-                        <div class="summary-value" style="color: #16a34a;">${공약수수식}</div>
+                        <div style="background-color: #f1f5f9; padding: 12px; border-radius: 6px; font-size: 15px; color: #334155; text-align: left;">
+                            💡 <strong>공약수:</strong> ${공약수목록}<br>
+                            <span style="color: #64748b; font-size: 14px; display: inline-block; margin-top: 4px;">※ 두 수의 공약수는 최대공약수(<strong>${최대공약수}</strong>)의 약수와 같습니다.</span>
+                        </div>
                     </div>
-                    <div class="summary-item">
-                        <div id="lcmLabelBtn" class="summary-label clickable-label" onclick="toggleLcm()">
-                            최소공배수
-                            <span style="font-size: 14px; font-weight: normal; color: #2563eb; margin-left: 8px;">👆 눌러서 확인</span>
+                    <div class="summary-item" style="flex-direction: column; align-items: stretch; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div id="lcmLabelBtn" class="summary-label clickable-label" onclick="toggleLcm()">
+                                최소공배수
+                                <span style="font-size: 14px; font-weight: normal; color: #2563eb; margin-left: 8px;">👆 눌러서 확인</span>
+                            </div>
+                            <div class="summary-value" style="color: #3b82f6;">${공배수수식}</div>
                         </div>
-                        <div class="summary-value" style="color: #3b82f6;">${공배수수식}</div>
+                        <div style="background-color: #f1f5f9; padding: 12px; border-radius: 6px; font-size: 15px; color: #334155; text-align: left;">
+                            💡 <strong>공배수:</strong> ${공배수목록}<br>
+                            <span style="color: #64748b; font-size: 14px; display: inline-block; margin-top: 4px;">※ 두 수의 공배수는 최소공배수(<strong>${최소공배수}</strong>)의 배수와 같습니다.</span>
+                        </div>
                     </div>
                     <div style="font-size:13px; color:#64748b; margin-top:5px; text-align:center;">
                         * '최대공약수'와 '최소공배수' 버튼을 누르면 위 수식에서 어떻게 가져왔는지 표시됩니다.
