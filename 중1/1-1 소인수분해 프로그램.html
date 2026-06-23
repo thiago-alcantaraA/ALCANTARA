@@ -49,6 +49,22 @@
             margin-bottom: 20px;
         }
 
+        /* 초기 화면 좌우 배치용 레이아웃 */
+        .sieve-layout {
+            flex-direction: row;
+            gap: 30px;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .sieve-left-panel {
+            flex: 1;
+            max-width: 350px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
         .main-btn {
             background-color: #4f46e5;
             color: white;
@@ -86,7 +102,8 @@
         }
 
         .sieve-container {
-            max-width: 800px;
+            flex: 2;
+            max-width: 750px;
         }
 
         .sieve-controls {
@@ -317,6 +334,8 @@
         #compareResult.show-lcm .gcd-lcm-mark { box-shadow: 0px 4px 0px 0px #3b82f6; }
 
         @media (max-width: 900px) {
+            .sieve-layout { flex-direction: column; align-items: center; }
+            .sieve-left-panel { max-width: 100%; width: 100%; margin-bottom: 10px; }
             .factor-columns { flex-direction: column; }
             .summary-item { flex-direction: column; gap: 10px; text-align: center; }
         }
@@ -324,11 +343,22 @@
 </head>
 <body>
 
-    <div id="sieveScreen" class="screen active">
-        <button class="main-btn" onclick="화면전환('calcScreen')">
-            🧮 두 수 소인수분해 비교 및 최대공약수·최소공배수 열기
-        </button>
+    <!-- 가로 배치를 위한 sieve-layout 클래스 적용 -->
+    <div id="sieveScreen" class="screen active sieve-layout">
+        
+        <!-- 왼쪽 패널: 설명 및 계산기 이동 버튼 -->
+        <div class="container sieve-left-panel">
+            <h2>수학 도우미</h2>
+            <p style="color: #64748b; font-size: 15px; margin-bottom: 30px; line-height: 1.6; word-break: keep-all;">
+                오른쪽 화면에서 1부터 100까지의 소수를 직접 찾아보세요.<br><br>
+                소인수분해 및 최대공약수·최소공배수 계산이 필요하다면 아래 버튼을 눌러주세요.
+            </p>
+            <button class="main-btn" style="margin-bottom: 0; width: 100%; line-height: 1.4;" onclick="화면전환('calcScreen')">
+                🧮 소인수분해 및<br>최대공약수·최소공배수<br>계산기 열기
+            </button>
+        </div>
 
+        <!-- 오른쪽 패널: 소수 찾기 격자 -->
         <div class="container sieve-container">
             <h2>소수 찾기 (에라토스테네스의 체)</h2>
             <p style="color: #64748b; font-size: 15px; margin-bottom: 15px;">숫자를 직접 눌러서 지우거나 아래 단추를 순서대로 눌러보세요.</p>
@@ -345,6 +375,7 @@
         </div>
     </div>
 
+    <!-- 계산기 화면 -->
     <div id="calcScreen" class="screen">
         <button class="back-btn" onclick="화면전환('sieveScreen')">
             🔙 소수 찾기 화면으로 돌아가기
@@ -453,7 +484,6 @@
             return { 과정: 계산과정, 소인수: 소인수목록, 마지막수: 현재값 };
         }
 
-        // 수식만들기 함수 개선: 두 번째 수(비교데이터)가 있을 경우 동그라미/밑줄 표시
         function 수식만들기(기준소인수, 비교소인수 = null) {
             let 인수문자열배열 = [];
             let 키배열 = Object.keys(기준소인수).map(Number).sort((a, b) => a - b);
@@ -469,10 +499,10 @@
                     let 클래스 = '';
                     
                     if (비교지수 > 0 && 지수 <= 비교지수) {
-                        if (지수 === 비교지수) 클래스 = 'gcd-lcm-mark'; // 둘 다 해당됨 (초록 원 + 파란 밑줄)
-                        else 클래스 = 'gcd-mark'; // 최대공약수 구성 (초록 원)
+                        if (지수 === 비교지수) 클래스 = 'gcd-lcm-mark';
+                        else 클래스 = 'gcd-mark';
                     } else if (지수 > 비교지수) {
-                        클래스 = 'lcm-mark'; // 최소공배수 구성 (파란 밑줄)
+                        클래스 = 'lcm-mark';
                     }
                     
                     if (클래스) 항 = `<span class="${클래스}">${항}</span>`;
@@ -482,7 +512,6 @@
             return 인수문자열배열.join(' &times; ');
         }
 
-        // 세로셈화면만들기 함수 개선: 비교데이터도 함께 받아 수식에 반영
         function 세로셈화면만들기(숫자, 데이터, 비교데이터 = null) {
             let 화면코드 = `<div style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #333333;">${숫자}의 소인수분해</div>`;
             
@@ -503,7 +532,6 @@
             return 화면코드;
         }
 
-        // --- 토글(껐다 켜기) 기능 함수 추가 ---
         function toggleGcd() {
             const resultDiv = document.getElementById('compareResult');
             const labelBtn = document.getElementById('gcdLabelBtn');
@@ -557,7 +585,6 @@
             결과영역.style.display = 'none';
             요약영역.style.display = 'none';
             
-            // 새 계산을 할 때마다 표시(동그라미/밑줄) 상태 초기화
             결과영역.classList.remove('show-gcd', 'show-lcm');
 
             if (isNaN(수1) || 수1 < 2) {
@@ -581,7 +608,6 @@
 
                 const 데이터2 = 소인수분해데이터구하기(수2);
 
-                // 두 수를 서로 비교하여 동그라미/밑줄 스타일을 적용
                 컬럼영역.innerHTML = `
                     <div class="factor-col">${세로셈화면만들기(수1, 데이터1, 데이터2)}</div>
                     <div class="factor-col">${세로셈화면만들기(수2, 데이터2, 데이터1)}</div>
