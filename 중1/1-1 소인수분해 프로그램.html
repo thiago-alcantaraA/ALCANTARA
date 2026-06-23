@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>소인수분해 계산기</title>
+    <title>소수 찾기 및 수학 계산기</title>
     <style>
         body {
             font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
@@ -12,19 +12,26 @@
             padding: 20px;
             display: flex;
             justify-content: center;
-            align-items: center; /* 세로 중앙 정렬 */
+            align-items: flex-start;
             min-height: 100vh;
         }
 
-        /* 좌우 배치를 위한 전체 틀 추가 */
-        .main-wrapper {
-            display: flex;
-            flex-direction: row;
-            gap: 30px;
+        .screen {
+            display: none;
             width: 100%;
-            max-width: 1100px; /* 전체 화면을 적절히 채우도록 최대 너비 설정 */
-            justify-content: center;
-            align-items: flex-start; /* 두 상자의 위쪽 선을 맞춤 */
+            max-width: 1100px;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .container {
@@ -33,124 +40,53 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             padding: 30px;
             width: 100%;
-            max-width: 400px;
             text-align: center;
-            flex: 1; /* 공간 나누기 */
+            box-sizing: border-box;
         }
 
-        h1 {
+        h1, h2 {
             color: #333333;
-            font-size: 24px;
             margin-bottom: 20px;
         }
 
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        input[type="number"] {
-            flex: 1;
-            padding: 12px;
-            font-size: 16px;
-            border: 2px solid #cbd5e1;
-            border-radius: 8px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        input[type="number"]:focus {
-            border-color: #3b82f6;
-        }
-
-        button {
-            padding: 12px 20px;
-            font-size: 16px;
+        .main-btn {
+            background-color: #4f46e5;
+            color: white;
+            font-size: 18px;
             font-weight: bold;
-            color: #ffffff;
-            background-color: #3b82f6;
+            padding: 15px 30px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);
+            transition: all 0.2s;
+        }
+
+        .main-btn:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+        }
+
+        .back-btn {
+            background-color: #64748b;
+            color: white;
+            font-size: 16px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            align-self: flex-start;
             transition: background-color 0.2s;
         }
 
-        button:hover {
-            background-color: #2563eb;
+        .back-btn:hover {
+            background-color: #475569;
         }
 
-        .result-box {
-            margin-top: 20px;
-            padding: 20px;
-            background-color: #f8fafc;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            min-height: 150px;
-        }
-
-        /* 세로셈 그리드 디자인 */
-        .division-grid {
-            display: grid;
-            grid-template-columns: max-content max-content;
-            justify-content: center;
-            align-items: end;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 22px;
-            line-height: 1.2;
-            margin-bottom: 20px;
-        }
-
-        .divisor {
-            padding-right: 10px;
-            padding-bottom: 4px;
-            text-align: right;
-            color: #ea580c; /* 주황색 */
-            font-weight: bold;
-        }
-
-        .dividend {
-            border-left: 2px solid #333333;
-            border-bottom: 2px solid #333333;
-            padding-left: 10px;
-            padding-bottom: 4px;
-            padding-right: 20px;
-            text-align: left;
-            color: #333333;
-        }
-
-        .remainder {
-            padding-left: 12px;
-            padding-top: 6px;
-            text-align: left;
-            color: #ea580c;
-            font-weight: bold;
-        }
-
-        .final-answer {
-            font-size: 20px;
-            font-weight: bold;
-            color: #1e293b;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px dashed #cbd5e1;
-        }
-
-        .error-message {
-            color: #ef4444;
-            font-weight: bold;
-        }
-
-        /* 1~100 숫자 격자 디자인 추가 */
         .sieve-container {
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            width: 100%;
-            max-width: 600px;
-            text-align: center;
-            flex: 1.5; /* 오른쪽 칸이 조금 더 넓은 비율을 갖게 설정 */
+            max-width: 800px;
         }
 
         .sieve-controls {
@@ -163,21 +99,17 @@
 
         .sieve-controls button {
             background-color: #10b981;
+            color: white;
             font-size: 14px;
             padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
         }
 
-        .sieve-controls button:hover {
-            background-color: #059669;
-        }
-
-        .sieve-controls button.reset-btn {
-            background-color: #64748b;
-        }
-
-        .sieve-controls button.reset-btn:hover {
-            background-color: #475569;
-        }
+        .sieve-controls button:hover { background-color: #059669; }
+        .sieve-controls button.reset-btn { background-color: #64748b; }
+        .sieve-controls button.reset-btn:hover { background-color: #475569; }
 
         .number-grid {
             display: grid;
@@ -194,24 +126,20 @@
             border: 1px solid #cbd5e1;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
             color: #334155;
             user-select: none;
             transition: all 0.2s;
         }
 
-        .grid-cell:hover {
-            background-color: #e2e8f0;
-        }
-
+        .grid-cell:hover { background-color: #e2e8f0; }
         .grid-cell.crossed {
             background-color: #cbd5e1;
             color: #94a3b8;
             text-decoration: line-through;
             border-color: #cbd5e1;
         }
-
         .grid-cell.prime {
             background-color: #fde047;
             color: #854d0e;
@@ -220,35 +148,190 @@
             font-weight: 900;
         }
 
-        /* 화면이 좁을 때 (스마트폰 등) 위아래로 다시 배치되도록 설정 */
+        .compare-container {
+            width: 100%;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        input[type="number"] {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+            max-width: 200px;
+        }
+
+        input[type="number"]:focus { border-color: #3b82f6; }
+
+        .calc-btn {
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #3b82f6;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .calc-btn:hover { background-color: #2563eb; }
+
+        .toggle-btn {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 8px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background-color: #e2e8f0;
+            color: #334155;
+        }
+
+        .factor-columns {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .factor-col {
+            flex: 1;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .summary-box {
+            background-color: #f0fdf4;
+            border-radius: 8px;
+            border: 2px solid #bbf7d0;
+            padding: 20px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-sizing: border-box;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .summary-label {
+            font-size: 18px;
+            font-weight: bold;
+            color: #334155;
+        }
+
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .division-grid {
+            display: grid;
+            grid-template-columns: max-content max-content;
+            justify-content: center;
+            align-items: end;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 22px;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+        .divisor { padding-right: 10px; padding-bottom: 4px; text-align: right; color: #ea580c; font-weight: bold; }
+        .dividend { border-left: 2px solid #333333; border-bottom: 2px solid #333333; padding-left: 10px; padding-bottom: 4px; padding-right: 20px; text-align: left; color: #333333; }
+        .remainder { padding-left: 12px; padding-top: 6px; text-align: left; color: #ea580c; font-weight: bold; }
+        .final-answer { font-size: 20px; font-weight: bold; color: #1e293b; margin-top: auto; padding-top: 20px; border-top: 1px dashed #cbd5e1; width: 100%; text-align: center; line-height: 2; }
+        .error-message { color: #ef4444; font-weight: bold; }
+
+        /* 클릭 가능한 라벨 스타일 */
+        .clickable-label {
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+            user-select: none;
+            display: flex;
+            align-items: center;
+        }
+        .clickable-label:hover { background-color: #f1f5f9; }
+        .clickable-label.active-gcd { background-color: #dcfce7; }
+        .clickable-label.active-lcm { background-color: #dbeafe; }
+
+        /* 소인수 비교 마크업을 위한 CSS 추가 (기본은 투명 테두리로 영역만 유지) */
+        .gcd-mark {
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 2px 8px;
+            display: inline-block;
+            transition: border-color 0.3s;
+        }
+        .lcm-mark {
+            border-bottom: 3px solid transparent;
+            padding-bottom: 2px;
+            padding-left: 4px;
+            padding-right: 4px;
+            display: inline-block;
+            transition: border-color 0.3s;
+        }
+        .gcd-lcm-mark {
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 2px 8px;
+            box-shadow: 0px 4px 0px 0px transparent;
+            margin-bottom: 4px;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+
+        /* 클릭(토글) 시 색상이 나타나도록 처리 */
+        #compareResult.show-gcd .gcd-mark { border-color: #22c55e; }
+        #compareResult.show-lcm .lcm-mark { border-color: #3b82f6; }
+        #compareResult.show-gcd .gcd-lcm-mark { border-color: #22c55e; }
+        #compareResult.show-lcm .gcd-lcm-mark { box-shadow: 0px 4px 0px 0px #3b82f6; }
+
         @media (max-width: 900px) {
-            .main-wrapper {
-                flex-direction: column;
-                align-items: center;
-            }
+            .factor-columns { flex-direction: column; }
+            .summary-item { flex-direction: column; gap: 10px; text-align: center; }
         }
     </style>
 </head>
 <body>
 
-    <div class="main-wrapper">
-        <!-- 왼쪽: 소인수분해 계산기 영역 -->
-        <div class="container">
-            <h1>소인수분해 계산기</h1>
-            <div class="input-group">
-                <input type="number" id="numberInput" placeholder="자연수를 입력하세요" min="2" onkeypress="엔터키처리(event)">
-                <button onclick="계산하기()">계산</button>
-            </div>
-            
-            <div id="resultContainer" class="result-box">
-                <div style="color: #64748b; margin-top: 40px;">결과가 이곳에 표시됩니다.</div>
-            </div>
-        </div>
+    <div id="sieveScreen" class="screen active">
+        <button class="main-btn" onclick="화면전환('calcScreen')">
+            🧮 두 수 소인수분해 비교 및 최대공약수·최소공배수 열기
+        </button>
 
-        <!-- 오른쪽: 1~100 숫자 격자 (에라토스테네스의 체) 영역 -->
-        <div class="sieve-container">
+        <div class="container sieve-container">
             <h2>소수 찾기 (에라토스테네스의 체)</h2>
-            <p style="color: #64748b; font-size: 14px; margin-bottom: 15px;">숫자를 직접 눌러서 지우거나 아래 단추를 순서대로 눌러보세요.</p>
+            <p style="color: #64748b; font-size: 15px; margin-bottom: 15px;">숫자를 직접 눌러서 지우거나 아래 단추를 순서대로 눌러보세요.</p>
             <div class="sieve-controls">
                 <button onclick="배수지우기(1)">1 지우기</button>
                 <button onclick="배수지우기(2)">2의 배수 지우기</button>
@@ -262,99 +345,39 @@
         </div>
     </div>
 
+    <div id="calcScreen" class="screen">
+        <button class="back-btn" onclick="화면전환('sieveScreen')">
+            🔙 소수 찾기 화면으로 돌아가기
+        </button>
+
+        <div class="container compare-container">
+            <h2 id="calcTitle">소인수분해 계산기</h2>
+            <div class="input-group">
+                <input type="number" id="num1" placeholder="자연수 (2 이상)" min="2" onkeypress="계산엔터(event)">
+                <input type="number" id="num2" placeholder="두 번째 수 (2 이상)" min="2" onkeypress="계산엔터(event)" style="display: none;">
+                <button id="calcActionBtn" class="calc-btn" onclick="통합계산하기()">소인수분해 계산</button>
+            </div>
+            
+            <button id="modeToggleBtn" class="toggle-btn" onclick="모드전환()">+ 최대공약수·최소공배수 같이 구하기</button>
+            
+            <div id="compareError" class="error-message" style="display:none; margin-bottom:20px;"></div>
+
+            <div id="compareResult" style="display:none; width: 100%;">
+                <div class="factor-columns" id="factorColumns">
+                </div>
+                <div class="summary-box" id="summaryBox" style="display: none;">
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        function 엔터키처리(이벤트) {
-            if (이벤트.key === 'Enter') {
-                계산하기();
-            }
+        function 화면전환(보일화면ID) {
+            document.querySelectorAll('.screen').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById(보일화면ID).classList.add('active');
         }
-
-        function 계산하기() {
-            const 입력창 = document.getElementById('numberInput');
-            const 결과창 = document.getElementById('resultContainer');
-            const 입력값 = parseInt(입력창.value);
-
-            // 초기화
-            결과창.innerHTML = '';
-
-            // 예외 처리
-            if (isNaN(입력값)) {
-                결과창.innerHTML = '<div class="error-message">숫자를 입력해주세요.</div>';
-                return;
-            }
-            if (입력값 < 2) {
-                결과창.innerHTML = '<div class="error-message">2 이상의 자연수를 입력해주세요.<br>(1은 소수도 합성수도 아닙니다)</div>';
-                return;
-            }
-
-            let 현재값 = 입력값;
-            let 나누는수 = 2;
-            let 계산과정 = [];
-            let 소인수목록 = {};
-
-            // 소인수분해 로직
-            while (나누는수 * 나누는수 <= 현재값) {
-                if (현재값 % 나누는수 === 0) {
-                    계산과정.push({ 소수: 나누는수, 대상: 현재값 });
-                    소인수목록[나누는수] = (소인수목록[나누는수] || 0) + 1;
-                    현재값 = 현재값 / 나누는수;
-                } else {
-                    나누는수++;
-                }
-            }
-
-            // 마지막 남은 수가 1보다 크면 소수임
-            if (현재값 > 1) {
-                소인수목록[현재값] = (소인수목록[현재값] || 0) + 1;
-            }
-
-            출력하기(입력값, 계산과정, 현재값, 소인수목록, 결과창);
-        }
-
-        function 출력하기(원래숫자, 계산과정, 마지막수, 소인수목록, 결과창) {
-            let 화면코드 = '';
-
-            // 소수인 경우 처리
-            if (계산과정.length === 0) {
-                화면코드 += `<div style="font-size: 24px; font-weight: bold; color: #ea580c; margin-bottom: 10px;">${원래숫자}</div>`;
-                화면코드 += `<div class="final-answer">${원래숫자}은(는) 자기 자신이 소수입니다.</div>`;
-                결과창.innerHTML = 화면코드;
-                return;
-            }
-
-            // 세로셈 화면 구성
-            화면코드 += '<div class="division-grid">';
-            for (let i = 0; i < 계산과정.length; i++) {
-                화면코드 += `<div class="divisor">${계산과정[i].소수}</div>`;
-                화면코드 += `<div class="dividend">${계산과정[i].대상}</div>`;
-            }
-            
-            // 마지막 몫(소수)
-            화면코드 += `<div></div>`;
-            화면코드 += `<div class="remainder">${마지막수}</div>`;
-            화면코드 += '</div>';
-
-            // 정답 수식 만들기 (거듭제곱 표현)
-            let 수식 = `${원래숫자} = `;
-            let 인수문자열배열 = [];
-            
-            for (let 소수 in 소인수목록) {
-                let 지수 = 소인수목록[소수];
-                if (지수 > 1) {
-                    인수문자열배열.push(`${소수}<sup>${지수}</sup>`);
-                } else {
-                    인수문자열배열.push(`${소수}`);
-                }
-            }
-            
-            수식 += 인수문자열배열.join(' &times; ');
-
-            화면코드 += `<div class="final-answer">${수식}</div>`;
-            
-            결과창.innerHTML = 화면코드;
-        }
-
-        // --- 여기서부터 에라토스테네스의 체 관련 자바스크립트 코드 ---
 
         function 격자초기화() {
             const 격자 = document.getElementById('numberGrid');
@@ -364,13 +387,12 @@
                 칸.className = 'grid-cell';
                 칸.textContent = i;
                 칸.id = 'cell-' + i;
-                // 칸을 누르면 지워진 상태와 기본 상태를 왔다갔다 할 수 있습니다.
                 칸.onclick = () => {
                     if (칸.classList.contains('crossed')) {
                         칸.classList.remove('crossed');
                     } else {
                         칸.classList.add('crossed');
-                        칸.classList.remove('prime'); // 소수 표시가 되어있었다면 제거
+                        칸.classList.remove('prime');
                     }
                 };
                 격자.appendChild(칸);
@@ -383,15 +405,11 @@
                 if (일칸) 일칸.classList.add('crossed');
                 return;
             }
-
-            // 기준이 되는 숫자는 소수로 표시 (예: 2, 3, 5, 7)
             const 기준칸 = document.getElementById('cell-' + 숫자);
             if (기준칸) {
                 기준칸.classList.remove('crossed');
                 기준칸.classList.add('prime');
             }
-
-            // 그 숫자의 배수들을 모두 지움
             for (let i = 숫자 * 2; i <= 100; i += 숫자) {
                 const 칸 = document.getElementById('cell-' + i);
                 if (칸) {
@@ -410,7 +428,205 @@
             }
         }
 
-        // 문서가 처음 열릴 때 격자를 만듭니다.
+        function 계산엔터(이벤트) {
+            if (이벤트.key === 'Enter') 통합계산하기();
+        }
+
+        function 소인수분해데이터구하기(숫자) {
+            let 현재값 = 숫자;
+            let 나누는수 = 2;
+            let 계산과정 = [];
+            let 소인수목록 = {};
+
+            while (나누는수 * 나누는수 <= 현재값) {
+                if (현재값 % 나누는수 === 0) {
+                    계산과정.push({ 소수: 나누는수, 대상: 현재값 });
+                    소인수목록[나누는수] = (소인수목록[나누는수] || 0) + 1;
+                    현재값 = 현재값 / 나누는수;
+                } else {
+                    나누는수++;
+                }
+            }
+            if (현재값 > 1) {
+                소인수목록[현재값] = (소인수목록[현재값] || 0) + 1;
+            }
+            return { 과정: 계산과정, 소인수: 소인수목록, 마지막수: 현재값 };
+        }
+
+        // 수식만들기 함수 개선: 두 번째 수(비교데이터)가 있을 경우 동그라미/밑줄 표시
+        function 수식만들기(기준소인수, 비교소인수 = null) {
+            let 인수문자열배열 = [];
+            let 키배열 = Object.keys(기준소인수).map(Number).sort((a, b) => a - b);
+            
+            if (키배열.length === 0) return "1";
+
+            for (let 소수 of 키배열) {
+                let 지수 = 기준소인수[소수];
+                let 항 = 지수 > 1 ? `${소수}<sup>${지수}</sup>` : `${소수}`;
+                
+                if (비교소인수) {
+                    let 비교지수 = 비교소인수[소수] || 0;
+                    let 클래스 = '';
+                    
+                    if (비교지수 > 0 && 지수 <= 비교지수) {
+                        if (지수 === 비교지수) 클래스 = 'gcd-lcm-mark'; // 둘 다 해당됨 (초록 원 + 파란 밑줄)
+                        else 클래스 = 'gcd-mark'; // 최대공약수 구성 (초록 원)
+                    } else if (지수 > 비교지수) {
+                        클래스 = 'lcm-mark'; // 최소공배수 구성 (파란 밑줄)
+                    }
+                    
+                    if (클래스) 항 = `<span class="${클래스}">${항}</span>`;
+                }
+                인수문자열배열.push(항);
+            }
+            return 인수문자열배열.join(' &times; ');
+        }
+
+        // 세로셈화면만들기 함수 개선: 비교데이터도 함께 받아 수식에 반영
+        function 세로셈화면만들기(숫자, 데이터, 비교데이터 = null) {
+            let 화면코드 = `<div style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #333333;">${숫자}의 소인수분해</div>`;
+            
+            if (데이터.과정.length === 0) {
+                화면코드 += `<div style="font-size: 24px; font-weight: bold; color: #ea580c; margin: 20px 0;">${숫자}</div>`;
+                화면코드 += `<div style="margin-bottom: 20px;">${숫자}은(는) 소수입니다.</div>`;
+            } else {
+                화면코드 += '<div class="division-grid">';
+                for (let i = 0; i < 데이터.과정.length; i++) {
+                    화면코드 += `<div class="divisor">${데이터.과정[i].소수}</div>`;
+                    화면코드 += `<div class="dividend">${데이터.과정[i].대상}</div>`;
+                }
+                화면코드 += `<div></div><div class="remainder">${데이터.마지막수}</div></div>`;
+            }
+            
+            let 수식 = 수식만들기(데이터.소인수, 비교데이터 ? 비교데이터.소인수 : null);
+            화면코드 += `<div class="final-answer">${숫자} = ${수식}</div>`;
+            return 화면코드;
+        }
+
+        // --- 토글(껐다 켜기) 기능 함수 추가 ---
+        function toggleGcd() {
+            const resultDiv = document.getElementById('compareResult');
+            const labelBtn = document.getElementById('gcdLabelBtn');
+            resultDiv.classList.toggle('show-gcd');
+            labelBtn.classList.toggle('active-gcd');
+        }
+
+        function toggleLcm() {
+            const resultDiv = document.getElementById('compareResult');
+            const labelBtn = document.getElementById('lcmLabelBtn');
+            resultDiv.classList.toggle('show-lcm');
+            labelBtn.classList.toggle('active-lcm');
+        }
+
+        let 현재모드 = 'single';
+
+        function 모드전환() {
+            const num2Input = document.getElementById('num2');
+            const toggleBtn = document.getElementById('modeToggleBtn');
+            const actionBtn = document.getElementById('calcActionBtn');
+            const calcTitle = document.getElementById('calcTitle');
+            const 결과영역 = document.getElementById('compareResult');
+            const 에러창 = document.getElementById('compareError');
+
+            if (현재모드 === 'single') {
+                현재모드 = 'double';
+                num2Input.style.display = 'inline-block';
+                toggleBtn.innerHTML = '- 단일 소인수분해 모드로 돌아가기';
+                actionBtn.innerHTML = '비교 계산';
+                calcTitle.innerHTML = '두 수 비교 (소인수분해 & 최대공약수·최소공배수)';
+            } else {
+                현재모드 = 'single';
+                num2Input.style.display = 'none';
+                num2Input.value = ''; 
+                toggleBtn.innerHTML = '+ 최대공약수·최소공배수 같이 구하기';
+                actionBtn.innerHTML = '소인수분해 계산';
+                calcTitle.innerHTML = '소인수분해 계산기';
+            }
+            결과영역.style.display = 'none';
+            에러창.style.display = 'none';
+        }
+
+        function 통합계산하기() {
+            const 수1 = parseInt(document.getElementById('num1').value);
+            const 에러창 = document.getElementById('compareError');
+            const 결과영역 = document.getElementById('compareResult');
+            const 컬럼영역 = document.getElementById('factorColumns');
+            const 요약영역 = document.getElementById('summaryBox');
+
+            에러창.style.display = 'none';
+            결과영역.style.display = 'none';
+            요약영역.style.display = 'none';
+            
+            // 새 계산을 할 때마다 표시(동그라미/밑줄) 상태 초기화
+            결과영역.classList.remove('show-gcd', 'show-lcm');
+
+            if (isNaN(수1) || 수1 < 2) {
+                에러창.innerHTML = '첫 번째 수를 2 이상의 자연수로 올바르게 입력해주세요.';
+                에러창.style.display = 'block';
+                return;
+            }
+
+            const 데이터1 = 소인수분해데이터구하기(수1);
+
+            if (현재모드 === 'single') {
+                컬럼영역.innerHTML = `<div class="factor-col">${세로셈화면만들기(수1, 데이터1)}</div>`;
+                결과영역.style.display = 'block';
+            } else {
+                const 수2 = parseInt(document.getElementById('num2').value);
+                if (isNaN(수2) || 수2 < 2) {
+                    에러창.innerHTML = '두 번째 수도 2 이상의 자연수로 올바르게 입력해주세요.';
+                    에러창.style.display = 'block';
+                    return;
+                }
+
+                const 데이터2 = 소인수분해데이터구하기(수2);
+
+                // 두 수를 서로 비교하여 동그라미/밑줄 스타일을 적용
+                컬럼영역.innerHTML = `
+                    <div class="factor-col">${세로셈화면만들기(수1, 데이터1, 데이터2)}</div>
+                    <div class="factor-col">${세로셈화면만들기(수2, 데이터2, 데이터1)}</div>
+                `;
+
+                let a = Math.max(수1, 수2);
+                let b = Math.min(수1, 수2);
+                while (b !== 0) {
+                    let 나머지 = a % b;
+                    a = b;
+                    b = 나머지;
+                }
+                const 최대공약수 = a;
+                const 최소공배수 = (수1 * 수2) / 최대공약수;
+
+                const 공약수데이터 = 소인수분해데이터구하기(최대공약수);
+                const 공배수데이터 = 소인수분해데이터구하기(최소공배수);
+                
+                let 공약수수식 = 최대공약수 === 1 ? "1 (서로소)" : 수식만들기(공약수데이터.소인수) + ` = ${최대공약수}`;
+                let 공배수수식 = 수식만들기(공배수데이터.소인수) + ` = ${최소공배수}`;
+
+                요약영역.innerHTML = `
+                    <div class="summary-item">
+                        <div id="gcdLabelBtn" class="summary-label clickable-label" onclick="toggleGcd()">
+                            최대공약수
+                            <span style="font-size: 14px; font-weight: normal; color: #16a34a; margin-left: 8px;">👆 눌러서 확인</span>
+                        </div>
+                        <div class="summary-value" style="color: #16a34a;">${공약수수식}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div id="lcmLabelBtn" class="summary-label clickable-label" onclick="toggleLcm()">
+                            최소공배수
+                            <span style="font-size: 14px; font-weight: normal; color: #2563eb; margin-left: 8px;">👆 눌러서 확인</span>
+                        </div>
+                        <div class="summary-value" style="color: #3b82f6;">${공배수수식}</div>
+                    </div>
+                    <div style="font-size:13px; color:#64748b; margin-top:5px; text-align:center;">
+                        * '최대공약수'와 '최소공배수' 버튼을 누르면 위 수식에서 어떻게 가져왔는지 표시됩니다.
+                    </div>
+                `;
+                요약영역.style.display = 'flex';
+                결과영역.style.display = 'block';
+            }
+        }
+
         window.onload = function() {
             격자초기화();
         };
