@@ -578,7 +578,6 @@
                         engine.targetNumber = lcmVal;
                     } else {
                         const commonPrimes = Object.keys(f1).filter(p => f2[p]).map(Number);
-                        tempTarget = {};
                         if (commonPrimes.length === 0) {
                             engine.targetNumber = 1; 
                         } else {
@@ -591,6 +590,9 @@
                             engine.targetNumber = gcdVal;
                         }
                     }
+
+                    // 수정된 부분: 계산한 정답의 소인수 개수를 실제 타겟으로 지정합니다.
+                    engine.targetCounts = tempTarget;
 
                     document.getElementById('target-number-view').innerHTML = 
                         `<div class="flex flex-row flex-wrap items-center gap-4 justify-center">
