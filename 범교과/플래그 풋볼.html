@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>플래그 풋볼 전술판</title>
+    <!-- Tailwind CSS 스타일 불러오기 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 풋볼 필드 잔디 패턴 및 라인 */
+        .football-field {
+            background-color: #2E7D32; /* 진한 녹색 */
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.4) 2px, transparent 2px),
+                linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 10% 100%, 2% 100%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* 엔드존 스타일 */
+        .endzone {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 15%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.8;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.5);
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            letter-spacing: 0.5rem;
+        }
+        .endzone-left {
+            left: 0;
+            background-color: #1565C0; /* 파란색 계열 엔드존 */
+            border-right: 4px solid white;
+        }
+        .endzone-right {
+            right: 0;
+            background-color: #C62828; /* 빨간색 계열 엔드존 */
+            border-left: 4px solid white;
+        }
+
+        /* 공 모양 스타일 (타원형) */
+        .football {
+            width: 30px;
+            height: 18px;
+            background-color: #5D4037;
+            border-radius: 50% / 50%;
+            border: 2px solid white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .football::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 4px;
+            background-image: linear-gradient(to right, transparent 20%, white 20%, white 80%, transparent 80%);
+            background-size: 4px 100%;
+        }
+
+        /* 캔버스 (그리기 영역) 설정 */
+        #drawing-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* 이동 모드일 때는 터치 무시 */
+            z-index: 10;
+        }
+        /* 그리기 모드일 때 캔버스 활성화 */
+        .draw-mode #drawing-layer {
+            pointer-events: auto;
+        }
+        .draw-mode .draggable {
+            pointer-events: none; /* 그리기 모드일 때는 선수 이동 금지 */
+        }
+
+        /* 부드러운 전환 효과 */
+        .transition-transform {
+            transition: transform 0.1s;
+        }
+        .draggable:active {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col font-sans">
+
+    <!-- 상단 헤더 및 조작부 -->
+    <header class="bg-gray-800 text-white p-4 shadow-md z-20 relative sticky top-0">
+        <h1 class="text-xl md:text-2xl font-bold text-center mb-4">플래그 풋볼 전술판 (5 vs 5)</h1>
+        
+        <div class="flex flex-wrap justify-center gap-3">
+            <button id="btn-mode" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-4 rounded-lg shadow transition">
+                현재 모드: 이동
+            </button>
+            <button id="btn-clear" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow transition">
+                그림 지우기
+            </button>
+            <button id="btn-reset" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg shadow transition">
+                위치 초기화
+            </button>
+        </div>
+    </header>
+
+    <!-- 메인 필드 영역 (화면에 꽉 차도록 중앙 정렬) -->
+    <main class="flex-1 p-2 flex justify-center items-center overflow-hidden w-full">
+        
+        <!-- 필드 컨테이너 (비율 유지하며 화면에 딱 맞게 자동 조절) -->
+        <div id="field-container" class="football-field rounded-lg shadow-2xl relative mx-auto" style="width: 100%; max-width: min(1000px, 130vh); aspect-ratio: 2 / 1;">
+            
+            <!-- 엔드존 -->
+            <div class="endzone endzone-left">공격</div>
+            <div class="endzone endzone-right">수비</div>
+
+            <!-- 중앙선 -->
+            <div class="absolute top-0 bottom-0 left-1/2 border-l-4 border-white opacity-80" style="transform: translateX(-50%);"></div>
+
+            <!-- 그리기 영역 (Canvas 대신 SVG 사용) -->
+            <svg id="drawing-layer">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="gray" />
+                    </marker>
+                </defs>
+            </svg>
+
+            <!-- 선수 및 공이 추가될 컨테이너 -->
+            <div id="entities-layer" class="absolute inset-0 z-20"></div>
+
+        </div>
+    </main>
+
+    <!-- 사용 설명서 -->
+    <footer class="text-center p-3 text-gray-600 text-xs md:text-sm bg-white border-t">
+        <p>선수와 공을 드래그하여 움직이세요. '현재 모드' 버튼을 누른 뒤, 필드에 두 점을 찍어 화살표를 그리고, 다시 누르면 지울 수 있습니다.</p>
+    </footer>
+
+    <script>
+        // 문서 요소 가져오기
+        const fieldContainer = document.getElementById('field-container');
+        const entitiesLayer = document.getElementById('entities-layer');
+        const svgLayer = document.getElementById('drawing-layer');
+        const btnMode = document.getElementById('btn-mode');
+        const btnClear = document.getElementById('btn-clear');
+        const btnReset = document.getElementById('btn-reset');
+
+        // 상태 변수
+        let currentMode = '이동'; // '이동' 또는 '그리기'
+        let firstPoint = null;
+        let tempDot = null;
+
+        // 초기 위치 설정 데이터 (백분율 %)
+        const initialPositions = [
+            // 공격팀 (파란색)
+            { id: 'off-1', type: 'offense', label: 'QB', x: 25, y: 50 },
+            { id: 'off-2', type: 'offense', label: 'C', x: 35, y: 50 },
+            { id: 'off-3', type: 'offense', label: 'WR', x: 35, y: 20 },
+            { id: 'off-4', type: 'offense', label: 'WR', x: 35, y: 80 },
+            { id: 'off-5', type: 'offense', label: 'RB', x: 20, y: 50 },
+            // 수비팀 (빨간색)
+            { id: 'def-1', type: 'defense', label: 'CB', x: 45, y: 20 },
+            { id: 'def-2', type: 'defense', label: 'CB', x: 45, y: 80 },
+            { id: 'def-3', type: 'defense', label: 'LB', x: 42, y: 50 },
+            { id: 'def-4', type: 'defense', label: 'S', x: 60, y: 35 },
+            { id: 'def-5', type: 'defense', label: 'S', x: 60, y: 65 },
+            // 풋볼 (공)
+            { id: 'ball', type: 'ball', label: '', x: 37, y: 50 }
+        ];
+
+        // 초기 화면 설정
+        function initEntities() {
+            entitiesLayer.innerHTML = ''; // 기존 요소 초기화
+            
+            initialPositions.forEach(item => {
+                const el = document.createElement('div');
+                el.id = item.id;
+                el.className = 'draggable absolute transform -translate-x-1/2 -translate-y-1/2 shadow-lg cursor-pointer flex items-center justify-center font-bold text-white text-xs sm:text-sm select-none z-30 transition-transform';
+                
+                // 위치 지정 (비율 기준)
+                el.style.left = item.x + '%';
+                el.style.top = item.y + '%';
+
+                // 모양 및 색상 지정
+                if (item.type === 'offense') {
+                    el.classList.add('bg-blue-600', 'rounded-full', 'w-8', 'h-8', 'sm:w-10', 'sm:h-10', 'border-2', 'border-white');
+                    el.textContent = item.label;
+                } else if (item.type === 'defense') {
+                    el.classList.add('bg-red-600', 'rounded-full', 'w-8', 'h-8', 'sm:w-10', 'sm:h-10', 'border-2', 'border-white');
+                    el.textContent = item.label;
+                } else if (item.type === 'ball') {
+                    el.classList.add('football');
+                    // 공은 특별한 모양을 가지므로 크기 클래스 제거
+                    el.classList.remove('w-8', 'h-8', 'sm:w-10', 'sm:h-10');
+                }
+
+                entitiesLayer.appendChild(el);
+                
+                // 드래그 이벤트 연결
+                makeDraggable(el);
+            });
+        }
+
+        // 드래그 앤 드롭 로직
+        function makeDraggable(element) {
+            let startX = 0, startY = 0;
+            
+            // 마우스 이벤트
+            element.addEventListener('mousedown', dragStart);
+            // 터치 이벤트
+            element.addEventListener('touchstart', dragStart, { passive: false });
+
+            function dragStart(e) {
+                if (currentMode !== '이동') return;
+                
+                e.preventDefault(); // 스크롤 등 기본 동작 방지
+                
+                // 가장 위로 가져오기
+                document.querySelectorAll('.draggable').forEach(el => el.style.zIndex = '30');
+                element.style.zIndex = '40';
+
+                if (e.type === 'touchstart') {
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                } else {
+                    startX = e.clientX;
+                    startY = e.clientY;
+                }
+
+                document.addEventListener('mousemove', dragAction);
+                document.addEventListener('touchmove', dragAction, { passive: false });
+                document.addEventListener('mouseup', dragEnd);
+                document.addEventListener('touchend', dragEnd);
+            }
+
+            function dragAction(e) {
+                if (currentMode !== '이동') return;
+                e.preventDefault(); // 스크롤 등 기본 동작 방지
+
+                let clientX, clientY;
+                if (e.type === 'touchmove') {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+
+                // 이동 거리 계산
+                let dx = clientX - startX;
+                let dy = clientY - startY;
+
+                startX = clientX;
+                startY = clientY;
+
+                // 픽셀 단위 위치를 %로 변환하여 창 크기 조절 시에도 위치 유지
+                let fieldRect = fieldContainer.getBoundingClientRect();
+                
+                // 현재 요소의 픽셀 기준 좌상단 위치 찾기
+                let currentLeftPixel = (parseFloat(element.style.left) / 100) * fieldRect.width;
+                let currentTopPixel = (parseFloat(element.style.top) / 100) * fieldRect.height;
+                
+                let newLeftPixel = currentLeftPixel + dx;
+                let newTopPixel = currentTopPixel + dy;
+
+                // 필드 밖으로 나가지 못하게 제한
+                newLeftPixel = Math.max(0, Math.min(newLeftPixel, fieldRect.width));
+                newTopPixel = Math.max(0, Math.min(newTopPixel, fieldRect.height));
+
+                // 다시 백분율로 변환하여 적용
+                element.style.left = (newLeftPixel / fieldRect.width * 100) + '%';
+                element.style.top = (newTopPixel / fieldRect.height * 100) + '%';
+            }
+
+            function dragEnd() {
+                document.removeEventListener('mousemove', dragAction);
+                document.removeEventListener('touchmove', dragAction);
+                document.removeEventListener('mouseup', dragEnd);
+                document.removeEventListener('touchend', dragEnd);
+            }
+        }
+
+        // 그리기 (화살표) 로직
+        svgLayer.addEventListener('click', function(e) {
+            if (currentMode !== '그리기') return;
+
+            // 화살표(또는 투명 터치영역)를 클릭한 경우, 화살표 자체 이벤트에서 처리되므로 무시
+            if (e.target.tagName === 'line' || e.target.tagName === 'path' || e.target.tagName === 'g') return;
+
+            const rect = svgLayer.getBoundingClientRect();
+            const xPixel = e.clientX - rect.left;
+            const yPixel = e.clientY - rect.top;
+            
+            const xPercent = (xPixel / rect.width) * 100;
+            const yPercent = (yPixel / rect.height) * 100;
+
+            if (!firstPoint) {
+                // 첫 번째 점 찍기
+                firstPoint = { x: xPercent, y: yPercent };
+                
+                tempDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                tempDot.setAttribute('cx', xPercent + '%');
+                tempDot.setAttribute('cy', yPercent + '%');
+                tempDot.setAttribute('r', '5');
+                tempDot.setAttribute('fill', 'gray');
+                svgLayer.appendChild(tempDot);
+            } else {
+                // 두 번째 점 찍기 -> 화살표 그리기
+                drawArrow(firstPoint.x, firstPoint.y, xPercent, yPercent);
+                
+                if (tempDot) {
+                    tempDot.remove();
+                    tempDot = null;
+                }
+                firstPoint = null; // 초기화
+            }
+        });
+
+        function drawArrow(x1, y1, x2, y2) {
+            const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            group.style.cursor = 'pointer';
+
+            // 실제 보이는 회색 화살표
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x1 + '%');
+            line.setAttribute('y1', y1 + '%');
+            line.setAttribute('x2', x2 + '%');
+            line.setAttribute('y2', y2 + '%');
+            line.setAttribute('stroke', 'gray');
+            line.setAttribute('stroke-width', '4');
+            line.setAttribute('marker-end', 'url(#arrowhead)');
+
+            // 스마트폰 등에서 클릭/터치를 쉽게 인식하도록 두꺼운 투명 선 겹치기
+            const hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            hitArea.setAttribute('x1', x1 + '%');
+            hitArea.setAttribute('y1', y1 + '%');
+            hitArea.setAttribute('x2', x2 + '%');
+            hitArea.setAttribute('y2', y2 + '%');
+            hitArea.setAttribute('stroke', 'transparent');
+            hitArea.setAttribute('stroke-width', '25');
+
+            group.appendChild(line);
+            group.appendChild(hitArea);
+
+            // 화살표 개별 삭제 이벤트
+            group.addEventListener('click', function(e) {
+                if (currentMode === '그리기') {
+                    e.stopPropagation(); // 부모 SVG 배경으로 이벤트 전달을 막음
+                    group.remove();
+                }
+            });
+
+            svgLayer.appendChild(group);
+        }
+
+        function clearDrawings() {
+            // SVG 내의 화살표(그룹) 및 임시 점(원) 모두 삭제
+            const elements = svgLayer.querySelectorAll('g, circle');
+            elements.forEach(el => el.remove());
+            firstPoint = null;
+            tempDot = null;
+        }
+
+        // 버튼 이벤트 처리
+        btnMode.addEventListener('click', () => {
+            if (currentMode === '이동') {
+                currentMode = '그리기';
+                btnMode.textContent = '현재 모드: 그리기';
+                btnMode.classList.replace('bg-yellow-500', 'bg-green-500');
+                btnMode.classList.replace('hover:bg-yellow-600', 'hover:bg-green-600');
+                fieldContainer.classList.add('draw-mode');
+            } else {
+                currentMode = '이동';
+                btnMode.textContent = '현재 모드: 이동';
+                btnMode.classList.replace('bg-green-500', 'bg-yellow-500');
+                btnMode.classList.replace('hover:bg-green-600', 'hover:bg-yellow-600');
+                fieldContainer.classList.remove('draw-mode');
+                
+                // 모드 변경 시 임시로 찍어둔 점이 있다면 제거
+                if (tempDot) {
+                    tempDot.remove();
+                    tempDot = null;
+                }
+                firstPoint = null;
+            }
+        });
+
+        btnClear.addEventListener('click', clearDrawings);
+
+        btnReset.addEventListener('click', () => {
+            initEntities();
+            clearDrawings();
+        });
+
+        // 초기화 실행
+        window.onload = () => {
+            initEntities();
+        };
+
+    </script>
+</body>
+</html>
