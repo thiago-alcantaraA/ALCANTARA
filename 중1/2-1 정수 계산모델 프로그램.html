@@ -555,9 +555,9 @@
                 const isBSelected = (state.selectedBlackId === bId);
 
                 const singleBox = document.createElement('div');
-                singleBox.className = "flex flex-col items-center gap-2 p-2.5 rounded-2xl bg-slate-800/40 border border-slate-700/50 animate-pop";
+                singleBox.className = "flex flex-col items-center gap-2 p-2.5 rounded-2xl bg-white/95 shadow-md border border-slate-200 animate-pop";
                 singleBox.innerHTML = `
-                    <span class="text-[10px] font-bold text-slate-400 px-1">+1</span>
+                    <span class="text-[10px] font-bold text-slate-600 px-1">+1</span>
                     <button onclick="selectStone('black', ${bId})" class="w-12 h-12 rounded-full bg-slate-900 text-amber-400 font-extrabold text-sm border-2 ${isBSelected ? 'border-amber-400 ring-4 ring-amber-400/50 scale-110' : 'border-slate-700'} flex items-center justify-center stone-shadow-black transition-all transform active:scale-95">
                         +1
                     </button>
@@ -572,9 +572,9 @@
                 const isWSelected = (state.selectedWhiteId === wId);
 
                 const singleBox = document.createElement('div');
-                singleBox.className = "flex flex-col items-center gap-2 p-2.5 rounded-2xl bg-slate-800/40 border border-slate-700/50 animate-pop";
+                singleBox.className = "flex flex-col items-center gap-2 p-2.5 rounded-2xl bg-white/95 shadow-md border border-slate-200 animate-pop";
                 singleBox.innerHTML = `
-                    <span class="text-[10px] font-bold text-slate-400 px-1">-1</span>
+                    <span class="text-[10px] font-bold text-slate-600 px-1">-1</span>
                     <div class="w-12 h-12 invisible"></div>
                     <button onclick="selectStone('white', ${wId})" class="w-12 h-12 rounded-full bg-slate-100 text-slate-900 font-extrabold text-sm border-2 ${isWSelected ? 'border-amber-400 ring-4 ring-amber-400/50 scale-110' : 'border-slate-300'} flex items-center justify-center stone-shadow-white transition-all transform active:scale-95">
                         -1
