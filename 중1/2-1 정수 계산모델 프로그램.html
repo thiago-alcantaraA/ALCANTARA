@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>정수 덧셈 뺄셈 시각화 교구</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Stone animations */
+        @keyframes popIn {
+            0% { transform: scale(0.6); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes fadeOutPair {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15) rotate(5deg); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        .animate-fade-out {
+            animation: fadeOutPair 0.4s ease-in forwards;
+        }
+
+        .stone-shadow-black {
+            box-shadow: inset -2px -2px 4px rgba(255, 255, 255, 0.2), 2px 4px 8px rgba(0, 0, 0, 0.4);
+        }
+        .stone-shadow-white {
+            box-shadow: inset -2px -2px 4px rgba(0, 0, 0, 0.1), 2px 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* SVG Arrow animation */
+        .vector-arrow {
+            stroke-dasharray: 600;
+            stroke-dashoffset: 600;
+            animation: dash 0.8s ease-out forwards;
+        }
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <!-- Header -->
+    <header class="bg-slate-900 text-white shadow-md border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-3.5 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                    <i class="fa-solid fa-calculator text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">정수 덧셈 · 뺄셈 학습 교구</h1>
+                    <p class="text-xs text-slate-400">바둑돌 직관 모델 & 수직선 벡터 시각화</p>
+                </div>
+            </div>
+
+            <!-- View Switcher Tabs -->
+            <div class="flex bg-slate-800/90 p-1 rounded-xl border border-slate-700/60 text-xs sm:text-sm font-semibold">
+                <button id="tabGoStone" onclick="switchView('stone')" class="px-4 py-2 rounded-lg flex items-center gap-2 transition-all bg-indigo-600 text-white shadow-md">
+                    <i class="fa-solid fa-circle-dot"></i>
+                    <span>바둑돌 모델</span>
+                </button>
+                <button id="tabNumberLine" onclick="switchView('line')" class="px-4 py-2 rounded-lg flex items-center gap-2 transition-all text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                    <span>수직선 모델</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-5xl mx-auto w-full px-4 py-6 flex-grow flex flex-col gap-6">
+
+        <!-- Expression Control Box -->
+        <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                <i class="fa-solid fa-sliders text-indigo-500"></i> 식 설정하기
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                <!-- Input A -->
+                <div class="md:col-span-5 bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-bold text-slate-600">첫 번째 수 (A)</label>
+                        <span id="numADisplay" class="text-base font-extrabold text-indigo-600">+3</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="range" id="sliderA" min="-10" max="10" value="3" class="w-full accent-indigo-600 cursor-pointer" oninput="updateControlsFromInputs()">
+                    </div>
+                </div>
+
+                <!-- Operator Toggle -->
+                <div class="md:col-span-2 flex justify-center">
+                    <div class="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                        <button id="opPlusBtn" onclick="setOperator('+')" class="px-4 py-2 rounded-lg font-black text-base transition-all bg-indigo-600 text-white shadow">
+                            +
+                        </button>
+                        <button id="opMinusBtn" onclick="setOperator('-')" class="px-4 py-2 rounded-lg font-black text-base transition-all text-slate-600 hover:bg-slate-200">
+                            -
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Input B -->
+                <div class="md:col-span-5 bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-bold text-slate-600">두 번째 수 (B)</label>
+                        <span id="numBDisplay" class="text-base font-extrabold text-amber-600">+5</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="range" id="sliderB" min="-10" max="10" value="5" class="w-full accent-amber-600 cursor-pointer" oninput="updateControlsFromInputs()">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 1: GO STONE MODEL -->
+        <section id="viewGoStone" class="flex flex-col gap-5">
+            
+            <!-- Go Stone Equation Display Box (Replaced) -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-indigo-200 flex flex-col items-center justify-center gap-2 bg-indigo-50/30">
+                <span class="text-xs font-bold text-indigo-500"><i class="fa-solid fa-square-root-variable mr-1"></i>바둑돌 모델 식과 계산 결과</span>
+                <div id="stoneModelEquationResult" class="text-3xl md:text-4xl font-black text-indigo-700 tracking-tight"></div>
+            </div>
+
+            <!-- Stone Control Bar & Notification -->
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                        <i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i> 검정돌(+1) & 흰돌(-1)
+                    </span>
+                    <span id="stoneInstructionMsg" class="text-xs text-indigo-600 font-semibold">
+                        0쌍은 묶음 처리되어 상쇄 지우기가 가능합니다.
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="addZeroPair()" class="px-3.5 py-1.75 text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 rounded-xl transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus-circle"></i> 0쌍 (+1, -1) 추가
+                    </button>
+                    <button onclick="autoRemoveZeroPairs()" class="px-3.5 py-1.75 text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-300 rounded-xl transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> 0쌍 자동 상쇄 삭제
+                    </button>
+                    <button onclick="resetStones()" class="px-3.5 py-1.75 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-rotate-right"></i> 초기화
+                    </button>
+                </div>
+            </div>
+
+            <!-- Go Stone Board Display -->
+            <div class="bg-emerald-950/90 rounded-2xl p-6 shadow-xl border-4 border-amber-900/60 min-h-[300px] flex flex-col justify-center items-center relative overflow-hidden">
+                <!-- Board grid background accent -->
+                <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
+
+                <!-- Active Selection Action Overlay -->
+                <div id="pairActionOverlay" class="hidden mb-4 bg-amber-500/90 text-slate-900 font-bold px-4 py-2 rounded-full shadow-lg border border-amber-300 flex items-center gap-3 animate-bounce z-20">
+                    <span>선택한 검정돌1 + 흰돌1 (0쌍) 상쇄할까요?</span>
+                    <button onclick="removeSelectedPair()" class="bg-slate-900 text-amber-400 text-xs px-3 py-1 rounded-full hover:bg-black transition">
+                        상쇄 삭제하기
+                    </button>
+                </div>
+
+                <!-- Parallel Layout Container -->
+                <div id="stoneBoardContainer" class="w-full flex justify-center items-center gap-3 flex-wrap z-10 py-4">
+                    <!-- Dynamic rendering of stones in pairs & singles -->
+                </div>
+
+                <!-- Empty State Message -->
+                <div id="emptyBoardMsg" class="hidden text-amber-100/70 text-sm font-medium my-8">
+                    바둑돌이 모두 상쇄되어 남아있는 돌이 없습니다 (값: 0).
+                </div>
+            </div>
+
+            <!-- Current Stone Summary Box -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-slate-900 text-white font-black text-xs flex items-center justify-center stone-shadow-black">+1</div>
+                    <div>
+                        <div class="text-[11px] font-bold text-slate-400">검정돌 (+1)</div>
+                        <div id="countBlackText" class="text-base font-extrabold text-slate-800">0개</div>
+                    </div>
+                </div>
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-white text-slate-800 font-black text-xs border border-slate-300 flex items-center justify-center stone-shadow-white">-1</div>
+                    <div>
+                        <div class="text-[11px] font-bold text-slate-400">흰돌 (-1)</div>
+                        <div id="countWhiteText" class="text-base font-extrabold text-slate-800">0개</div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- VIEW 2: NUMBER LINE MODEL -->
+        <section id="viewNumberLine" class="hidden flex-col gap-5">
+            
+            <!-- Big Result Display -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-indigo-200 flex flex-col items-center justify-center gap-2 bg-indigo-50/30">
+                <span class="text-sm font-bold text-indigo-500"><i class="fa-solid fa-square-root-variable mr-1"></i>수직선 계산 결과</span>
+                <div id="numberLineBigResult" class="text-4xl md:text-5xl font-black text-indigo-700 tracking-tight"></div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col gap-4">
+                
+                <div class="flex justify-between items-center flex-wrap gap-2">
+                    <span class="text-xs font-bold bg-slate-800 text-amber-400 px-3 py-1 rounded-full flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrows-left-right"></i> 수직선 이동 시각화
+                    </span>
+                    <div class="flex items-center gap-3 text-xs font-semibold text-slate-500">
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-blue-600 inline-block"></span> 양수(+) 방향 이동 (파란색, 위)</span>
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-amber-700 inline-block"></span> 음수(-) 방향 이동 (갈색, 아래)</span>
+                    </div>
+                </div>
+
+                <!-- SVG Canvas Container -->
+                <div class="w-full overflow-x-auto custom-scrollbar py-2 bg-slate-50/80 rounded-2xl border border-slate-200">
+                    <svg id="numberLineSvg" class="w-full min-w-[700px] h-[340px]" viewBox="0 0 800 340">
+                        <!-- Dynamic SVG Elements will be rendered here -->
+                    </svg>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-4 text-center border-t border-slate-800 mt-6">
+        <p>정수 덧셈 뺄셈 바둑돌 & 수직선 교구 | 초·중등 수학 원리 탐구</p>
+    </footer>
+
+    <script>
+        // --- STATE MANAGEMENT ---
+        let state = {
+            view: 'stone', // 'stone' or 'line'
+            numA: 3,
+            operator: '+',
+            numB: 5,
+            stonesBlack: [], // array of ids
+            stonesWhite: [], // array of ids
+            selectedBlackId: null,
+            selectedWhiteId: null,
+            nextStoneId: 1
+        };
+
+        // --- SOUND EFFECTS (Web Audio API) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'pop') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.08);
+                } else if (type === 'remove') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.15);
+                } else if (type === 'add') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(500, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.1);
+                }
+            } catch (e) {
+                // Audio fallback silence
+            }
+        }
+
+        // --- VIEW SWITCHING ---
+        function switchView(viewName) {
+            state.view = viewName;
+            const tabGoStone = document.getElementById('tabGoStone');
+            const tabNumberLine = document.getElementById('tabNumberLine');
+            const viewGoStone = document.getElementById('viewGoStone');
+            const viewNumberLine = document.getElementById('viewNumberLine');
+
+            if (viewName === 'stone') {
+                tabGoStone.className = "px-4 py-2 rounded-lg flex items-center gap-2 transition-all bg-indigo-600 text-white shadow-md";
+                tabNumberLine.className = "px-4 py-2 rounded-lg flex items-center gap-2 transition-all text-slate-400 hover:text-white";
+                viewGoStone.classList.remove('hidden');
+                viewNumberLine.classList.add('hidden');
+                renderStoneBoard();
+            } else {
+                tabNumberLine.className = "px-4 py-2 rounded-lg flex items-center gap-2 transition-all bg-indigo-600 text-white shadow-md";
+                tabGoStone.className = "px-4 py-2 rounded-lg flex items-center gap-2 transition-all text-slate-400 hover:text-white";
+                viewNumberLine.classList.remove('hidden');
+                viewGoStone.classList.add('hidden');
+                renderNumberLine();
+            }
+        }
+
+        // --- CONTROL INPUT HANDLERS ---
+        function updateControlsFromInputs() {
+            state.numA = parseInt(document.getElementById('sliderA').value);
+            state.numB = parseInt(document.getElementById('sliderB').value);
+            
+            document.getElementById('numADisplay').textContent = formatNum(state.numA);
+            document.getElementById('numBDisplay').textContent = formatNum(state.numB);
+            
+            updateEquationDisplay();
+            resetStones();
+            if (state.view === 'line') {
+                renderNumberLine();
+            }
+        }
+
+        function setOperator(op) {
+            state.operator = op;
+            const plusBtn = document.getElementById('opPlusBtn');
+            const minusBtn = document.getElementById('opMinusBtn');
+
+            if (op === '+') {
+                plusBtn.className = "px-4 py-2 rounded-lg font-black text-base transition-all bg-indigo-600 text-white shadow";
+                minusBtn.className = "px-4 py-2 rounded-lg font-black text-base transition-all text-slate-600 hover:bg-slate-200";
+            } else {
+                minusBtn.className = "px-4 py-2 rounded-lg font-black text-base transition-all bg-amber-600 text-white shadow";
+                plusBtn.className = "px-4 py-2 rounded-lg font-black text-base transition-all text-slate-600 hover:bg-slate-200";
+            }
+
+            updateEquationDisplay();
+            resetStones();
+            if (state.view === 'line') {
+                renderNumberLine();
+            }
+        }
+
+        function formatNum(n) {
+            return n > 0 ? `+${n}` : `${n}`;
+        }
+
+        function calculateResult() {
+            return state.operator === '+' ? state.numA + state.numB : state.numA - state.numB;
+        }
+
+        function updateEquationDisplay() {
+            const formatN = (n) => n > 0 ? `+${n}` : `${n}`;
+            const res = calculateResult();
+            const eqStr = `(${formatN(state.numA)}) ${state.operator} (${formatN(state.numB)}) = ${formatN(res)}`;
+            
+            const stoneEqEl = document.getElementById('stoneModelEquationResult');
+            if (stoneEqEl) {
+                stoneEqEl.textContent = eqStr;
+            }
+        }
+
+        // --- GO STONE MODEL ENGINE ---
+        function resetStones() {
+            state.stonesBlack = [];
+            state.stonesWhite = [];
+            state.selectedBlackId = null;
+            state.selectedWhiteId = null;
+            state.nextStoneId = 1;
+
+            // Generate initial stones based on expression A + B or A - B
+            let countBlack = 0;
+            let countWhite = 0;
+
+            // First add stones for A
+            if (state.numA > 0) countBlack += state.numA;
+            else if (state.numA < 0) countWhite += Math.abs(state.numA);
+
+            // For second term & operator:
+            // A + B means we add B stones (if B > 0, add black; if B < 0, add white)
+            // A - B means we TAKE AWAY B stones (if B > 0, remove black/add white; if B < 0, remove white/add black)
+            let secondBlackToAdd = 0;
+            let secondWhiteToAdd = 0;
+
+            if (state.operator === '+') {
+                if (state.numB > 0) secondBlackToAdd += state.numB;
+                else if (state.numB < 0) secondWhiteToAdd += Math.abs(state.numB);
+            } else {
+                // Subtraction: A - B is equivalent to adding the opposite (-B)
+                // e.g. +3 - (+5) -> take away 5 black stones (or add 5 white stones)
+                // e.g. +3 - (-5) -> take away 5 white stones (or add 5 black stones)
+                const oppositeB = -state.numB;
+                if (oppositeB > 0) secondBlackToAdd += oppositeB;
+                else if (oppositeB < 0) secondWhiteToAdd += Math.abs(oppositeB);
+            }
+
+            countBlack += secondBlackToAdd;
+            countWhite += secondWhiteToAdd;
+
+            for (let i = 0; i < countBlack; i++) {
+                state.stonesBlack.push(state.nextStoneId++);
+            }
+            for (let i = 0; i < countWhite; i++) {
+                state.stonesWhite.push(state.nextStoneId++);
+            }
+
+            updateEquationDisplay();
+            renderStoneBoard();
+        }
+
+        function addZeroPair() {
+            state.stonesBlack.push(state.nextStoneId++);
+            state.stonesWhite.push(state.nextStoneId++);
+            playSound('add');
+            renderStoneBoard();
+        }
+
+        function selectStone(type, id) {
+            if (type === 'black') {
+                state.selectedBlackId = (state.selectedBlackId === id) ? null : id;
+            } else {
+                state.selectedWhiteId = (state.selectedWhiteId === id) ? null : id;
+            }
+            playSound('pop');
+            renderStoneBoard();
+        }
+
+        function removeSelectedPair() {
+            if (state.selectedBlackId && state.selectedWhiteId) {
+                state.stonesBlack = state.stonesBlack.filter(i => i !== state.selectedBlackId);
+                state.stonesWhite = state.stonesWhite.filter(i => i !== state.selectedWhiteId);
+                state.selectedBlackId = null;
+                state.selectedWhiteId = null;
+                playSound('remove');
+                renderStoneBoard();
+            }
+        }
+
+        function autoRemoveZeroPairs() {
+            const pairCount = Math.min(state.stonesBlack.length, state.stonesWhite.length);
+            if (pairCount === 0) return;
+
+            let count = 0;
+            const interval = setInterval(() => {
+                if (state.stonesBlack.length > 0 && state.stonesWhite.length > 0) {
+                    state.stonesBlack.pop();
+                    state.stonesWhite.pop();
+                    playSound('remove');
+                    renderStoneBoard();
+                    count++;
+                }
+                if (count >= pairCount) {
+                    clearInterval(interval);
+                }
+            }, 200);
+        }
+
+        function renderStoneBoard() {
+            const container = document.getElementById('stoneBoardContainer');
+            const emptyMsg = document.getElementById('emptyBoardMsg');
+            const overlay = document.getElementById('pairActionOverlay');
+            
+            container.innerHTML = '';
+
+            const numBlack = state.stonesBlack.length;
+            const numWhite = state.stonesWhite.length;
+            const numPairs = Math.min(numBlack, numWhite);
+
+            document.getElementById('countBlackText').textContent = `${numBlack}개`;
+            document.getElementById('countWhiteText').textContent = `${numWhite}개`;
+
+            if (numBlack === 0 && numWhite === 0) {
+                emptyMsg.classList.remove('hidden');
+            } else {
+                emptyMsg.classList.add('hidden');
+            }
+
+            // Render Selection Action Button overlay if 1 black & 1 white selected
+            if (state.selectedBlackId && state.selectedWhiteId) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
+
+            // Render Parallel Columns:
+            // First render the paired zero-pairs with outer brackets
+            for (let i = 0; i < numPairs; i++) {
+                const bId = state.stonesBlack[i];
+                const wId = state.stonesWhite[i];
+
+                const isBSelected = (state.selectedBlackId === bId);
+                const isWSelected = (state.selectedWhiteId === wId);
+
+                const pairBox = document.createElement('div');
+                pairBox.className = "flex flex-col items-center gap-2 p-2.5 rounded-2xl bg-amber-500/10 border-2 border-dashed border-amber-400/60 relative group transition-all hover:bg-amber-500/20 animate-pop";
+
+                pairBox.innerHTML = `
+                    <span class="text-[10px] font-extrabold text-amber-300 tracking-tight bg-amber-900/80 px-2 py-0.5 rounded-full border border-amber-500/50">0 쌍</span>
+                    
+                    <!-- Black Stone (Top Row) -->
+                    <button onclick="selectStone('black', ${bId})" class="w-12 h-12 rounded-full bg-slate-900 text-amber-400 font-extrabold text-sm border-2 ${isBSelected ? 'border-amber-400 ring-4 ring-amber-400/50 scale-110' : 'border-slate-700'} flex items-center justify-center stone-shadow-black transition-all transform active:scale-95">
+                        +1
+                    </button>
+
+                    <!-- Connector Line -->
+                    <div class="w-0.5 h-3 bg-amber-400/50"></div>
+
+                    <!-- White Stone (Bottom Row) -->
+                    <button onclick="selectStone('white', ${wId})" class="w-12 h-12 rounded-full bg-slate-100 text-slate-900 font-extrabold text-sm border-2 ${isWSelected ? 'border-amber-400 ring-4 ring-amber-400/50 scale-110' : 'border-slate-300'} flex items-center justify-center stone-shadow-white transition-all transform active:scale-95">
+                        -1
+                    </button>
+                `;
+                container.appendChild(pairBox);
+            }
+
+            // Remaining unpaired Black stones
+            for (let i = numPairs; i < numBlack; i++) {
+                const bId = state.stonesBlack[i];
+                const isBSelected = (state.selectedBlackId === bId);
+
+                const singleBox = document.createElement('div');
+                singleBox.className = "flex flex-col items-center gap-2 p-2.5 rounded-2xl bg-slate-800/40 border border-slate-700/50 animate-pop";
+                singleBox.innerHTML = `
+                    <span class="text-[10px] font-bold text-slate-400 px-1">+1</span>
+                    <button onclick="selectStone('black', ${bId})" class="w-12 h-12 rounded-full bg-slate-900 text-amber-400 font-extrabold text-sm border-2 ${isBSelected ? 'border-amber-400 ring-4 ring-amber-400/50 scale-110' : 'border-slate-700'} flex items-center justify-center stone-shadow-black transition-all transform active:scale-95">
+                        +1
+                    </button>
+                    <div class="w-12 h-12 invisible"></div>
+                `;
+                container.appendChild(singleBox);
+            }
+
+            // Remaining unpaired White stones
+            for (let i = numPairs; i < numWhite; i++) {
+                const wId = state.stonesWhite[i];
+                const isWSelected = (state.selectedWhiteId === wId);
+
+                const singleBox = document.createElement('div');
+                singleBox.className = "flex flex-col items-center gap-2 p-2.5 rounded-2xl bg-slate-800/40 border border-slate-700/50 animate-pop";
+                singleBox.innerHTML = `
+                    <span class="text-[10px] font-bold text-slate-400 px-1">-1</span>
+                    <div class="w-12 h-12 invisible"></div>
+                    <button onclick="selectStone('white', ${wId})" class="w-12 h-12 rounded-full bg-slate-100 text-slate-900 font-extrabold text-sm border-2 ${isWSelected ? 'border-amber-400 ring-4 ring-amber-400/50 scale-110' : 'border-slate-300'} flex items-center justify-center stone-shadow-white transition-all transform active:scale-95">
+                        -1
+                    </button>
+                `;
+                container.appendChild(singleBox);
+            }
+        }
+
+        // --- NUMBER LINE MODEL ENGINE ---
+        function renderNumberLine() {
+            const svg = document.getElementById('numberLineSvg');
+            svg.innerHTML = ''; // Clear canvas
+
+            const valA = state.numA;
+            const lineOp = state.operator;
+            const lineB = state.numB;
+            
+            // Effective movement for second term:
+            // If operator is '+', move by +lineB
+            // If operator is '-', move by opposite of lineB (-lineB)
+            const moveB = (lineOp === '+') ? lineB : -lineB;
+            const result = valA + moveB;
+
+            // Compute tick display bounds dynamically
+            const minVal = Math.min(-10, valA, result) - 2;
+            const maxVal = Math.max(10, valA, result) + 2;
+
+            const svgWidth = 800;
+            const axisY = 160; // Baseline Y coordinate
+            const padding = 50;
+
+            // X scale mapper function
+            const getX = (v) => padding + ((v - minVal) / (maxVal - minVal)) * (svgWidth - padding * 2);
+
+            // 1. Create Arrowhead Defs
+            const defs = createSvgElem('defs');
+            defs.innerHTML = `
+                <marker id="arrow-pos" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb" />
+                </marker>
+                <marker id="arrow-neg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#b45309" />
+                </marker>
+            `;
+            svg.appendChild(defs);
+
+            // 2. Draw Main Axis Line
+            const mainAxis = createSvgElem('line', {
+                x1: 20, y1: axisY, x2: svgWidth - 20, y2: axisY,
+                stroke: '#475569', 'stroke-width': '3', 'stroke-linecap': 'round'
+            });
+            svg.appendChild(mainAxis);
+
+            // Ticks and Tick Labels
+            for (let v = minVal; v <= maxVal; v++) {
+                const x = getX(v);
+                const isZero = (v === 0);
+
+                const tick = createSvgElem('line', {
+                    x1: x, y1: axisY - (isZero ? 10 : 6),
+                    x2: x, y2: axisY + (isZero ? 10 : 6),
+                    stroke: isZero ? '#0f172a' : '#94a3b8',
+                    'stroke-width': isZero ? '3' : '1.5'
+                });
+                svg.appendChild(tick);
+
+                const label = createSvgElem('text', {
+                    x: x, y: axisY + 24,
+                    'text-anchor': 'middle',
+                    fill: isZero ? '#0f172a' : '#64748b',
+                    'font-size': isZero ? '14' : '12',
+                    'font-weight': isZero ? '800' : '600'
+                });
+                label.textContent = v;
+                svg.appendChild(label);
+            }
+
+            // 3. Helper for drawing directional vectors
+            function drawVector(xStart, xEnd, value, labelText) {
+                if (value === 0) return;
+                
+                const isPos = value > 0;
+                const color = isPos ? '#2563eb' : '#b45309'; 
+                const marker = isPos ? 'url(#arrow-pos)' : 'url(#arrow-neg)';
+                const midX = (xStart + xEnd) / 2;
+                
+                const arcHeight = Math.min(70, Math.max(35, Math.abs(value) * 6)) + 20;
+
+                let yStart, yControl, labelY;
+
+                if (isPos) {
+                    yStart = axisY - 12;
+                    yControl = yStart - arcHeight;
+                    labelY = yControl - 10;
+                    
+                    if (xStart !== getX(0)) {
+                        const guideStart = createSvgElem('line', {
+                            x1: xStart, y1: axisY - 12, x2: xStart, y2: axisY,
+                            stroke: color, 'stroke-width': '1.5', 'stroke-dasharray': '3,3'
+                        });
+                        svg.appendChild(guideStart);
+                    }
+                    
+                    const guideEnd = createSvgElem('line', {
+                        x1: xEnd, y1: axisY - 12, x2: xEnd, y2: axisY,
+                        stroke: color, 'stroke-width': '1.5', 'stroke-dasharray': '3,3'
+                    });
+                    svg.appendChild(guideEnd);
+
+                } else {
+                    yStart = axisY + 36;
+                    yControl = yStart + arcHeight;
+                    labelY = yControl + 15;
+
+                    const connStart = createSvgElem('line', {
+                        x1: xStart, y1: axisY, x2: xStart, y2: yStart,
+                        stroke: color, 'stroke-width': '1.5', 'stroke-dasharray': '3,3'
+                    });
+                    svg.appendChild(connStart);
+
+                    const connEnd = createSvgElem('line', {
+                        x1: xEnd, y1: axisY, x2: xEnd, y2: yStart,
+                        stroke: color, 'stroke-width': '1.5', 'stroke-dasharray': '3,3'
+                    });
+                    svg.appendChild(connEnd);
+                }
+
+                const pathData = `M ${xStart} ${yStart} Q ${midX} ${yControl} ${xEnd} ${yStart}`;
+                const path = createSvgElem('path', {
+                    d: pathData, fill: 'none',
+                    stroke: color, 'stroke-width': '3.5',
+                    'marker-end': marker, class: 'vector-arrow'
+                });
+                svg.appendChild(path);
+
+                const label = createSvgElem('text', {
+                    x: midX, y: labelY,
+                    'text-anchor': 'middle', fill: color,
+                    'font-size': '13', 'font-weight': 'bold'
+                });
+                label.textContent = labelText;
+                svg.appendChild(label);
+            }
+
+            // 4. Draw Vector A & Vector B
+            const x0 = getX(0);
+            const xA = getX(valA);
+            const xResult = getX(result);
+
+            drawVector(x0, xA, valA, formatNum(valA));
+            
+            // Display label showing the math rule for subtraction of signed numbers
+            let secondDisplayLabel = `${lineOp} (${formatNum(lineB)})`;
+            if (lineOp === '-') {
+                secondDisplayLabel = `- (${formatNum(lineB)}) ➔ 역원(${formatNum(moveB)}) 이동`;
+            }
+            drawVector(xA, xResult, moveB, secondDisplayLabel);
+
+            // 5. Final Result Indicator Circle
+            const resultCircle = createSvgElem('circle', {
+                cx: xResult, cy: axisY, r: '7',
+                fill: '#f59e0b', stroke: '#78350f', 'stroke-width': '2.5'
+            });
+            svg.appendChild(resultCircle);
+
+            document.getElementById('numberLineBigResult').textContent = 
+                `(${formatNum(valA)}) ${lineOp} (${formatNum(lineB)}) = ${formatNum(result)}`;
+        }
+
+        // SVG Element Helper
+        function createSvgElem(type, attrs = {}) {
+            const elem = document.createElementNS('http://www.w3.org/2000/svg', type);
+            for (let k in attrs) {
+                elem.setAttribute(k, attrs[k]);
+            }
+            return elem;
+        }
+
+        // --- INIT ON LOAD ---
+        window.onload = function() {
+            updateControlsFromInputs();
+            updateEquationDisplay();
+        };
+    </script>
+</body>
+</html>
