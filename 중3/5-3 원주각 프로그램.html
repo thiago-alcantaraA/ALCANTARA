@@ -155,6 +155,20 @@
             return res < 0 ? res + Math.PI * 2 : res;
         }
 
+        // 특정 각도(pAngle)가 호 AB 중 짧은 호(Minor Arc) 위에 있는지 판별
+        function isPointOnMinorArc(pAngle, aAng, bAng) {
+            let a = norm(aAng);
+            let b = norm(bAng);
+            let p = norm(pAngle);
+            let diffAB = norm(b - a);
+            
+            if (diffAB <= Math.PI) {
+                return norm(p - a) <= diffAB;
+            } else {
+                return norm(p - b) <= (Math.PI * 2 - diffAB);
+            }
+        }
+
         canvas.addEventListener('pointerdown', (e) => {
             const rect = canvas.getBoundingClientRect();
             const px = e.clientX - rect.left;
@@ -200,13 +214,32 @@
 
         function draw() {
             ctx.clearRect(0, 0, width, height);
+
+            // 0. 점 P/Q가 짧은 호(minor arc) 위에 있는지 판단
+            let activePt = userPoints.find(p => p.id === draggingPoint) || userPoints[0];
+            let pOnMinor = activePt ? isPointOnMinorArc(activePt.angle, angleA, angleB) : false;
+
             let nA = norm(angleA), nB = norm(angleB), arcLen = norm(nB - nA);
+            let isArcLenMajor = arcLen > Math.PI;
+
+            let minorStart = isArcLenMajor ? nB : nA;
+            let minorEnd = isArcLenMajor ? nA : nB;
+            let minorSpan = isArcLenMajor ? Math.PI * 2 - arcLen : arcLen;
+
+            let startArc, endArc, subtendedArc;
+            if (pOnMinor) {
+                // P가 짧은 호 위에 위치하면 중심각은 반대편(우등각/긴 호)을 바라봄
+                startArc = minorEnd;
+                endArc = minorStart;
+                subtendedArc = Math.PI * 2 - minorSpan;
+            } else {
+                // P가 긴 호 위에 있거나 점이 없으면 중심각은 짧은 호를 바라봄
+                startArc = minorStart;
+                endArc = minorEnd;
+                subtendedArc = minorSpan;
+            }
 
             // 1. 중심각 호 그리기
-            let startArc = arcLen > Math.PI ? nB : nA;
-            let endArc = arcLen > Math.PI ? nA : nB;
-            let subtendedArc = arcLen > Math.PI ? Math.PI * 2 - arcLen : arcLen;
-            
             ctx.beginPath();
             ctx.arc(cx, cy, 50, startArc, endArc, false);
             ctx.strokeStyle = '#ea580c';
@@ -214,7 +247,8 @@
             ctx.stroke();
 
             let centralDeg = subtendedArc * 180 / Math.PI;
-            drawText(`${centralDeg.toFixed(1)}°`, cx + 80 * Math.cos(startArc + subtendedArc / 2), cy + 80 * Math.sin(startArc + subtendedArc / 2), '#ea580c');
+            let midArc = startArc + subtendedArc / 2;
+            drawText(`${centralDeg.toFixed(1)}°`, cx + 80 * Math.cos(midArc), cy + 80 * Math.sin(midArc), '#ea580c');
 
             // 2. 기본 원 그리기
             ctx.beginPath();
@@ -233,7 +267,6 @@
             if (showProof && userPoints.length > 0) {
                 userPoints.forEach(up => {
                     const pPt = { x: cx + circleRadius * Math.cos(up.angle), y: cy + circleRadius * Math.sin(up.angle) };
-                    // P에서 중심 O를 지나 원의 반대쪽 끝(P')까지 반직선/지름 그리기
                     const oppX = cx - (pPt.x - cx);
                     const oppY = cy - (pPt.y - cy);
                     
@@ -247,7 +280,6 @@
                     ctx.stroke();
                     ctx.restore();
 
-                    // 중심 O 너머 반대쪽 점 표식
                     drawPoint(oppX, oppY, '#64748b', 4);
                 });
             }
@@ -277,14 +309,17 @@
                     ctx.lineWidth = 3; 
                     ctx.stroke();
                     
-                    let inscribedDeg = centralDeg / 2;
+                    let upOnMinor = isPointOnMinorArc(up.angle, angleA, angleB);
+                    let ptCentralDeg = upOnMinor ? (360 - minorSpan * 180 / Math.PI) : (minorSpan * 180 / Math.PI);
+                    let inscribedDeg = ptCentralDeg / 2;
+                    
                     drawText(`${inscribedDeg.toFixed(1)}°`, pPt.x + 65 * Math.cos(aPA + (diff < Math.PI ? diff : Math.PI * 2 - diff) / 2), pPt.y + 65 * Math.sin(aPA + (diff < Math.PI ? diff : Math.PI * 2 - diff) / 2), style.text);
                     drawPoint(pPt.x, pPt.y, style.point);
                     drawLabelOutside(up.id, pPt, {x: cx, y: cy}, style.point);
                     
                     htmlContent += `
                         <div class="p-2 bg-slate-50 rounded-lg border border-slate-100">
-                            <p class="text-xs text-slate-500">중심각: <span class="text-orange-600 font-bold text-sm">${centralDeg.toFixed(1)}°</span></p>
+                            <p class="text-xs text-slate-500">중심각: <span class="text-orange-600 font-bold text-sm">${ptCentralDeg.toFixed(1)}°</span></p>
                             <p class="text-xs text-slate-500">원주각 (${up.id}): <span class="${style.class} font-bold text-sm">${inscribedDeg.toFixed(1)}°</span></p>
                         </div>
                     `;
@@ -294,14 +329,12 @@
                 relationText.innerHTML = `<span class="text-slate-800 font-bold">중심각 = 2 × 원주각</span>`;
                 relationText.className = "text-sm text-emerald-700 font-bold bg-emerald-50 p-2 rounded-lg text-center border border-emerald-200";
             } else {
-                // 원주각 점이 없을 때: 각도비교 영역 숨김 및 초기 안내로 리셋
                 angleList.innerHTML = '';
                 relationText.innerHTML = `원 테두리를 클릭하여 점을 찍어보세요 (최대 2개).`;
                 relationText.className = "text-sm text-slate-500 font-medium";
                 showProof = false;
             }
 
-            // 증명 뱃지 상태 업데이트
             if (showProof && userPoints.length > 0) {
                 proofBadge.classList.remove('hidden');
             } else {
