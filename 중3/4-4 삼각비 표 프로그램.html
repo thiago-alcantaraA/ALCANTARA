@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>삼각비 표 학습 도우미</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 첫 번째 선택 (노란색/빨간색) */
+        .highlight-line-1 { background-color: #fef08a !important; }
+        .highlight-intersect-1 { background-color: #ef4444 !important; color: white !important; font-weight: bold; }
+        
+        /* 동일한 삼각비 찾기 매칭 하이라이트 (에메랄드 그린) */
+        .highlight-match { 
+            background-color: #10b981 !important; 
+            color: white !important; 
+            font-weight: bold; 
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.7);
+            animation: pulse-match 1.5s infinite;
+        }
+
+        @keyframes pulse-match {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+
+        .table-container { max-height: 60vh; overflow-y: auto; border: 1px solid #e5e7eb; }
+        table { border-collapse: separate; border-spacing: 0; }
+        th { position: sticky; top: 0; background-color: #f3f4f6; z-index: 30; border-bottom: 2px solid #e5e7eb; }
+        
+        /* 첫 번째 열(각도 라벨) 고정 */
+        td:first-child, th:first-child { 
+            position: sticky; 
+            left: 0; 
+            background-color: #f8fafc; 
+            z-index: 40; 
+            border-right: 2px solid #e5e7eb;
+        }
+        th:first-child { z-index: 50; }
+        
+        .clickable-cell:hover {
+            background-color: #cbd5e1;
+            cursor: pointer;
+        }
+
+        /* 버튼 애니메이션 */
+        .btn-active { background-color: #ef4444 !important; color: white !important; border-color: #dc2626 !important; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen p-4 md:p-8 text-slate-800 font-sans">
+
+    <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-xl p-6">
+        <!-- 헤더 영역 -->
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">삼각비 표 완벽 가이드</h1>
+            <p class="text-slate-600">각도(0°~90°)를 입력하거나 표의 칸을 클릭하여 sin, cos, tan 값을 확인하고 비교해 보세요.</p>
+        </div>
+
+        <!-- 컨트롤 영역 -->
+        <div class="flex flex-wrap items-center justify-start gap-6 mb-6 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+            
+            <!-- 각도 입력 세트 -->
+            <div class="flex items-center gap-4 p-3 bg-red-50 rounded-2xl border border-red-100 flex-wrap md:flex-nowrap">
+                <div class="flex flex-col">
+                    <label for="searchVal" class="text-xs font-bold text-red-700 mb-1 ml-1">각도 입력 (0°~90°)</label>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="searchVal" min="0" max="90" step="1"
+                               placeholder="30"
+                               class="w-28 px-3 py-2 border-2 border-red-200 rounded-lg focus:outline-none focus:border-red-500 text-lg font-bold text-center">
+                        <span class="text-xl font-bold text-red-600">°</span>
+                    </div>
+                </div>
+                <div id="resultDisplay" class="flex items-center gap-3 transition-all duration-300 opacity-0 flex-wrap sm:flex-nowrap">
+                    <!-- 근사값 표시 -->
+                </div>
+            </div>
+
+            <!-- 같은 값을 갖는 삼각비 찾기 버튼 -->
+            <div class="flex flex-col justify-end">
+                <button id="findEqualBtn" class="px-5 py-3.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 active:scale-95 transition-all shadow-md flex items-center gap-2 border border-emerald-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <span>같은 값을 갖는 삼각비 찾기</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 탐색 결과 알림 배너 -->
+        <div id="matchBanner" class="hidden mb-6 p-4 bg-emerald-50 border-2 border-emerald-200 rounded-2xl text-emerald-900 font-medium flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">✨</span>
+                <span id="matchBannerText" class="text-base"></span>
+            </div>
+            <button id="closeBannerBtn" class="text-emerald-500 hover:text-emerald-800 font-bold px-2 py-1">✕ 닫기</button>
+        </div>
+
+        <!-- 범례 및 안내 설명 -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4 text-sm font-medium">
+            <div class="flex flex-wrap gap-6 ml-2">
+                <div class="flex items-center gap-2 text-red-600">
+                    <div class="w-4 h-4 bg-yellow-200 border border-yellow-400 rounded"></div>
+                    <span>선택 경로</span>
+                    <div class="w-4 h-4 bg-red-500 rounded ml-2"></div>
+                    <span>선택한 삼각비</span>
+                </div>
+                <div class="flex items-center gap-2 text-emerald-600">
+                    <div class="w-4 h-4 bg-emerald-500 rounded ring-2 ring-emerald-300"></div>
+                    <span>같은 값의 삼각비</span>
+                </div>
+            </div>
+
+            <!-- 표 오른쪽 위 근사값 설명 -->
+            <div class="text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 flex items-center gap-1.5 self-end sm:self-auto">
+                <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>※ 표의 수치는 <strong>소수점 아래 다섯째 자리에서 반올림</strong>하여 넷째 자리까지 나타낸 근사값입니다.</span>
+            </div>
+        </div>
+
+        <!-- 테이블 영역 -->
+        <div class="table-container rounded-xl shadow-inner border border-slate-200">
+            <table id="rootTable" class="w-full text-center text-sm border-collapse">
+                <thead>
+                    <tr id="tableHeader">
+                        <th class="p-4 border-b border-r font-black text-slate-700 bg-slate-100 min-w-[80px]">각도(°)</th>
+                        <th class="p-4 border-b border-r font-bold text-slate-700 bg-slate-100 min-w-[120px]">sin</th>
+                        <th class="p-4 border-b border-r font-bold text-slate-700 bg-slate-100 min-w-[120px]">cos</th>
+                        <th class="p-4 border-b border-r font-bold text-slate-700 bg-slate-100 min-w-[120px]">tan</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const tableBody = document.getElementById('tableBody');
+        const searchInput1 = document.getElementById('searchVal');
+        const resultDisplay1 = document.getElementById('resultDisplay');
+        const findEqualBtn = document.getElementById('findEqualBtn');
+        const matchBanner = document.getElementById('matchBanner');
+        const matchBannerText = document.getElementById('matchBannerText');
+        const closeBannerBtn = document.getElementById('closeBannerBtn');
+
+        let selectedRatio1 = null; // 'sin', 'cos', 'tan'
+        let matchedCellsList = [];
+
+        // 1. 삼각비 세부 계산 함수
+        function getTrigValues(angleDeg) {
+            const rad = (angleDeg * Math.PI) / 180;
+            const sinVal = Math.sin(rad).toFixed(4);
+            const cosVal = Math.cos(rad).toFixed(4);
+            let tanVal;
+            
+            if (angleDeg === 90) {
+                tanVal = "—";
+            } else {
+                tanVal = Math.tan(rad).toFixed(4);
+            }
+
+            return { sin: sinVal, cos: cosVal, tan: tanVal };
+        }
+
+        // 2. 데이터 행 생성 (0도 ~ 90도)
+        function generateTable() {
+            for (let angle = 0; angle <= 90; angle++) {
+                const tr = document.createElement('tr');
+                tr.dataset.angle = angle;
+
+                const tdAngle = document.createElement('td');
+                tdAngle.className = 'p-3 border-b border-r font-bold text-slate-800 bg-slate-50';
+                tdAngle.innerText = `${angle}°`;
+                tr.appendChild(tdAngle);
+
+                const values = getTrigValues(angle);
+                const ratios = ['sin', 'cos', 'tan'];
+
+                ratios.forEach(ratio => {
+                    const td = document.createElement('td');
+                    td.className = 'clickable-cell p-3 border-b border-r text-slate-600 transition-all duration-150 font-mono';
+                    td.innerText = values[ratio];
+                    td.dataset.ratio = ratio;
+                    td.dataset.angle = angle;
+
+                    td.addEventListener('click', () => {
+                        if (searchInput1) searchInput1.value = angle;
+                        selectedRatio1 = ratio;
+                        clearMatches();
+                        updateHighlight();
+                    });
+                    tr.appendChild(td);
+                });
+
+                tableBody.appendChild(tr);
+            }
+        }
+
+        generateTable();
+
+        function clearMatches() {
+            matchedCellsList = [];
+            document.querySelectorAll('.highlight-match').forEach(td => td.classList.remove('highlight-match'));
+            if (matchBanner) matchBanner.classList.add('hidden');
+        }
+
+        // 3. 하이라이트 통합 로직
+        function updateHighlight() {
+            // 기존 선택 초기화 (매칭 제외)
+            document.querySelectorAll('td').forEach(td => {
+                td.classList.remove('highlight-line-1', 'highlight-intersect-1');
+            });
+
+            if (searchInput1) applyHighlight(searchInput1.value, selectedRatio1, resultDisplay1);
+        }
+
+        function applyHighlight(valString, ratioType, displayElement) {
+            if (!displayElement) return;
+
+            const angle = parseInt(valString, 10);
+            
+            if (isNaN(angle) || angle < 0 || angle > 90) {
+                displayElement.style.opacity = "0";
+                return;
+            }
+
+            const values = getTrigValues(angle);
+
+            const ratios = [
+                { key: 'sin', label: 'sin' },
+                { key: 'cos', label: 'cos' },
+                { key: 'tan', label: 'tan' }
+            ];
+
+            displayElement.innerHTML = ratios.map(r => {
+                const isSelected = ratioType === r.key;
+                const activeClass = isSelected
+                    ? 'bg-red-600 text-white shadow-lg ring-2 ring-red-400 scale-105 font-bold cursor-pointer'
+                    : 'bg-white text-red-900 border border-red-200 shadow-sm hover:border-red-300 cursor-pointer';
+
+                return `
+                    <div onclick="selectRatioFromCard('${r.key}')" class="flex flex-col items-center justify-center min-w-[95px] px-4 py-2.5 rounded-xl transition-all duration-200 ${activeClass}">
+                        <span class="text-xs uppercase tracking-wider font-extrabold ${isSelected ? 'text-red-100' : 'text-slate-500'}">${r.label}</span>
+                        <span class="text-xl font-black font-mono mt-0.5">${values[r.key]}</span>
+                    </div>
+                `;
+            }).join('');
+
+            displayElement.style.opacity = "1";
+
+            const targetRow = document.querySelector(`tr[data-angle="${angle}"]`);
+            if (targetRow) {
+                targetRow.querySelectorAll('td').forEach(td => td.classList.add('highlight-line-1'));
+
+                if (ratioType) {
+                    document.querySelectorAll(`#tableBody td[data-ratio="${ratioType}"]`).forEach(td => {
+                        if (td.dataset.angle == angle) {
+                            td.classList.add('highlight-intersect-1');
+                        } else {
+                            td.classList.add('highlight-line-1');
+                        }
+                    });
+                }
+
+                targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        window.selectRatioFromCard = function(ratioKey) {
+            selectedRatio1 = ratioKey;
+            clearMatches();
+            updateHighlight();
+        };
+
+        // 4. 같은 값을 갖는 삼각비 찾기 기능
+        function findEqualTrigValues() {
+            clearMatches();
+
+            const angle = parseInt(searchInput1.value, 10);
+            if (isNaN(angle) || angle < 0 || angle > 90) {
+                alert("올바른 각도(0°~90°)를 먼저 입력해 주세요.");
+                return;
+            }
+
+            if (!selectedRatio1) {
+                selectedRatio1 = 'sin'; // 기본값 sin 지정
+                updateHighlight();
+            }
+
+            const currentValues = getTrigValues(angle);
+            const targetVal = currentValues[selectedRatio1];
+
+            if (targetVal === "—") {
+                if (matchBannerText && matchBanner) {
+                    matchBannerText.innerHTML = `<strong>tan ${angle}°</strong>는 정의되지 않은 값(—)이므로 같은 값을 비교할 수 없습니다.`;
+                    matchBanner.classList.remove('hidden');
+                }
+                return;
+            }
+
+            const matches = [];
+
+            // 0도 ~ 90도의 모든 삼각비 탐색
+            for (let a = 0; a <= 90; a++) {
+                const vals = getTrigValues(a);
+                ['sin', 'cos', 'tan'].forEach(r => {
+                    // 현재 선택된 셀 자체는 제외
+                    if (a === angle && r === selectedRatio1) return;
+
+                    if (vals[r] === targetVal) {
+                        matches.push({ angle: a, ratio: r, value: targetVal });
+                    }
+                });
+            }
+
+            if (matches.length > 0) {
+                const matchDescriptions = [];
+
+                matches.forEach(m => {
+                    const matchTd = document.querySelector(`#tableBody tr[data-angle="${m.angle}"] td[data-ratio="${m.ratio}"]`);
+                    if (matchTd) {
+                        matchTd.classList.add('highlight-match');
+                    }
+                    matchDescriptions.push(`<span class="font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg">${m.ratio}(${m.angle}°) = ${m.value}</span>`);
+                });
+
+                if (matchBannerText && matchBanner) {
+                    matchBannerText.innerHTML = `<strong>${selectedRatio1}(${angle}°) = ${targetVal}</strong> 와(과) 같은 값을 갖는 삼각비를 찾았습니다: ${matchDescriptions.join(' , ')}`;
+                    matchBanner.classList.remove('hidden');
+                }
+
+                // 첫 번째 검색 결과로 이동
+                const firstMatchTd = document.querySelector(`#tableBody tr[data-angle="${matches[0].angle}"]`);
+                if (firstMatchTd) {
+                    firstMatchTd.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            } else {
+                if (matchBannerText && matchBanner) {
+                    matchBannerText.innerHTML = `<strong>${selectedRatio1}(${angle}°) = ${targetVal}</strong> 와(과) 같은 값을 갖는 다른 삼각비가 표 안에 없습니다.`;
+                    matchBanner.classList.remove('hidden');
+                }
+            }
+        }
+
+        // 5. 이벤트 리스너 설정
+        if (findEqualBtn) {
+            findEqualBtn.addEventListener('click', findEqualTrigValues);
+        }
+
+        if (closeBannerBtn) {
+            closeBannerBtn.addEventListener('click', () => {
+                clearMatches();
+            });
+        }
+
+        if (searchInput1) {
+            searchInput1.addEventListener('input', () => {
+                selectedRatio1 = null;
+                clearMatches();
+                updateHighlight();
+            });
+        }
+
+        window.onload = () => {
+            if (searchInput1) searchInput1.value = 30;
+            selectedRatio1 = 'sin';
+            updateHighlight();
+        };
+    </script>
+</body>
+</html>
