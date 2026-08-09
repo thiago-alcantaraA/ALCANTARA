@@ -2,23 +2,56 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>접현각과 원주각의 성질</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #f8fafc; font-family: 'Pretendard', sans-serif; user-select: none; }
-        canvas { display: block; cursor: crosshair; }
-        .panel { position: absolute; top: 20px; right: 20px; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid #e2e8f0; pointer-events: none; }
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #f8fafc; 
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; 
+            user-select: none; 
+        }
+        canvas { 
+            display: block; 
+            cursor: crosshair; 
+        }
+        .panel { 
+            position: absolute; 
+            top: 20px; 
+            right: 20px; 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(8px);
+            padding: 20px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05); 
+            border: 1px solid #e2e8f0; 
+            pointer-events: none; 
+            max-width: 320px;
+        }
     </style>
 </head>
-<body>
-    <button id="reset-btn" class="absolute top-5 left-5 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg cursor-pointer z-10 transition">초기화</button>
+<body class="w-full h-screen relative">
+    <button id="reset-btn" class="absolute top-5 left-5 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg cursor-pointer z-10 transition hover:scale-105 active:scale-95">
+        초기화
+    </button>
     
     <div class="panel z-10">
-        <h2 class="font-bold text-lg mb-2">접현각과 원주각의 성질</h2>
-        <p class="text-sm text-slate-600 mb-4">점 P와 B를 드래그하여 이동해보세요.<br>기하학적 성질에 의해 두 각은 언제나 일치합니다.</p>
-        <div class="text-lg font-bold">
-            <p>접현각 (∠TAB): <span id="tab-angle" class="text-red-600">0°</span></p>
-            <p>원주각 (∠APB): <span id="apb-angle" class="text-blue-600">0°</span></p>
+        <h2 class="font-bold text-lg mb-2 text-slate-800">접현각과 원주각의 성질</h2>
+        <p class="text-sm text-slate-600 mb-4 leading-relaxed">
+            점 P와 B를 드래그하여 이동해보세요.<br>
+            지름 AC와 보조선 PC(점선)를 활용해 원주각과 접현각이 같음을 증명할 수 있습니다.
+        </p>
+        <div class="text-base font-bold space-y-2">
+            <p class="flex items-center justify-between gap-4 text-slate-700">
+                <span>접현각 (∠TAB):</span>
+                <span id="tab-angle" class="text-red-600 text-xl font-extrabold">0°</span>
+            </p>
+            <p class="flex items-center justify-between gap-4 text-slate-700">
+                <span>원주각 (∠APB):</span>
+                <span id="apb-angle" class="text-blue-600 text-xl font-extrabold">0°</span>
+            </p>
         </div>
     </div>
     
@@ -27,27 +60,32 @@
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        let w, h, cx, cy, r = 325; // 원의 크기 1.3배 확대 (250 -> 325)
+        let w, h, cx, cy, r;
         
         // 캔버스 좌표계: y축은 아래로 갈수록 증가 (각도는 시계방향으로 증가)
-        const A_ANGLE = Math.PI / 2; // 90도 (6시 방향, A 고정 위치)
-        let bAngle = Math.PI * 1.5;  // 270도 (12시 방향, 초기화 시 AB는 지름)
-        let pAngle = Math.PI * 1.15; // 10시 방향쯤 (원주각을 형성하는 점 P)
+        const A_ANGLE = Math.PI / 2; // 90도 (6시 방향, 접점 A 고정 위치)
+        const C_ANGLE = Math.PI * 1.5; // 270도 (12시 방향, A의 정반대 점 C)
+        let bAngle = Math.PI * 1.5;  // 점 B 위치 (초기화 시 C 위치에 배치)
+        let pAngle = Math.PI * 1.15; // 점 P 위치 (10시 방향 부근)
         
         let dragging = null;
 
         function resizeCanvas() {
             w = canvas.width = window.innerWidth;
             h = canvas.height = window.innerHeight;
-            cx = w / 2;
+            
+            // 화면 좌측 영역(38%)에 원 중심 배치하여 우측 패널과 분리
+            cx = w * 0.38;
             cy = h / 2;
+            
+            // 화면 크기 반응형 반지름 계산 (최대 320px)
+            r = Math.min(w * 0.32, h * 0.38, 320);
             draw();
         }
         window.onresize = resizeCanvas;
 
         document.getElementById('reset-btn').onclick = () => {
-            // 초기화 시 B를 A의 정반대(지름)로, P를 좌측 호에 위치시킴
-            bAngle = Math.PI * 1.5; 
+            bAngle = Math.PI * 1.5; // 점 B를 C 위치로 초기화
             pAngle = Math.PI * 1.15;
             draw();
         };
@@ -89,15 +127,15 @@
             while (diff > Math.PI) diff -= Math.PI * 2;
             
             ctx.beginPath();
-            ctx.arc(vertex.x, vertex.y, 55, a1, a1 + diff, diff < 0); // 아크 크기 확대
+            ctx.arc(vertex.x, vertex.y, 45, a1, a1 + diff, diff < 0);
             ctx.strokeStyle = color;
             ctx.lineWidth = 3;
             ctx.stroke();
         }
 
-        // 직각 기호를 그리는 함수 추가
+        // 직각 기호를 그리는 함수
         function drawRightAngle(vertex, p1, p2, color) {
-            const size = 25; // 직각 표시 크기 확대
+            const size = 22;
             const d1 = Math.hypot(p1.x - vertex.x, p1.y - vertex.y);
             const d2 = Math.hypot(p2.x - vertex.x, p2.y - vertex.y);
             
@@ -122,11 +160,15 @@
         function draw() {
             ctx.clearRect(0, 0, w, h);
             
-            const O = {x: cx, y: cy};
-            const A = {x: cx, y: cy + r}; 
-            const B = {x: cx + r * Math.cos(bAngle), y: cy + r * Math.sin(bAngle)}; 
-            const P = {x: cx + r * Math.cos(pAngle), y: cy + r * Math.sin(pAngle)};
-            const T = {x: cx + 450, y: cy + r}; // 접선 연장선 길이 조정
+            const O = { x: cx, y: cy };
+            const A = { x: cx, y: cy + r }; // 6시 방향 접점
+            const C = { x: cx, y: cy - r }; // 12시 방향 (A의 정반대 점, 지름 AC 형성)
+            const B = { x: cx + r * Math.cos(bAngle), y: cy + r * Math.sin(bAngle) }; 
+            const P = { x: cx + r * Math.cos(pAngle), y: cy + r * Math.sin(pAngle) };
+            const T = { x: cx + r * 1.3, y: cy + r }; // 접선 연장선 점 T
+
+            // 점 B와 점 C가 겹쳐 있는지 확인 (거리 10px 미만)
+            const isBAtC = Math.hypot(B.x - C.x, B.y - C.y) < 10;
 
             // 1. 기본 원 그리기
             ctx.beginPath(); 
@@ -135,31 +177,61 @@
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // 2. 반지름 OA 그리기 (중심 O와 A 연결)
-            ctx.beginPath();
-            ctx.moveTo(O.x, O.y);
-            ctx.lineTo(A.x, A.y);
-            ctx.strokeStyle = '#64748b';
-            ctx.setLineDash([5, 5]); // 점선 처리
-            ctx.stroke();
-            ctx.setLineDash([]);
+            // 2. 지름 AC 및 보조선 PC 점선으로 그리기 (B가 C와 다를 때만 표시)
+            if (!isBAtC) {
+                ctx.save();
+                ctx.setLineDash([6, 6]);
+                ctx.strokeStyle = '#64748b';
+                ctx.lineWidth = 2;
+
+                // 지름 AC (A에서 O를 지나 C까지 연결)
+                ctx.beginPath();
+                ctx.moveTo(A.x, A.y);
+                ctx.lineTo(C.x, C.y);
+                ctx.stroke();
+
+                // 보조선 PC (점 P와 C 연결)
+                ctx.beginPath();
+                ctx.moveTo(P.x, P.y);
+                ctx.lineTo(C.x, C.y);
+                ctx.stroke();
+                ctx.restore();
+            }
 
             // 3. 직각 기호 표시 (∠OAT)
             ctx.beginPath();
-            ctx.moveTo(A.x, A.y - 20); // 기호 크기 확대
-            ctx.lineTo(A.x + 20, A.y - 20);
-            ctx.lineTo(A.x + 20, A.y);
+            ctx.moveTo(A.x, A.y - 18);
+            ctx.lineTo(A.x + 18, A.y - 18);
+            ctx.lineTo(A.x + 18, A.y);
             ctx.strokeStyle = '#ef4444';
             ctx.lineWidth = 2;
             ctx.stroke();
 
             // 4. 선분 AB, 접선 AT, 현 AP/BP 그리기
-            ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.strokeStyle = '#94a3b8'; ctx.stroke(); 
-            ctx.beginPath(); ctx.moveTo(A.x - 300, A.y); ctx.lineTo(T.x, T.y); ctx.lineWidth = 3; ctx.strokeStyle = '#475569'; ctx.stroke();
+            ctx.beginPath(); 
+            ctx.moveTo(A.x, A.y); 
+            ctx.lineTo(B.x, B.y); 
+            ctx.strokeStyle = '#94a3b8'; 
+            ctx.lineWidth = 2;
+            ctx.stroke(); 
+            
+            // 접선 AT (좌우로 넉넉히 연결)
+            ctx.beginPath(); 
+            ctx.moveTo(A.x - r * 0.9, A.y); 
+            ctx.lineTo(T.x, T.y); 
+            ctx.lineWidth = 3; 
+            ctx.strokeStyle = '#475569'; 
+            ctx.stroke();
             
             // 삼각형 APB (원주각 형성)
-            ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(P.x, P.y); ctx.lineTo(B.x, B.y); ctx.closePath(); 
-            ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.beginPath(); 
+            ctx.moveTo(A.x, A.y); 
+            ctx.lineTo(P.x, P.y); 
+            ctx.lineTo(B.x, B.y); 
+            ctx.closePath(); 
+            ctx.strokeStyle = '#3b82f6'; 
+            ctx.lineWidth = 2.5; 
+            ctx.stroke();
 
             // 5. 각도 수치 계산 및 UI 업데이트
             const tab = getAngle(T, A, B);
@@ -168,61 +240,84 @@
             document.getElementById('apb-angle').innerText = apb.toFixed(1) + "°";
 
             // 6. 각도 아크 표시 (시각적 피드백)
-            const is90 = Math.abs(tab - 90) < 1; // 90도 근처인지 확인
+            const is90 = Math.abs(tab - 90) < 0.5;
             
             if (is90) {
-                // 90도일 경우: 빨간색 접현각 표시는 숨기고(고정 직각과 겹치므로), 파란색 원주각은 직각으로 표시
                 drawRightAngle(P, A, B, '#2563eb');
             } else {
-                // 90도가 아닐 경우: 일반적인 부채꼴 각도 표시
                 drawAngleArc(A, T, B, '#dc2626'); // 접현각 TAB (빨간색)
                 drawAngleArc(P, A, B, '#2563eb'); // 원주각 APB (파란색)
             }
 
-            // 7. 점 찍기
-            [O, A, B, P].forEach(pt => {
-                ctx.beginPath(); ctx.arc(pt.x, pt.y, 6, 0, Math.PI*2); ctx.fillStyle = '#1e293b'; ctx.fill();
+            // 7. 점 찍기 (O, A, B, P, 필요시 C)
+            const pointsToDraw = isBAtC ? [O, A, B, P] : [O, A, B, P, C];
+            pointsToDraw.forEach(pt => {
+                ctx.beginPath(); 
+                ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2); 
+                ctx.fillStyle = '#1e293b'; 
+                ctx.fill();
             });
 
-            // 8. 텍스트 라벨링 (점 위치에 따라 동적 이동)
-            ctx.font = 'bold 20px Pretendard, sans-serif';
-            ctx.fillText('O', O.x - 20, O.y - 10); 
-            ctx.fillText('A', A.x - 10, A.y + 40); 
+            // 8. 텍스트 라벨링
+            ctx.font = 'bold 18px Pretendard, sans-serif';
+            ctx.fillStyle = '#1e293b';
+            ctx.fillText('O', O.x - 22, O.y + 5); 
+            ctx.fillText('A', A.x - 8, A.y + 35); 
+            if (!isBAtC) {
+                ctx.fillText('C', C.x - 7, C.y - 15); // B와 C가 분리되었을 때만 점 C 표시
+            }
             
-            const distB = Math.sqrt((B.x-O.x)**2 + (B.y-O.y)**2);
-            ctx.fillText('B', B.x + (B.x-O.x)/distB*35 - 6, B.y + (B.y-O.y)/distB*35 + 6);
+            const distB = Math.hypot(B.x - O.x, B.y - O.y);
+            ctx.fillText('B', B.x + (B.x - O.x) / distB * 28 - 6, B.y + (B.y - O.y) / distB * 28 + 6);
             
-            const distP = Math.sqrt((P.x-O.x)**2 + (P.y-O.y)**2);
-            ctx.fillText('P', P.x + (P.x-O.x)/distP*35 - 6, P.y + (P.y-O.y)/distP*35 + 6);
+            const distP = Math.hypot(P.x - O.x, P.y - O.y);
+            ctx.fillText('P', P.x + (P.x - O.x) / distP * 28 - 6, P.y + (P.y - O.y) / distP * 28 + 6);
             
-            ctx.fillText('T', T.x, T.y + 30);
+            ctx.fillText('T', T.x + 10, T.y + 25);
         }
 
-        // 드래그 및 마우스 제어
-        canvas.onmousedown = (e) => {
-            const P = {x: cx + r * Math.cos(pAngle), y: cy + r * Math.sin(pAngle)};
-            const B = {x: cx + r * Math.cos(bAngle), y: cy + r * Math.sin(bAngle)};
-            if(Math.hypot(e.clientX - P.x, e.clientY - P.y) < 50) dragging = 'P'; // 잡기 쉽도록 반경 확대
-            else if(Math.hypot(e.clientX - B.x, e.clientY - B.y) < 50) dragging = 'B';
-        };
-        
-        canvas.onmousemove = (e) => {
-            if(!dragging) return;
-            const newAngle = Math.atan2(e.clientY - cy, e.clientX - cx);
+        function handleStart(clientX, clientY) {
+            const P = { x: cx + r * Math.cos(pAngle), y: cy + r * Math.sin(pAngle) };
+            const B = { x: cx + r * Math.cos(bAngle), y: cy + r * Math.sin(bAngle) };
+            if (Math.hypot(clientX - P.x, clientY - P.y) < 40) dragging = 'P';
+            else if (Math.hypot(clientX - B.x, clientY - B.y) < 40) dragging = 'B';
+        }
+
+        function handleMove(clientX, clientY) {
+            if (!dragging) return;
+            const newAngle = Math.atan2(clientY - cy, clientX - cx);
             
-            if(dragging === 'B') {
-                // B는 P와 A 사이의 우측 호에만 위치하도록 제한
+            if (dragging === 'B') {
                 if (inRange(newAngle, pAngle, A_ANGLE)) bAngle = newAngle;
             }
-            else if(dragging === 'P') {
-                // P는 A와 B 사이의 좌측 호에만 위치하도록 제한
+            else if (dragging === 'P') {
                 if (inRange(newAngle, A_ANGLE, bAngle)) pAngle = newAngle;
             }
             draw();
+        }
+
+        function handleEnd() {
+            dragging = null;
+        }
+
+        canvas.onmousedown = (e) => handleStart(e.clientX, e.clientY);
+        canvas.onmousemove = (e) => handleMove(e.clientX, e.clientY);
+        canvas.onmouseup = handleEnd;
+        canvas.onmouseleave = handleEnd;
+
+        // 터치 지원
+        canvas.ontouchstart = (e) => {
+            if (e.touches.length === 1) {
+                handleStart(e.touches[0].clientX, e.touches[0].clientY);
+            }
         };
-        
-        canvas.onmouseup = () => dragging = null;
-        canvas.onmouseleave = () => dragging = null;
+        canvas.ontouchmove = (e) => {
+            if (e.touches.length === 1) {
+                handleMove(e.touches[0].clientX, e.touches[0].clientY);
+                e.preventDefault();
+            }
+        };
+        canvas.ontouchend = handleEnd;
         
         resizeCanvas();
     </script>
