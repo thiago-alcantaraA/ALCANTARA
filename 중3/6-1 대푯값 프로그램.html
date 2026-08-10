@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대표값 계산기 (평균, 중앙값, 최빈값)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: #f8fafc;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen pb-12">
+
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-500/20">
+                    <i class="fa-solid fa-chart-line text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 leading-tight">대표값 & 통계 계산기</h1>
+                    <p class="text-[11px] text-slate-500">평균 · 중앙값 · 최빈값 상세 계산 과정</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="btn-sample-1" class="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 cursor-pointer border border-blue-200">
+                    <i class="fa-solid fa-wand-magic-sparkles text-blue-600"></i>
+                    <span>샘플 1</span>
+                </button>
+                <button id="btn-sample-2" class="px-3 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 cursor-pointer border border-purple-200">
+                    <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i>
+                    <span>샘플 2</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 mt-4 space-y-4">
+
+        <!-- Input Section -->
+        <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-1 mb-2">
+                <label for="number-input" class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-keyboard text-blue-600"></i>
+                    <span>숫자 데이터 입력</span>
+                </label>
+                <span class="text-[11px] text-slate-500">쉼표(,), 공백, 줄바꿈으로 구분하여 입력</span>
+            </div>
+
+            <div class="relative">
+                <textarea id="number-input" rows="2" 
+                    class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-slate-800 font-mono text-sm leading-relaxed outline-none"
+                    placeholder="예: 12, 45, 23, 67, 23, 89, 45, 23, 90, 12, 55"></textarea>
+                <div id="input-badge" class="absolute bottom-2.5 right-2.5 bg-white/90 border border-slate-200 px-2 py-0.5 rounded text-[11px] font-medium text-slate-500 backdrop-blur-sm">
+                    0개 수집됨
+                </div>
+            </div>
+
+            <div class="mt-2.5 flex flex-wrap gap-2 justify-between items-center">
+                <div class="flex flex-wrap gap-2">
+                    <button id="btn-calculate" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-lg shadow-md shadow-blue-500/20 transition flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-calculator"></i>
+                        <span>계산하기</span>
+                    </button>
+                    <button id="btn-clear" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span>초기화</span>
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-1.5 text-xs text-slate-500">
+                    <span class="text-[11px]">빠른 추가:</span>
+                    <button class="btn-quick-add px-2 py-0.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 rounded border border-slate-200 text-xs transition cursor-pointer">+10</button>
+                    <button class="btn-quick-add px-2 py-0.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 rounded border border-slate-200 text-xs transition cursor-pointer">+50</button>
+                    <button class="btn-quick-add px-2 py-0.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 rounded border border-slate-200 text-xs transition cursor-pointer">+100</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Container -->
+        <section id="results-container" class="hidden space-y-3">
+
+            <!-- Compact Clickable Measure Cards -->
+            <div>
+                <p class="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5 mb-1.5">
+                    <i class="fa-solid fa-hand-pointer text-blue-500"></i>
+                    <span>카드를 클릭하면 하단에 풀이가 나타납니다.</span>
+                </p>
+                <div class="grid grid-cols-3 gap-2.5">
+                    <!-- Mean Card -->
+                    <button id="card-mean" type="button" class="rep-card text-left bg-white hover:bg-blue-50/50 rounded-xl p-2.5 border-2 border-slate-200 transition-all cursor-pointer relative overflow-hidden group shadow-sm hover:shadow">
+                        <div class="flex items-center justify-between mb-0.5">
+                            <span class="text-[10px] font-bold text-blue-600 bg-blue-100/80 px-1.5 py-0.5 rounded uppercase">Mean</span>
+                            <i class="fa-solid fa-divide text-blue-400 text-xs"></i>
+                        </div>
+                        <div class="text-[11px] font-semibold text-slate-500">평균</div>
+                        <div id="val-mean" class="text-sm sm:text-lg font-extrabold text-blue-900 mt-0.5 truncate">-</div>
+                    </button>
+
+                    <!-- Median Card -->
+                    <button id="card-median" type="button" class="rep-card text-left bg-white hover:bg-emerald-50/50 rounded-xl p-2.5 border-2 border-slate-200 transition-all cursor-pointer relative overflow-hidden group shadow-sm hover:shadow">
+                        <div class="flex items-center justify-between mb-0.5">
+                            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-100/80 px-1.5 py-0.5 rounded uppercase">Median</span>
+                            <i class="fa-solid fa-arrows-left-right-to-line text-emerald-400 text-xs"></i>
+                        </div>
+                        <div class="text-[11px] font-semibold text-slate-500">중앙값</div>
+                        <div id="val-median" class="text-sm sm:text-lg font-extrabold text-emerald-900 mt-0.5 truncate">-</div>
+                    </button>
+
+                    <!-- Mode Card -->
+                    <button id="card-mode" type="button" class="rep-card text-left bg-white hover:bg-purple-50/50 rounded-xl p-2.5 border-2 border-slate-200 transition-all cursor-pointer relative overflow-hidden group shadow-sm hover:shadow">
+                        <div class="flex items-center justify-between mb-0.5">
+                            <span class="text-[10px] font-bold text-purple-600 bg-purple-100/80 px-1.5 py-0.5 rounded uppercase">Mode</span>
+                            <i class="fa-solid fa-fire text-purple-400 text-xs"></i>
+                        </div>
+                        <div class="text-[11px] font-semibold text-slate-500">최빈값</div>
+                        <div id="val-mode" class="text-sm sm:text-lg font-extrabold text-purple-900 mt-0.5 truncate">-</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dynamic Explanation Area -->
+            <div id="explanation-box" class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm transition-all">
+                <!-- Placeholder when nothing is clicked -->
+                <div id="explanation-placeholder" class="py-6 text-center text-slate-400 space-y-1.5">
+                    <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400 text-sm">
+                        <i class="fa-solid fa-arrow-up"></i>
+                    </div>
+                    <p class="text-xs font-medium text-slate-600">위의 <span class="text-blue-600 font-bold">평균</span>, <span class="text-emerald-600 font-bold">중앙값</span>, <span class="text-purple-600 font-bold">최빈값</span> 카드를 클릭하면 상세 과정이 표시됩니다.</p>
+                </div>
+
+                <!-- Dynamic Content Area -->
+                <div id="explanation-content" class="hidden space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <div class="flex items-center gap-2">
+                            <span id="exp-badge" class="px-2 py-0.5 text-xs font-bold rounded text-white">대표값</span>
+                            <h3 id="exp-title" class="text-sm font-bold text-slate-900">상세 과정</h3>
+                        </div>
+                        <span id="exp-summary" class="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full"></span>
+                    </div>
+
+                    <!-- Visual Breakdown / Formulas -->
+                    <div id="exp-body">
+                        <!-- Content dynamically inserted -->
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Empty State Message when no data -->
+        <section id="empty-state" class="bg-white rounded-2xl p-8 text-center border border-slate-200 shadow-sm">
+            <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-2 text-xl">
+                <i class="fa-solid fa-calculator"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800 mb-0.5">데이터를 입력해 주세요</h3>
+            <p class="text-xs text-slate-500 max-w-md mx-auto">
+                숫자를 입력하거나 상단 '샘플 1', '샘플 2' 버튼을 클릭해 보세요.
+            </p>
+        </section>
+
+    </main>
+
+    <script>
+        // DOM Elements
+        const numberInput = document.getElementById('number-input');
+        const inputBadge = document.getElementById('input-badge');
+        const btnCalculate = document.getElementById('btn-calculate');
+        const btnClear = document.getElementById('btn-clear');
+        const btnSample1 = document.getElementById('btn-sample-1');
+        const btnSample2 = document.getElementById('btn-sample-2');
+        
+        const resultsContainer = document.getElementById('results-container');
+        const emptyState = document.getElementById('empty-state');
+
+        // Clickable Cards
+        const cardMean = document.getElementById('card-mean');
+        const cardMedian = document.getElementById('card-median');
+        const cardMode = document.getElementById('card-mode');
+
+        // Card Display Values
+        const valMean = document.getElementById('val-mean');
+        const valMedian = document.getElementById('val-median');
+        const valMode = document.getElementById('val-mode');
+
+        // Dynamic Explanation Area DOM
+        const explanationPlaceholder = document.getElementById('explanation-placeholder');
+        const explanationContent = document.getElementById('explanation-content');
+        const expBadge = document.getElementById('exp-badge');
+        const expTitle = document.getElementById('exp-title');
+        const expSummary = document.getElementById('exp-summary');
+        const expBody = document.getElementById('exp-body');
+
+        // Internal State
+        let calcData = null;
+        let selectedMeasure = null; // 'mean', 'median', 'mode'
+
+        // Sample Data Presets (From Images)
+        const sampleData1 = [58, 22, 26, 24, 23, 26, 20, 23, 21];
+        const sampleData2 = [95, 90, 95, 90, 95, 95, 100, 100, 95, 105];
+
+        // Event Listeners Setup
+        numberInput.addEventListener('input', updateInputBadge);
+        btnCalculate.addEventListener('click', processAndRender);
+        
+        btnClear.addEventListener('click', () => {
+            numberInput.value = '';
+            updateInputBadge();
+            resultsContainer.classList.add('hidden');
+            emptyState.classList.remove('hidden');
+            calcData = null;
+            resetExplanationUI();
+        });
+
+        btnSample1.addEventListener('click', () => {
+            numberInput.value = sampleData1.join(', ');
+            updateInputBadge();
+            processAndRender();
+        });
+
+        btnSample2.addEventListener('click', () => {
+            numberInput.value = sampleData2.join(', ');
+            updateInputBadge();
+            processAndRender();
+        });
+
+        document.querySelectorAll('.btn-quick-add').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const addVal = e.target.innerText.replace('+', '');
+                const current = numberInput.value.trim();
+                numberInput.value = current ? `${current}, ${addVal}` : addVal;
+                updateInputBadge();
+            });
+        });
+
+        // Click Event Handlers for Measure Cards
+        cardMean.addEventListener('click', () => selectMeasure('mean'));
+        cardMedian.addEventListener('click', () => selectMeasure('median'));
+        cardMode.addEventListener('click', () => selectMeasure('mode'));
+
+        function parseNumbers(input) {
+            if (!input) return [];
+            return input
+                .split(/[\s,\n]+/)
+                .map(v => v.trim())
+                .filter(v => v !== '' && !isNaN(v))
+                .map(Number);
+        }
+
+        function updateInputBadge() {
+            const nums = parseNumbers(numberInput.value);
+            inputBadge.innerText = `${nums.length}개 수집됨`;
+        }
+
+        function formatNum(num) {
+            if (num === null || num === undefined || isNaN(num)) return '-';
+            if (Number.isInteger(num)) return num.toString();
+            return parseFloat(num.toFixed(4)).toString();
+        }
+
+        // Main Processing Logic
+        function processAndRender() {
+            const numbers = parseNumbers(numberInput.value);
+
+            if (numbers.length === 0) {
+                resultsContainer.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            resultsContainer.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            const count = numbers.length;
+            const sum = numbers.reduce((acc, curr) => acc + curr, 0);
+            const mean = sum / count;
+
+            const sorted = [...numbers].sort((a, b) => a - b);
+
+            let median;
+            let medianIndices = [];
+            if (count % 2 === 1) {
+                const midIdx = Math.floor(count / 2);
+                median = sorted[midIdx];
+                medianIndices = [midIdx];
+            } else {
+                const midIdx1 = count / 2 - 1;
+                const midIdx2 = count / 2;
+                median = (sorted[midIdx1] + sorted[midIdx2]) / 2;
+                medianIndices = [midIdx1, midIdx2];
+            }
+
+            const freqMap = {};
+            let maxFreq = 0;
+            sorted.forEach(num => {
+                freqMap[num] = (freqMap[num] || 0) + 1;
+                if (freqMap[num] > maxFreq) {
+                    maxFreq = freqMap[num];
+                }
+            });
+
+            let modes = [];
+            const uniqueKeys = Object.keys(freqMap);
+            if (maxFreq > 1) {
+                modes = uniqueKeys.filter(k => freqMap[k] === maxFreq).map(Number);
+            }
+
+            const min = sorted[0];
+            const max = sorted[count - 1];
+            const range = max - min;
+
+            const variance = numbers.reduce((acc, curr) => acc + Math.pow(curr - mean, 2), 0) / count;
+            const stdDev = Math.sqrt(variance);
+
+            // Store State
+            calcData = {
+                numbers, sorted, count, sum, mean, median, medianIndices,
+                freqMap, maxFreq, modes, min, max, range, stdDev
+            };
+
+            // Update Top Cards
+            valMean.innerText = formatNum(mean);
+            valMedian.innerText = formatNum(median);
+
+            if (modes.length === 0) {
+                valMode.innerText = '없음';
+            } else if (modes.length === uniqueKeys.length && modes.length > 2) {
+                valMode.innerText = '동일';
+            } else {
+                valMode.innerText = modes.map(formatNum).join(', ');
+            }
+
+            // Reset or maintain explanation
+            if (selectedMeasure) {
+                selectMeasure(selectedMeasure);
+            } else {
+                resetExplanationUI();
+            }
+        }
+
+        function resetExplanationUI() {
+            selectedMeasure = null;
+            explanationPlaceholder.classList.remove('hidden');
+            explanationContent.classList.add('hidden');
+
+            // Reset Card Styles
+            [cardMean, cardMedian, cardMode].forEach(card => {
+                card.className = "rep-card text-left bg-white hover:bg-slate-50 rounded-xl p-3 border-2 border-slate-200 transition-all cursor-pointer relative overflow-hidden shadow-sm hover:shadow";
+            });
+        }
+
+        function selectMeasure(type) {
+            if (!calcData) return;
+            selectedMeasure = type;
+
+            explanationPlaceholder.classList.add('hidden');
+            explanationContent.classList.remove('hidden');
+
+            // Reset Card Styles
+            cardMean.className = "rep-card text-left bg-white hover:bg-blue-50/50 rounded-xl p-3 border-2 border-slate-200 transition-all cursor-pointer relative overflow-hidden shadow-sm";
+            cardMedian.className = "rep-card text-left bg-white hover:bg-emerald-50/50 rounded-xl p-3 border-2 border-slate-200 transition-all cursor-pointer relative overflow-hidden shadow-sm";
+            cardMode.className = "rep-card text-left bg-white hover:bg-purple-50/50 rounded-xl p-3 border-2 border-slate-200 transition-all cursor-pointer relative overflow-hidden shadow-sm";
+
+            if (type === 'mean') {
+                cardMean.className = "rep-card text-left bg-blue-50/80 rounded-xl p-3 border-2 border-blue-500 ring-2 ring-blue-200 transition-all cursor-pointer relative overflow-hidden shadow-sm";
+                renderMeanExplanation();
+            } else if (type === 'median') {
+                cardMedian.className = "rep-card text-left bg-emerald-50/80 rounded-xl p-3 border-2 border-emerald-500 ring-2 ring-emerald-200 transition-all cursor-pointer relative overflow-hidden shadow-sm";
+                renderMedianExplanation();
+            } else if (type === 'mode') {
+                cardMode.className = "rep-card text-left bg-purple-50/80 rounded-xl p-3 border-2 border-purple-500 ring-2 ring-purple-200 transition-all cursor-pointer relative overflow-hidden shadow-sm";
+                renderModeExplanation();
+            }
+        }
+
+        function renderMeanExplanation() {
+            expBadge.innerText = '평균 (Mean)';
+            expBadge.className = 'px-2 py-0.5 text-xs font-bold rounded text-white bg-blue-600';
+            expTitle.innerText = '계산 풀이 과정';
+            expSummary.innerText = `평균: ${formatNum(calcData.mean)}`;
+
+            expBody.innerHTML = `
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 font-mono text-xs sm:text-sm text-slate-800 space-y-2">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-slate-500 font-sans font-semibold text-xs">1. 총합:</span>
+                        <span class="bg-white px-2 py-1 rounded border border-slate-200 break-all text-xs">${calcData.numbers.join(' + ')}</span>
+                        <span class="font-bold text-blue-600">= ${formatNum(calcData.sum)}</span>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap pt-1.5 border-t border-slate-200">
+                        <span class="text-slate-500 font-sans font-semibold text-xs">2. 개수로 나누기:</span>
+                        <span class="text-xs">${formatNum(calcData.sum)} ÷ ${calcData.count}개</span>
+                        <span class="font-bold text-blue-600 font-extrabold text-sm sm:text-base">= ${formatNum(calcData.mean)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMedianExplanation() {
+            expBadge.innerText = '중앙값 (Median)';
+            expBadge.className = 'px-2 py-0.5 text-xs font-bold rounded text-white bg-emerald-600';
+            expTitle.innerText = '오름차순 정렬 및 중앙 위치';
+            expSummary.innerText = `중앙값: ${formatNum(calcData.median)}`;
+
+            const isOdd = calcData.count % 2 === 1;
+
+            let htmlList = calcData.sorted.map((num, idx) => {
+                const isMid = calcData.medianIndices.includes(idx);
+                if (isMid) {
+                    return `<span class="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-emerald-500 text-white shadow-sm ring-2 ring-emerald-300 inline-block">${num}</span>`;
+                }
+                return `<span class="px-2 py-1 text-xs font-mono rounded-lg bg-white border border-slate-200 text-slate-600 inline-block">${num}</span>`;
+            }).join(' ');
+
+            expBody.innerHTML = `
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs text-slate-500">
+                        <span>오름차순 정렬 (총 ${calcData.count}개, ${isOdd ? '홀수개' : '짝수개'})</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 p-3 bg-slate-50 rounded-xl border border-slate-200 max-h-28 overflow-y-auto custom-scrollbar">
+                        ${htmlList}
+                    </div>
+                    <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 font-mono">
+                        ${isOdd 
+                            ? `데이터가 <strong>홀수개</strong>이므로, 정가운데 [${calcData.medianIndices[0] + 1}번째] 수인 <strong class="text-emerald-600 font-bold">${calcData.median}</strong>이(가) 중앙값입니다.`
+                            : `데이터가 <strong>짝수개</strong>이므로, 정가운데 2개 수 (${calcData.sorted[calcData.medianIndices[0]]}, ${calcData.sorted[calcData.medianIndices[1]]})의 평균인 (<span class="text-slate-800">${calcData.sorted[calcData.medianIndices[0]]} + ${calcData.sorted[calcData.medianIndices[1]]}</span>) ÷ 2 = <strong class="text-emerald-600 font-bold">${formatNum(calcData.median)}</strong>이(가) 중앙값입니다.`
+                        }
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderModeExplanation() {
+            expBadge.innerText = '최빈값 (Mode)';
+            expBadge.className = 'px-2 py-0.5 text-xs font-bold rounded text-white bg-purple-600';
+            expTitle.innerText = '숫자별 출현 빈도';
+
+            let modeText = calcData.modes.length === 0 ? '없음' : calcData.modes.map(formatNum).join(', ');
+            expSummary.innerText = `최빈값: ${modeText}`;
+
+            const entries = Object.entries(calcData.freqMap).sort((a, b) => Number(a[0]) - Number(b[0]));
+            let freqBars = entries.map(([numStr, count]) => {
+                const num = Number(numStr);
+                const isMode = calcData.modes.includes(num);
+                const pct = Math.max((count / calcData.maxFreq) * 100, 16);
+
+                return `
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="w-8 font-mono font-bold text-right ${isMode ? 'text-purple-700 font-extrabold' : 'text-slate-600'}">${numStr}</span>
+                        <div class="flex-1 bg-slate-100 rounded-full h-3.5 overflow-hidden p-0.5 border border-slate-200">
+                            <div class="${isMode ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold' : 'bg-slate-300 text-slate-700'} h-full rounded-full transition-all duration-300 flex items-center justify-end pr-1.5 text-[9px]"
+                                 style="width: ${pct}%">
+                                ${count}회
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            expBody.innerHTML = `
+                <div class="space-y-2">
+                    <div class="space-y-1.5 max-h-32 overflow-y-auto pr-1 custom-scrollbar p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+                        ${freqBars}
+                    </div>
+                    <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 font-mono">
+                        ${calcData.modes.length === 0 
+                            ? `모든 수의 등장 횟수가 동일하여 <strong>최빈값이 없습니다.</strong>`
+                            : `최대 출현 빈도는 <strong>${calcData.maxFreq}회</strong>이며, 해당 값 <strong class="text-purple-700 font-extrabold">[ ${calcData.modes.join(', ')} ]</strong> 이(가) 최빈값입니다.`
+                        }
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
