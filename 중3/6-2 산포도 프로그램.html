@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>두 변량(A · B) 통계 계산기</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- MathJax for Math Formulas -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: #f8fafc;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .table-input:focus {
+            background-color: #ffffff;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="w-full max-w-[1920px] mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3.5">
+                <div class="p-3 bg-indigo-600 text-white rounded-xl shadow-md shadow-indigo-500/20">
+                    <i class="fa-solid fa-chart-line text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold text-slate-900 leading-tight">두 변량(A · B) 비교 통계 계산기</h1>
+                    <p class="text-xs text-slate-500 mt-0.5">개수 설정(5~12개) · 편차/편차제곱/독립 그래프 제공</p>
+                </div>
+            </div>
+
+            <!-- Global Controls: Item count & Samples -->
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Item Count Selector -->
+                <div class="flex items-center bg-slate-100 rounded-xl p-1.5 border border-slate-200">
+                    <label for="select-count" class="text-sm font-bold text-slate-700 px-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-list-ol text-indigo-500"></i>
+                        <span>변량 개수:</span>
+                    </label>
+                    <select id="select-count" class="bg-white text-sm font-bold text-indigo-700 px-3 py-1 rounded-lg border border-slate-200 outline-none cursor-pointer hover:border-indigo-400">
+                        <option value="5">5개</option>
+                        <option value="6">6개</option>
+                        <option value="7">7개</option>
+                        <option value="8" selected>8개</option>
+                        <option value="9">9개</option>
+                        <option value="10">10개</option>
+                        <option value="11">11개</option>
+                        <option value="12">12개</option>
+                    </select>
+                </div>
+
+                <!-- Single Sample Button -->
+                <button id="btn-sample" class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-semibold rounded-xl transition flex items-center gap-2 border border-indigo-200 cursor-pointer">
+                    <i class="fa-solid fa-school text-indigo-600"></i>
+                    <span>샘플 (학교 점수)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="w-full max-w-[1920px] mx-auto px-6 mt-6 space-y-6">
+
+        <!-- Toolbar & Toggle Buttons Bar -->
+        <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+            
+            <!-- Primary Action Buttons -->
+            <div class="flex flex-wrap items-center gap-2.5">
+                <button id="btn-calculate" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-bold rounded-xl shadow-md shadow-indigo-500/20 transition flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-calculator"></i>
+                    <span>통계 계산하기</span>
+                </button>
+                <button id="btn-random" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-shuffle"></i>
+                    <span>랜덤 채우기</span>
+                </button>
+                <button id="btn-clear" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold rounded-xl transition flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span>초기화</span>
+                </button>
+            </div>
+
+            <!-- View Toggle Buttons -->
+            <div class="flex flex-wrap items-center gap-2.5 border-t md:border-t-0 md:border-l border-slate-200 pt-3 md:pt-0 md:pl-4">
+                <!-- Toggle Deviations -->
+                <button id="toggle-dev" class="px-3.5 py-2.5 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 text-sm font-bold rounded-xl transition flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-minus text-indigo-500"></i>
+                    <span>편차</span>
+                    <span id="badge-dev" class="text-xs px-2 py-0.5 bg-slate-200 text-slate-600 rounded-md ml-0.5 font-bold">OFF</span>
+                </button>
+
+                <!-- Toggle Squared Deviations -->
+                <button id="toggle-devsq" class="px-3.5 py-2.5 bg-slate-100 hover:bg-purple-50 text-slate-700 hover:text-purple-700 border border-slate-200 text-sm font-bold rounded-xl transition flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-superscript text-purple-500"></i>
+                    <span>편차의 제곱</span>
+                    <span id="badge-devsq" class="text-xs px-2 py-0.5 bg-slate-200 text-slate-600 rounded-md ml-0.5 font-bold">OFF</span>
+                </button>
+
+                <!-- Toggle Graph -->
+                <button id="toggle-graph" class="px-3.5 py-2.5 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 text-sm font-bold rounded-xl transition flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-chart-column text-emerald-500"></i>
+                    <span>그래프</span>
+                    <span id="badge-graph" class="text-xs px-2 py-0.5 bg-slate-200 text-slate-600 rounded-md ml-0.5 font-bold">OFF</span>
+                </button>
+
+                <!-- Toggle Mean Line (Only shown when Graph is active) -->
+                <button id="toggle-mean" class="hidden px-3.5 py-2.5 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 border border-slate-200 text-sm font-bold rounded-xl transition items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-ruler-horizontal text-rose-500"></i>
+                    <span>평균선</span>
+                    <span id="badge-mean" class="text-xs px-2 py-0.5 bg-slate-200 text-slate-600 rounded-md ml-0.5 font-bold">OFF</span>
+                </button>
+            </div>
+
+        </section>
+
+        <!-- Main Content Area: Left (Variable A) & Right (Variable B) Split -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            
+            <!-- Variable A Card (Left Side) -->
+            <section class="bg-white rounded-2xl p-5 shadow-sm border border-indigo-200 space-y-4 flex flex-col justify-between">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-indigo-100 pb-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-3.5 h-3.5 rounded-full bg-indigo-600"></span>
+                            <h2 class="font-bold text-slate-900 text-base">변량 A ($x_A$) 표</h2>
+                        </div>
+                        <span id="stat-tag-a" class="text-sm font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100">
+                            평균 $m_A = -$
+                        </span>
+                    </div>
+
+                    <!-- Table A -->
+                    <div class="w-full overflow-x-auto custom-scrollbar pb-1">
+                        <table class="w-full border-collapse text-center text-sm table-fixed">
+                            <thead>
+                                <tr id="table-a-header" class="bg-indigo-50 text-indigo-900 border border-indigo-200">
+                                    <!-- Dynamic Header 1~N -->
+                                </tr>
+                            </thead>
+                            <tbody id="table-a-body">
+                                <!-- Dynamic Input & Calculations for A -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Graph A Container -->
+                <div id="graph-box-a" class="hidden border-t border-indigo-100 pt-4 mt-2">
+                    <div class="text-sm font-bold text-indigo-900 mb-2 flex items-center justify-between">
+                        <span><i class="fa-solid fa-chart-bar text-indigo-600 mr-1.5"></i> 변량 A 값 분포</span>
+                        <span id="graph-info-a" class="text-xs font-semibold text-slate-600"></span>
+                    </div>
+                    <div class="w-full h-64 relative">
+                        <canvas id="chartA"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Variable B Card (Right Side) -->
+            <section class="bg-white rounded-2xl p-5 shadow-sm border border-emerald-200 space-y-4 flex flex-col justify-between">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-emerald-100 pb-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-3.5 h-3.5 rounded-full bg-emerald-600"></span>
+                            <h2 class="font-bold text-slate-900 text-base">변량 B ($x_B$) 표</h2>
+                        </div>
+                        <span id="stat-tag-b" class="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100">
+                            평균 $m_B = -$
+                        </span>
+                    </div>
+
+                    <!-- Table B -->
+                    <div class="w-full overflow-x-auto custom-scrollbar pb-1">
+                        <table class="w-full border-collapse text-center text-sm table-fixed">
+                            <thead>
+                                <tr id="table-b-header" class="bg-emerald-50 text-emerald-900 border border-emerald-200">
+                                    <!-- Dynamic Header 1~N -->
+                                </tr>
+                            </thead>
+                            <tbody id="table-b-body">
+                                <!-- Dynamic Input & Calculations for B -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Graph B Container -->
+                <div id="graph-box-b" class="hidden border-t border-emerald-100 pt-4 mt-2">
+                    <div class="text-sm font-bold text-emerald-900 mb-2 flex items-center justify-between">
+                        <span><i class="fa-solid fa-chart-bar text-emerald-600 mr-1.5"></i> 변량 B 값 분포</span>
+                        <span id="graph-info-b" class="text-xs font-semibold text-slate-600"></span>
+                    </div>
+                    <div class="w-full h-64 relative">
+                        <canvas id="chartB"></canvas>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <script>
+        // State Variables
+        let currentCount = 8;
+        let showDeviations = false;
+        let showDevSquared = false;
+        let showGraph = false;
+        let showMeanLine = false;
+
+        let chartInstanceA = null;
+        let chartInstanceB = null;
+
+        let lastStatsA = null;
+        let lastStatsB = null;
+
+        // Sample Dataset
+        const sample_A = [4, 5, 5, 5, 6, 5, 4, 5, 6, 5];
+        const sample_B = [3, 4, 3, 5, 4, 5, 6, 7, 6, 7];
+
+        // DOM Elements
+        const selectCount = document.getElementById('select-count');
+        const tableAHeader = document.getElementById('table-a-header');
+        const tableABody = document.getElementById('table-a-body');
+        const tableBHeader = document.getElementById('table-b-header');
+        const tableBBody = document.getElementById('table-b-body');
+
+        const btnCalculate = document.getElementById('btn-calculate');
+        const btnRandom = document.getElementById('btn-random');
+        const btnClear = document.getElementById('btn-clear');
+        const btnSample = document.getElementById('btn-sample');
+
+        const toggleDev = document.getElementById('toggle-dev');
+        const toggleDevsq = document.getElementById('toggle-devsq');
+        const toggleGraph = document.getElementById('toggle-graph');
+        const toggleMean = document.getElementById('toggle-mean');
+
+        const badgeDev = document.getElementById('badge-dev');
+        const badgeDevsq = document.getElementById('badge-devsq');
+        const badgeGraph = document.getElementById('badge-graph');
+        const badgeMean = document.getElementById('badge-mean');
+
+        const statTagA = document.getElementById('stat-tag-a');
+        const statTagB = document.getElementById('stat-tag-b');
+
+        const graphBoxA = document.getElementById('graph-box-a');
+        const graphBoxB = document.getElementById('graph-box-b');
+        const graphInfoA = document.getElementById('graph-info-a');
+        const graphInfoB = document.getElementById('graph-info-b');
+
+        // Number Formatter
+        function formatNum(num, dec = 2) {
+            if (num === null || num === undefined || isNaN(num)) return '-';
+            if (Number.isInteger(num)) return num.toString();
+            return parseFloat(num.toFixed(dec)).toString();
+        }
+
+        // Chart.js Plugin for Horizontal Mean Line
+        const meanLinePlugin = {
+            id: 'meanLinePlugin',
+            afterDraw(chart) {
+                if (!showMeanLine) return;
+                const meanVal = chart.options.plugins.meanValue;
+                if (meanVal === undefined || meanVal === null || isNaN(meanVal)) return;
+
+                const { ctx, chartArea: { left, right, top, bottom }, scales: { y } } = chart;
+                const yPixel = y.getPixelForValue(meanVal);
+
+                if (yPixel < top || yPixel > bottom) return;
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.setLineDash([5, 5]);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#ef4444'; // Red Dashed Line
+                ctx.moveTo(left, yPixel);
+                ctx.lineTo(right, yPixel);
+                ctx.stroke();
+
+                // Draw Mean Text Label
+                ctx.fillStyle = '#ef4444';
+                ctx.font = 'bold 12px Pretendard, sans-serif';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(`평균 (${formatNum(meanVal)})`, right - 4, yPixel - 3);
+                ctx.restore();
+            }
+        };
+
+        Chart.register(meanLinePlugin);
+
+        // Render Tables according to currentCount, showDeviations, showDevSquared
+        function renderTables() {
+            // Save existing input values before re-rendering
+            const existingA = [];
+            const existingB = [];
+            for (let i = 1; i <= 12; i++) {
+                const elA = document.getElementById(`cell-a-${i}`);
+                const elB = document.getElementById(`cell-b-${i}`);
+                existingA[i] = elA ? elA.value : '';
+                existingB[i] = elB ? elB.value : '';
+            }
+
+            // Category column gets ~13% width, Sum column gets ~13%, N items share the remaining width evenly
+            const itemWidthPercent = ((74 / currentCount)).toFixed(2);
+
+            let headerA = `<th class="p-2 border border-indigo-200 bg-indigo-100/70 font-bold text-xs sm:text-sm w-[13%]">구분</th>`;
+            let headerB = `<th class="p-2 border border-emerald-200 bg-emerald-100/70 font-bold text-xs sm:text-sm w-[13%]">구분</th>`;
+
+            for (let i = 1; i <= currentCount; i++) {
+                headerA += `<th class="p-1.5 border border-indigo-200 font-bold text-xs sm:text-sm" style="width:${itemWidthPercent}%">${i}번</th>`;
+                headerB += `<th class="p-1.5 border border-emerald-200 font-bold text-xs sm:text-sm" style="width:${itemWidthPercent}%">${i}번</th>`;
+            }
+            headerA += `<th class="p-2 border border-indigo-300 bg-indigo-200/80 font-extrabold text-xs sm:text-sm w-[13%]">합계</th>`;
+            headerB += `<th class="p-2 border border-emerald-300 bg-emerald-200/80 font-extrabold text-xs sm:text-sm w-[13%]">합계</th>`;
+
+            tableAHeader.innerHTML = headerA;
+            tableBHeader.innerHTML = headerB;
+
+            // Body Rows Generation
+            buildTableBody('A', tableABody, existingA, 'indigo', lastStatsA);
+            buildTableBody('B', tableBBody, existingB, 'emerald', lastStatsB);
+
+            if (window.MathJax && MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
+        }
+
+        function buildTableBody(type, targetBody, existingVals, color, stats) {
+            let html = '';
+
+            // Row 1: Variable Input Row
+            html += `
+                <tr class="bg-${color}-50/20">
+                    <td class="p-2 border border-slate-200 font-bold text-slate-800 bg-slate-100 text-xs sm:text-sm">변량 $x_${type}$</td>
+            `;
+
+            let sumX = 0;
+            let countX = 0;
+
+            for (let i = 1; i <= currentCount; i++) {
+                const val = existingVals[i] !== undefined ? existingVals[i] : '';
+                if (val !== '' && !isNaN(parseFloat(val))) {
+                    sumX += parseFloat(val);
+                    countX++;
+                }
+                html += `
+                    <td class="p-0.5 sm:p-1 border border-slate-200">
+                        <input type="number" id="cell-${type.toLowerCase()}-${i}" value="${val}" 
+                               class="table-input w-full py-2 px-1 text-center font-mono text-sm sm:text-base font-extrabold rounded bg-white text-${color}-950 border border-${color}-300 outline-none transition" 
+                               placeholder="${i}" />
+                    </td>
+                `;
+            }
+            html += `<td class="p-2 font-mono text-sm sm:text-base font-bold border border-slate-200 bg-slate-100 text-${color}-950">${countX > 0 ? formatNum(sumX) : '-'}</td></tr>`;
+
+            // Row 2: Deviations Row (If Enabled)
+            if (showDeviations) {
+                html += `
+                    <tr class="bg-${color}-50/40">
+                        <td class="p-2 border border-${color}-200 font-bold text-${color}-900 bg-${color}-100/60 text-xs sm:text-sm">편차 ($x - m$)</td>
+                `;
+                if (stats && stats.items && stats.items.length === currentCount) {
+                    stats.items.forEach(item => {
+                        const devColor = item.dev > 0 ? 'text-blue-600' : (item.dev < 0 ? 'text-rose-600' : 'text-slate-600');
+                        html += `<td class="p-1 sm:p-2 border border-slate-200 font-mono text-xs sm:text-sm font-bold ${devColor}">${formatNum(item.dev)}</td>`;
+                    });
+                    html += `<td class="p-1 sm:p-2 border border-slate-200 font-mono text-xs sm:text-sm font-bold text-${color}-900 bg-${color}-100">${Math.abs(stats.sumDev) < 0.0001 ? "0" : formatNum(stats.sumDev)}</td>`;
+                } else {
+                    for (let i = 1; i <= currentCount; i++) {
+                        html += `<td class="p-1 sm:p-2 border border-slate-200 text-slate-400 font-mono text-xs sm:text-sm">-</td>`;
+                    }
+                    html += `<td class="p-1 sm:p-2 border border-slate-200 text-slate-400 font-mono text-xs sm:text-sm">-</td>`;
+                }
+                html += `</tr>`;
+            }
+
+            // Row 3: Squared Deviations Row (If Enabled)
+            if (showDevSquared) {
+                html += `
+                    <tr class="bg-purple-50/40">
+                        <td class="p-2 border border-purple-200 font-bold text-purple-900 bg-purple-100/60 text-xs sm:text-sm">편차제곱 ($(x-m)^2$)</td>
+                `;
+                if (stats && stats.items && stats.items.length === currentCount) {
+                    stats.items.forEach(item => {
+                        html += `<td class="p-1 sm:p-2 border border-slate-200 font-mono text-xs sm:text-sm font-bold text-purple-900">${formatNum(item.devSq)}</td>`;
+                    });
+                    html += `<td class="p-1 sm:p-2 border border-slate-200 font-mono text-xs sm:text-sm font-bold text-purple-900 bg-purple-100">${formatNum(stats.sumSqDev)}</td>`;
+                } else {
+                    for (let i = 1; i <= currentCount; i++) {
+                        html += `<td class="p-1 sm:p-2 border border-slate-200 text-slate-400 font-mono text-xs sm:text-sm">-</td>`;
+                    }
+                    html += `<td class="p-1 sm:p-2 border border-slate-200 text-slate-400 font-mono text-xs sm:text-sm">-</td>`;
+                }
+                html += `</tr>`;
+            }
+
+            targetBody.innerHTML = html;
+        }
+
+        function computeGroupStats(type) {
+            const data = [];
+            for (let i = 1; i <= currentCount; i++) {
+                const el = document.getElementById(`cell-${type.toLowerCase()}-${i}`);
+                const val = el ? parseFloat(el.value) : NaN;
+                if (!isNaN(val)) {
+                    data.push({ id: i, x: val });
+                }
+            }
+
+            const N = data.length;
+            if (N === 0) return null;
+
+            let sumX = 0;
+            data.forEach(d => sumX += d.x);
+
+            const mean = sumX / N;
+            let sumDev = 0;
+            let sumSqDev = 0;
+
+            const items = data.map(d => {
+                const dev = d.x - mean;
+                const devSq = dev * dev;
+                sumDev += dev;
+                sumSqDev += devSq;
+                return { id: d.id, x: d.x, dev: dev, devSq: devSq };
+            });
+
+            const variance = sumSqDev / N;
+            const stdDev = Math.sqrt(variance);
+
+            return {
+                N,
+                sumX,
+                mean,
+                sumDev,
+                sumSqDev,
+                variance,
+                stdDev,
+                items
+            };
+        }
+
+        // Helper to generate integer array where mean is guaranteed to be an integer
+        function generateIntegerMeanDataWithSpread(count, mean, spread) {
+            let arr = Array.from({ length: count }, () => mean + Math.floor(Math.random() * (spread * 2 + 1)) - spread);
+            let sum = arr.reduce((a, b) => a + b, 0);
+            let targetSum = mean * count;
+            let diff = targetSum - sum;
+
+            let idx = 0;
+            while (diff !== 0) {
+                const step = diff > 0 ? 1 : -1;
+                arr[idx % count] += step;
+                diff -= step;
+                idx++;
+            }
+            return arr;
+        }
+
+        // Main Calculation Function
+        function calculateStats() {
+            lastStatsA = computeGroupStats('A');
+            lastStatsB = computeGroupStats('B');
+
+            // Update Header Tag Badges
+            if (lastStatsA) {
+                statTagA.innerHTML = `평균 $m_A = \\mathbf{${formatNum(lastStatsA.mean)}}$`;
+            } else {
+                statTagA.innerHTML = `평균 $m_A = -$`;
+            }
+
+            if (lastStatsB) {
+                statTagB.innerHTML = `평균 $m_B = \\mathbf{${formatNum(lastStatsB.mean)}}$`;
+            } else {
+                statTagB.innerHTML = `평균 $m_B = -$`;
+            }
+
+            // Re-render Tables with fresh stats
+            renderTables();
+
+            // Update Separate Charts if Graph Mode is ON
+            if (showGraph) {
+                updateSeparateCharts();
+            }
+        }
+
+        function updateSeparateCharts() {
+            const labels = [];
+            for (let i = 1; i <= currentCount; i++) labels.push(`${i}번`);
+
+            // Chart A Rendering
+            if (lastStatsA && lastStatsA.items) {
+                const dataA = lastStatsA.items.map(item => item.x);
+                graphInfoA.innerText = `평균: ${formatNum(lastStatsA.mean)}`;
+                
+                const ctxA = document.getElementById('chartA').getContext('2d');
+                if (chartInstanceA) chartInstanceA.destroy();
+
+                chartInstanceA = new Chart(ctxA, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '변량 A',
+                            data: dataA,
+                            backgroundColor: 'rgba(79, 70, 229, 0.8)',
+                            borderColor: 'rgba(79, 70, 229, 1)',
+                            borderWidth: 1.5,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            meanValue: lastStatsA.mean
+                        },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 12, weight: 'bold' } } },
+                            x: { grid: { display: false }, ticks: { font: { size: 12, weight: 'bold' } } }
+                        }
+                    }
+                });
+            }
+
+            // Chart B Rendering
+            if (lastStatsB && lastStatsB.items) {
+                const dataB = lastStatsB.items.map(item => item.x);
+                graphInfoB.innerText = `평균: ${formatNum(lastStatsB.mean)}`;
+
+                const ctxB = document.getElementById('chartB').getContext('2d');
+                if (chartInstanceB) chartInstanceB.destroy();
+
+                chartInstanceB = new Chart(ctxB, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '변량 B',
+                            data: dataB,
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            borderWidth: 1.5,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            meanValue: lastStatsB.mean
+                        },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 12, weight: 'bold' } } },
+                            x: { grid: { display: false }, ticks: { font: { size: 12, weight: 'bold' } } }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Fill Sample Data
+        function fillSample(sampleA, sampleB) {
+            for (let i = 1; i <= currentCount; i++) {
+                const elA = document.getElementById(`cell-a-${i}`);
+                const elB = document.getElementById(`cell-b-${i}`);
+                if (elA) elA.value = sampleA[i - 1];
+                if (elB) elB.value = sampleB[i - 1];
+            }
+            calculateStats();
+        }
+
+        // Event Listeners
+        selectCount.addEventListener('change', (e) => {
+            currentCount = parseInt(e.target.value);
+            renderTables();
+            calculateStats();
+        });
+
+        btnCalculate.addEventListener('click', calculateStats);
+
+        btnRandom.addEventListener('click', () => {
+            const commonMean = Math.floor(Math.random() * 10) + 10; // 공통 정수 평균 (10 ~ 19)
+            
+            // 한쪽은 평균 주변에 밀집(작은 분산), 다른 쪽은 넓게 분포(큰 분산)
+            const isAClustered = Math.random() < 0.5;
+            const spreadA = isAClustered ? 1 : 6;
+            const spreadB = isAClustered ? 6 : 1;
+
+            const dataA = generateIntegerMeanDataWithSpread(currentCount, commonMean, spreadA);
+            const dataB = generateIntegerMeanDataWithSpread(currentCount, commonMean, spreadB);
+
+            for (let i = 1; i <= currentCount; i++) {
+                document.getElementById(`cell-a-${i}`).value = dataA[i - 1];
+                document.getElementById(`cell-b-${i}`).value = dataB[i - 1];
+            }
+            calculateStats();
+        });
+
+        btnClear.addEventListener('click', () => {
+            for (let i = 1; i <= 12; i++) {
+                const elA = document.getElementById(`cell-a-${i}`);
+                const elB = document.getElementById(`cell-b-${i}`);
+                if (elA) elA.value = '';
+                if (elB) elB.value = '';
+            }
+            lastStatsA = null;
+            lastStatsB = null;
+            statTagA.innerHTML = `평균 $m_A = -$`;
+            statTagB.innerHTML = `평균 $m_B = -$`;
+            renderTables();
+        });
+
+        btnSample.addEventListener('click', () => {
+            selectCount.value = "10";
+            currentCount = 10;
+            renderTables();
+            for (let i = 1; i <= currentCount; i++) {
+                const elA = document.getElementById(`cell-a-${i}`);
+                const elB = document.getElementById(`cell-b-${i}`);
+                if (elA) elA.value = sample_A[i - 1];
+                if (elB) elB.value = sample_B[i - 1];
+            }
+            calculateStats();
+        });
+
+        // Toggle Deviations
+        toggleDev.addEventListener('click', () => {
+            showDeviations = !showDeviations;
+            if (showDeviations) {
+                toggleDev.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
+                toggleDev.classList.remove('bg-slate-100', 'text-slate-700');
+                badgeDev.innerText = "ON";
+                badgeDev.className = "text-xs px-2 py-0.5 bg-white/20 text-white font-bold rounded-md ml-0.5";
+            } else {
+                toggleDev.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
+                toggleDev.classList.add('bg-slate-100', 'text-slate-700');
+                badgeDev.innerText = "OFF";
+                badgeDev.className = "text-xs px-2 py-0.5 bg-slate-200 text-slate-600 rounded-md ml-0.5";
+            }
+            renderTables();
+        });
+
+        // Toggle Squared Deviations
+        toggleDevsq.addEventListener('click', () => {
+            showDevSquared = !showDevSquared;
+            if (showDevSquared) {
+                toggleDevsq.classList.add('bg-purple-600', 'text-white', 'hover:bg-purple-700');
+                toggleDevsq.classList.remove('bg-slate-100', 'text-slate-700');
+                badgeDevsq.innerText = "ON";
+                badgeDevsq.className = "text-xs px-2 py-0.5 bg-white/20 text-white font-bold rounded-md ml-0.5";
+            } else {
+                toggleDevsq.classList.remove('bg-purple-600', 'text-white', 'hover:bg-purple-700');
+                toggleDevsq.classList.add('bg-slate-100', 'text-slate-700');
+                badgeDevsq.innerText = "OFF";
+                badgeDevsq.className = "text-xs px-2 py-0.5 bg-slate-200 text-slate-600 rounded-md ml-0.5";
+            }
+            renderTables();
+        });
+
+        // Toggle Graphs
+        toggleGraph.addEventListener('click', () => {
+            showGraph = !showGraph;
+            if (showGraph) {
+                toggleGraph.classList.add('bg-emerald-600', 'text-white', 'hover:bg-emerald-700');
+                toggleGraph.classList.remove('bg-slate-100', 'text-slate-700');
+                badgeGraph.innerText = "ON";
+                badgeGraph.className = "text-xs px-2 py-0.5 bg-white/20 text-white font-bold rounded-md ml-0.5";
+                
+                // Show Mean Line Button
+                toggleMean.classList.remove('hidden');
+                toggleMean.classList.add('flex');
+
+                graphBoxA.classList.remove('hidden');
+                graphBoxB.classList.remove('hidden');
+                updateSeparateCharts();
+            } else {
+                toggleGraph.classList.remove('bg-emerald-600', 'text-white', 'hover:bg-emerald-700');
+                toggleGraph.classList.add('bg-slate-100', 'text-slate-700');
+                badgeGraph.innerText = "OFF";
+                badgeGraph.className = "text-xs px-2 py-0.5 bg-slate-200 text-slate-600 rounded-md ml-0.5";
+
+                // Hide Mean Line Button
+                toggleMean.classList.add('hidden');
+                toggleMean.classList.remove('flex');
+
+                graphBoxA.classList.add('hidden');
+                graphBoxB.classList.add('hidden');
+            }
+        });
+
+        // Toggle Mean Line
+        toggleMean.addEventListener('click', () => {
+            showMeanLine = !showMeanLine;
+            if (showMeanLine) {
+                toggleMean.classList.add('bg-rose-600', 'text-white', 'hover:bg-rose-700');
+                toggleMean.classList.remove('bg-slate-100', 'text-slate-700');
+                badgeMean.innerText = "ON";
+                badgeMean.className = "text-xs px-2 py-0.5 bg-white/20 text-white font-bold rounded-md ml-0.5";
+            } else {
+                toggleMean.classList.remove('bg-rose-600', 'text-white', 'hover:bg-rose-700');
+                toggleMean.classList.add('bg-slate-100', 'text-slate-700');
+                badgeMean.innerText = "OFF";
+                badgeMean.className = "text-xs px-2 py-0.5 bg-slate-200 text-slate-600 rounded-md ml-0.5";
+            }
+            if (showGraph) {
+                updateSeparateCharts();
+            }
+        });
+
+        // Initial Load
+        window.onload = function() {
+            renderTables();
+        };
+    </script>
+</body>
+</html>
