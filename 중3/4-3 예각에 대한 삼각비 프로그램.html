@@ -3,88 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>단위원과 삼각비</title>
-    <!-- Tailwind CSS를 사용하여 디자인을 구성합니다 -->
+    <title>단위원과 삼각비 - 각도 입력 및 특수각 기능</title>
+    <!-- Tailwind CSS를 사용하여 웹 앱을 스타일링합니다 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 터치 기기에서 캔버스를 드래그할 때 화면이 스크롤되는 것을 방지합니다 */
+        /* 터치 기기에서 캔버스 드래그 시 화면 스크롤 방지 */
         canvas {
             touch-action: none;
-            /* 캔버스 크기를 기존 600px에서 800px로 키워 넓은 화면을 활용합니다 */
             max-width: 800px;
             max-height: 800px;
             width: 100%;
             height: auto;
             aspect-ratio: 1 / 1;
         }
+        /* custom range slider styling */
+        input[type=range]::-webkit-slider-thumb {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 md:p-8 font-sans text-slate-800">
 
-    <!-- 좌우 여백을 줄이기 위해 컨테이너의 최대 너비(max-w-6xl -> max-w-[1600px])를 크게 확장했습니다 -->
     <div class="w-full max-w-[1600px] bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
         
-        <!-- 왼쪽: 캔버스 영역 -->
-        <div class="relative bg-slate-100 flex-1 flex justify-center items-center p-6 md:p-10 border-b md:border-b-0 md:border-r border-slate-200">
-            <!-- 캔버스 자체 픽셀 해상도도 800x800으로 키웠습니다 -->
+        <!-- 왼쪽: 캔버스 시각화 영역 -->
+        <div class="relative bg-slate-100 flex-1 flex justify-center items-center p-6 md:p-10 border-b md:border-b-0 md:border-r border-slate-200 min-h-[450px]">
             <canvas id="mathCanvas" width="800" height="800" class="bg-white rounded-xl shadow-sm border border-slate-200 cursor-grab active:cursor-grabbing"></canvas>
             
-            <!-- 사용자 안내 메시지 -->
-            <div class="absolute top-10 left-1/2 transform -translate-x-1/2 bg-white/80 backdrop-blur px-5 py-2.5 rounded-full shadow-sm text-base font-medium text-slate-600 pointer-events-none">
-                원 위의 검은 점을 잡고 드래그해보세요
+            <!-- 안내 메시지 -->
+            <div class="absolute top-10 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur px-5 py-2.5 rounded-full shadow-sm text-sm md:text-base font-medium text-slate-600 pointer-events-none text-center border border-slate-200/60">
+                원 위의 점을 드래그하거나 오른쪽 조작창에서 각도를 조정하세요
             </div>
         </div>
 
-        <!-- 오른쪽: 정보 및 수치 표시 영역 (전체 크기 확장에 맞춰 패널 너비도 증가) -->
-        <div class="w-full md:w-[400px] lg:w-[480px] p-8 md:p-10 flex flex-col justify-between">
+        <!-- 오른쪽: 각도 조작 및 수치 정보 표시 영역 -->
+        <div class="w-full md:w-[440px] lg:w-[500px] p-6 md:p-10 flex flex-col justify-between space-y-6">
             <div>
-                <h1 class="text-4xl font-bold mb-4 text-slate-800">삼각비의 원리</h1>
-                <p class="text-slate-500 mb-10 text-lg">반지름이 1인 단위원의 제1사분면에서 점을 움직여 사인, 코사인, 탄젠트의 변화를 직관적으로 이해해보세요.</p>
+                <h1 class="text-3xl md:text-4xl font-bold mb-3 text-slate-800">삼각비의 원리</h1>
+                <p class="text-slate-500 mb-6 text-sm md:text-base leading-relaxed">
+                    반지름이 1인 단위원에서 각도를 직접 조절하여 사인(sin), 코사인(cos), 탄젠트(tan)의 변화를 관찰해보세요.
+                </p>
 
-                <!-- 수치 표시 패널 -->
-                <div class="space-y-6">
-                    <!-- 각도 -->
-                    <div class="flex justify-between items-center p-5 bg-slate-50 rounded-xl">
-                        <span class="text-lg font-medium text-slate-600 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <!-- 각도 조작 및 입력 컨트롤 영역 -->
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/80 mb-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <label for="angleInput" class="text-base font-bold text-slate-700 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
                             </svg>
-                            각도 (θ)
-                        </span>
-                        <span id="angleValue" class="text-3xl font-bold text-slate-800">45.0°</span>
+                            각도(θ) 직접 입력
+                        </label>
+                        <div class="flex items-center space-x-1">
+                            <input 
+                                type="number" 
+                                id="angleInput" 
+                                min="0" 
+                                max="90" 
+                                step="0.1" 
+                                value="45.0"
+                                class="w-24 px-3 py-1.5 text-right font-bold text-xl text-blue-600 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            />
+                            <span class="text-xl font-bold text-slate-600">°</span>
+                        </div>
+                    </div>
+
+                    <!-- 슬라이더 조절 -->
+                    <div class="pt-1">
+                        <input 
+                            type="range" 
+                            id="angleRange" 
+                            min="0" 
+                            max="90" 
+                            step="0.1" 
+                            value="45.0"
+                            class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                        />
+                        <div class="flex justify-between text-xs text-slate-400 mt-1 font-medium">
+                            <span>0°</span>
+                            <span>30°</span>
+                            <span>45°</span>
+                            <span>60°</span>
+                            <span>90°</span>
+                        </div>
+                    </div>
+
+                    <!-- 특수각 빠르게 선택 버튼 모음 -->
+                    <div>
+                        <div class="text-xs font-semibold text-slate-500 mb-2">특수각 빠른 선택</div>
+                        <div class="grid grid-cols-5 gap-1.5">
+                            <button type="button" onclick="setAngleDegrees(0)" class="preset-btn px-2 py-2 text-xs font-bold rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition">0°</button>
+                            <button type="button" onclick="setAngleDegrees(30)" class="preset-btn px-2 py-2 text-xs font-bold rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition">30°</button>
+                            <!-- 45도 특수각 강조 버튼 -->
+                            <button type="button" onclick="setAngleDegrees(45)" id="btn45" class="preset-btn px-2 py-2 text-xs font-bold rounded-lg bg-blue-600 border border-blue-600 text-white shadow-sm hover:bg-blue-700 transition">45°</button>
+                            <button type="button" onclick="setAngleDegrees(60)" class="preset-btn px-2 py-2 text-xs font-bold rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition">60°</button>
+                            <button type="button" onclick="setAngleDegrees(90)" class="preset-btn px-2 py-2 text-xs font-bold rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition">90°</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 삼각비 수치 표시 패널 -->
+                <div class="space-y-3">
+                    <!-- 각도 표시 -->
+                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
+                        <span class="text-base font-medium text-slate-600 flex items-center">현재 각도</span>
+                        <span id="angleValue" class="text-2xl font-bold text-slate-800">45.0°</span>
                     </div>
 
                     <!-- 코사인 (밑변) -->
-                    <div class="flex justify-between items-center p-5 bg-blue-50 rounded-xl border border-blue-100">
-                        <span class="text-lg font-medium text-blue-700">코사인 (cos θ)</span>
-                        <span id="cosValue" class="text-3xl font-bold text-blue-700">0.7071</span>
+                    <div class="flex justify-between items-center p-4 bg-blue-50/80 rounded-xl border border-blue-100">
+                        <span class="text-base font-medium text-blue-700">코사인 (cos θ)</span>
+                        <span id="cosValue" class="text-2xl font-bold text-blue-700">0.7071</span>
                     </div>
 
                     <!-- 사인 (높이) -->
-                    <div class="flex justify-between items-center p-5 bg-red-50 rounded-xl border border-red-100">
-                        <span class="text-lg font-medium text-red-700">사인 (sin θ)</span>
-                        <span id="sinValue" class="text-3xl font-bold text-red-700">0.7071</span>
+                    <div class="flex justify-between items-center p-4 bg-red-50/80 rounded-xl border border-red-100">
+                        <span class="text-base font-medium text-red-700">사인 (sin θ)</span>
+                        <span id="sinValue" class="text-2xl font-bold text-red-700">0.7071</span>
                     </div>
 
-                    <!-- 탄젠트 (확장된 높이) -->
-                    <div class="flex justify-between items-center p-5 bg-emerald-50 rounded-xl border border-emerald-100">
-                        <span class="text-lg font-medium text-emerald-700">탄젠트 (tan θ)</span>
-                        <span id="tanValue" class="text-3xl font-bold text-emerald-700">1.0000</span>
+                    <!-- 탄젠트 (확장 높이) -->
+                    <div class="flex justify-between items-center p-4 bg-emerald-50/80 rounded-xl border border-emerald-100">
+                        <span class="text-base font-medium text-emerald-700">탄젠트 (tan θ)</span>
+                        <span id="tanValue" class="text-2xl font-bold text-emerald-700">1.0000</span>
                     </div>
                 </div>
             </div>
 
-            <!-- 설명 영역 -->
-            <div class="mt-12 space-y-5 text-slate-600 bg-slate-50 p-6 rounded-xl text-base">
-                <h3 class="font-bold text-slate-700 mb-3 text-lg">시각적 의미</h3>
-                <p class="flex items-center"><span class="w-3.5 h-3.5 bg-blue-500 rounded-full mr-3 shrink-0"></span><span><strong class="text-blue-600 mr-1">코사인:</strong> 빗변이 1일 때의 밑변 길이</span></p>
-                <p class="flex items-center"><span class="w-3.5 h-3.5 bg-red-500 rounded-full mr-3 shrink-0"></span><span><strong class="text-red-600 mr-1">사인:</strong> 빗변이 1일 때의 높이</span></p>
-                <p class="flex items-center"><span class="w-3.5 h-3.5 bg-emerald-500 rounded-full mr-3 shrink-0"></span><span><strong class="text-emerald-600 mr-1">탄젠트:</strong> 밑변이 1일 때의 높이 (90°에 가까울수록 급격히 증가)</span></p>
+            <!-- 범례 및 설명 영역 -->
+            <div class="mt-6 space-y-3 text-slate-600 bg-slate-50 p-5 rounded-xl text-sm border border-slate-100">
+                <h3 class="font-bold text-slate-700 text-base mb-2">삼각비의 시각적 의미</h3>
+                <p class="flex items-center"><span class="w-3 h-3 bg-blue-500 rounded-full mr-2.5 shrink-0"></span><span><strong class="text-blue-600">cos θ:</strong> 밑변의 길이에 해당</span></p>
+                <p class="flex items-center"><span class="w-3 h-3 bg-red-500 rounded-full mr-2.5 shrink-0"></span><span><strong class="text-red-600">sin θ:</strong> 높이에 해당</span></p>
+                <p class="flex items-center"><span class="w-3 h-3 bg-emerald-500 rounded-full mr-2.5 shrink-0"></span><span><strong class="text-emerald-600">tan θ:</strong> 밑변이 1일 때 확장된 높이</span></p>
             </div>
         </div>
     </div>
 
     <script>
+        // HTML 요소 참조
         const canvas = document.getElementById('mathCanvas');
         const ctx = canvas.getContext('2d');
         
@@ -93,20 +149,23 @@
         const cosEl = document.getElementById('cosValue');
         const tanEl = document.getElementById('tanValue');
 
-        // 해상도가 커짐에 따라 그리기 설정값들 업데이트
+        const angleInput = document.getElementById('angleInput');
+        const angleRange = document.getElementById('angleRange');
+
+        // 캔버스 크기 및 단위원 설정
         const width = canvas.width;
         const height = canvas.height;
-        const padding = 120; // 캔버스 여백 확대
+        const padding = 120;
         
         const cx = padding;
         const cy = height - padding;
-        
-        const R = 520; // 반지름 확대
+        const R = 520; // 단위원 반지름 피셀 크기
 
-        let currentAngle = Math.PI / 4;
+        let currentAngle = Math.PI / 4; // 기본 45도(라디안)
         let isDragging = false;
-        const dragHitAreaRadius = 40; // 드래그 감지 영역 확대
+        const dragHitAreaRadius = 40;
 
+        // 시각화에 사용할 색상 테마
         const colors = {
             axis: '#94a3b8',
             circle: '#cbd5e1',
@@ -119,8 +178,7 @@
             pointHighlight: '#3b82f6'
         };
 
-        draw();
-
+        // 마우스 및 터치 이벤트 바인딩
         canvas.addEventListener('mousedown', startInteraction);
         canvas.addEventListener('mousemove', handleInteraction);
         window.addEventListener('mouseup', endInteraction);
@@ -136,6 +194,66 @@
         }, { passive: false });
         
         window.addEventListener('touchend', endInteraction);
+
+        // 각도 직접 입력 필드 이벤트 처리
+        angleInput.addEventListener('input', () => {
+            let val = parseFloat(angleInput.value);
+            if (isNaN(val)) return;
+            if (val < 0) val = 0;
+            if (val > 90) val = 90;
+            
+            setAngleDegrees(val, false);
+        });
+
+        angleInput.addEventListener('change', () => {
+            let val = parseFloat(angleInput.value);
+            if (isNaN(val)) val = 0;
+            if (val < 0) val = 0;
+            if (val > 90) val = 90;
+            
+            setAngleDegrees(val, true);
+        });
+
+        // 각도 슬라이더 이벤트 처리
+        angleRange.addEventListener('input', () => {
+            let val = parseFloat(angleRange.value);
+            setAngleDegrees(val, true);
+        });
+
+        /**
+         * 각도를 도(degree) 단위로 설정하고 모든 UI 요소를 동기화합니다.
+         * @param {number} deg - 설정할 각도 (0 ~ 90)
+         * @param {boolean} updateInputField - 입력 창 텍스트 업데이트 여부
+         */
+        function setAngleDegrees(deg, updateInputField = true) {
+            // 범위 제한 [0, 90]
+            const clampedDeg = Math.max(0, Math.min(90, deg));
+            currentAngle = (clampedDeg * Math.PI) / 180;
+
+            if (updateInputField) {
+                angleInput.value = clampedDeg.toFixed(1);
+            }
+            angleRange.value = clampedDeg;
+
+            updatePresetButtonStyles(clampedDeg);
+            draw();
+            updateUI();
+        }
+
+        /**
+         * 특수각 프리셋 버튼의 활성화 스타일에 변화를 줍니다.
+         */
+        function updatePresetButtonStyles(currentDeg) {
+            const buttons = document.querySelectorAll('.preset-btn');
+            buttons.forEach(btn => {
+                const btnAngle = parseFloat(btn.textContent);
+                if (Math.abs(btnAngle - currentDeg) < 0.1) {
+                    btn.className = "preset-btn px-2 py-2 text-xs font-bold rounded-lg bg-blue-600 border border-blue-600 text-white shadow-sm transition";
+                } else {
+                    btn.className = "preset-btn px-2 py-2 text-xs font-bold rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition";
+                }
+            });
+        }
 
         function startInteraction(e) {
             const pos = getEventPosition(e);
@@ -187,6 +305,12 @@
             if (angle > Math.PI / 2) angle = Math.PI / 2;
 
             currentAngle = angle;
+            const degrees = (currentAngle * 180 / Math.PI);
+
+            angleInput.value = degrees.toFixed(1);
+            angleRange.value = degrees.toFixed(1);
+
+            updatePresetButtonStyles(degrees);
             draw();
             updateUI();
         }
@@ -197,7 +321,7 @@
             const cosVal = Math.cos(currentAngle).toFixed(4);
             
             let tanVal;
-            if (currentAngle === Math.PI / 2) {
+            if (Math.abs(currentAngle - Math.PI / 2) < 0.0001) {
                 tanVal = '무한대';
             } else {
                 tanVal = Math.tan(currentAngle).toFixed(4);
@@ -216,11 +340,10 @@
             const cos = Math.cos(currentAngle);
             const tan = Math.tan(currentAngle);
 
-            // 1. 축 (두께 증가)
+            // 1. 축 그리기
             drawLine(0, cy, width, cy, colors.axis, 3);
             drawLine(cx, height, cx, 0, colors.axis, 3);
             
-            // 텍스트 크기 증가
             drawText('x', width - 40, cy + 40, colors.text, '24px sans-serif');
             drawText('y', cx - 40, 40, colors.text, '24px sans-serif');
             drawText('0', cx - 30, cy + 40, colors.text, '20px sans-serif');
@@ -242,32 +365,32 @@
             const px = cx + R * cos;
             const py = cy - R * sin;
 
-            // 3. 탄젠트
-            if (currentAngle < Math.PI / 2 - 0.01) {
+            // 3. 탄젠트 높이 선
+            if (currentAngle < Math.PI / 2 - 0.001) {
                 const tx = cx + R;
                 const ty = cy - R * tan;
                 
                 drawLine(tx, cy, tx, ty, colors.tan, 5);
                 drawLine(px, py, tx, ty, colors.tan, 3, true);
                 
-                if (tan < 2.5 && tan > 0.1) {
+                if (tan < 2.5 && tan > 0.05) {
                     drawText('tan', tx + 20, cy - (R * tan) / 2, colors.tan, 'bold 24px sans-serif');
                 }
             }
 
-            // 4. 코사인
+            // 4. 코사인 (밑변)
             drawLine(cx, cy, px, cy, colors.cos, 5);
-            if (cos > 0.1) {
+            if (cos > 0.08) {
                 drawText('cos', cx + (R * cos) / 2, cy + 40, colors.cos, 'bold 24px sans-serif', 'center');
             }
 
-            // 5. 사인
+            // 5. 사인 (높이)
             drawLine(px, cy, px, py, colors.sin, 5);
-            if (sin > 0.1) {
+            if (sin > 0.08) {
                 drawText('sin', px + 20, cy - (R * sin) / 2, colors.sin, 'bold 24px sans-serif');
             }
 
-            // 6. 빗변
+            // 6. 빗변 (반지름=1)
             drawLine(cx, cy, px, py, colors.hypotenuse, 4);
             
             const midX = cx + (px - cx) / 2;
@@ -276,8 +399,8 @@
                 drawText('1', midX - 30, midY - 20, colors.hypotenuse, 'bold 24px sans-serif');
             }
 
-            // 7. 각도
-            const arcRadius = 80; // 반경 증가
+            // 7. 각도 호 및 θ 표시
+            const arcRadius = 80;
             ctx.beginPath();
             ctx.moveTo(cx, cy);
             ctx.arc(cx, cy, arcRadius, 0, -currentAngle, true);
@@ -287,23 +410,22 @@
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // 세타(θ) 기호 위치 수식을 삼각함수를 활용하여 정확하게 수정했습니다
             const textAngle = currentAngle / 2;
-            if (currentAngle > 0.1) {
-                const textRadius = arcRadius + 25; // 각도 호 바로 바깥쪽에 위치하도록 설정
+            if (currentAngle > 0.05) {
+                const textRadius = arcRadius + 25;
                 const thetaX = cx + textRadius * Math.cos(textAngle);
                 const thetaY = cy - textRadius * Math.sin(textAngle);
                 drawText('θ', thetaX, thetaY, colors.text, 'italic 28px sans-serif', 'center');
             }
 
-            // 8. 점 (크기 증가)
+            // 8. 점 그리기
             drawPoint(cx, cy, colors.axis, 6); // 원점
 
             if (currentAngle < Math.PI / 2) {
                 drawPoint(cx + R, cy - R * tan, colors.tan, 7); // 탄젠트 점
             }
             
-            // 원 위의 점
+            // 원 위의 움직이는 점
             const pointColor = isDragging ? colors.pointHighlight : colors.point;
             const pointSize = isDragging ? 14 : 10;
             drawPoint(px, py, pointColor, pointSize);
@@ -348,8 +470,9 @@
             ctx.textBaseline = 'middle';
             ctx.fillText(text, x, y);
         }
-        
-        updateUI();
+
+        // 초기화 (기본 45도 설정)
+        setAngleDegrees(45, true);
 
     </script>
 </body>
