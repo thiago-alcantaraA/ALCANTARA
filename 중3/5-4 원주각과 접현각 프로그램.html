@@ -50,7 +50,7 @@
         <h2 class="font-bold text-lg mb-2 text-slate-800">접현각과 원주각의 성질</h2>
         <p class="text-xs md:text-sm text-slate-600 mb-3 leading-relaxed">
             점 P와 B를 드래그하여 이동해보세요.<br>
-            <span class="text-emerald-700 font-bold">증명하기</span> 버튼을 누르면 지름 AC와 보조선 PC를 이용한 원리가 강조됩니다.
+            지름 AC에 대한 원주각 <span class="text-blue-600 font-bold">∠CPA = 90°</span>와 보조선을 활용해 접현각의 원리를 직관적으로 확인할 수 있습니다.
         </p>
         
         <div class="text-sm md:text-base font-bold space-y-2 border-t pt-3 border-slate-200">
@@ -198,7 +198,7 @@
             const d2 = Math.hypot(p2.x - vertex.x, p2.y - vertex.y);
             if (d1 === 0 || d2 === 0) return;
 
-            const size = Math.max(10, Math.min(20, d1 * 0.3, d2 * 0.3));
+            const size = Math.max(10, Math.min(18, d1 * 0.3, d2 * 0.3));
 
             const ux1 = (p1.x - vertex.x) / d1;
             const uy1 = (p1.y - vertex.y) / d1;
@@ -242,7 +242,7 @@
                 drawMinorArcOnCircle(cx, cy, r, C_ANGLE, bAngle, '#10b981', 5);
             }
 
-            // 3. 지름 AC 및 보조선 PC (점선)
+            // 3. 지름 AC 및 보조선 PC (점선) & 파란색 직각 표시(∠CPA = 90°)
             if (!isBAtC || proofMode) {
                 ctx.save();
                 ctx.setLineDash([6, 5]);
@@ -261,6 +261,9 @@
                 ctx.lineTo(C.x, C.y);
                 ctx.stroke();
                 ctx.restore();
+
+                // 파란색 직각 표시 (지름 AC에 대한 원주각 ∠CPA = 90°)
+                drawRightAngle(P, A, C, '#2563eb');
             }
 
             // 4. 직각 표시 (∠OAT - 접선과 반지름의 수직 관계)
@@ -304,13 +307,15 @@
             document.getElementById('tab-angle').innerText = tab.toFixed(1) + "°";
             document.getElementById('apb-angle').innerText = apb.toFixed(1) + "°";
 
-            // 7. 각도 표시 (접현각 TAB, 원주각 APB)
-            const is90 = Math.abs(tab - 90) < 0.5;
-            if (is90) {
-                drawRightAngle(P, A, B, '#2563eb');
-            } else {
-                drawAngleArc(A, T, B, '#dc2626', 42, 3); // 접현각 TAB (빨간색)
-                drawAngleArc(P, A, B, '#2563eb', 42, 3); // 원주각 APB (파란색)
+            // 7. 각도 표시 (접현각 TAB, 원주각 APB) - 증명 모드가 아닐 때만 표시
+            if (!proofMode) {
+                const is90 = Math.abs(tab - 90) < 0.5;
+                if (is90) {
+                    drawRightAngle(P, A, B, '#2563eb');
+                } else {
+                    drawAngleArc(A, T, B, '#dc2626', 42, 3); // 접현각 TAB (빨간색)
+                    drawAngleArc(P, A, B, '#2563eb', 42, 3); // 원주각 APB (파란색)
+                }
             }
 
             // 8. 증명 모드 활성화 시: ∠CPB 및 ∠CAB 초록색으로 표시
