@@ -29,7 +29,7 @@
         #info-panel {
             position: absolute;
             top: 20px;
-            right: 20px;
+            left: 20px; /* 기존 right: 20px에서 동일한 높이의 왼쪽으로 이동 */
             background: white;
             padding: 18px 22px;
             border-radius: 16px;
@@ -76,6 +76,7 @@
             <div id="relation-container" class="mt-3 pt-3 border-t border-slate-200">
                 <p id="relation-text" class="text-sm text-slate-500 font-medium">원 테두리를 클릭하여 점을 찍어보세요 (최대 2개).</p>
             </div>
+            <div id="proof-info" class="hidden mt-3 pt-3 border-t border-slate-200 text-xs text-slate-600"></div>
         </div>
     </main>
 
@@ -89,6 +90,7 @@
         const angleList = document.getElementById('angle-list');
         const relationText = document.getElementById('relation-text');
         const proofBadge = document.getElementById('proof-badge');
+        const proofInfo = document.getElementById('proof-info');
 
         let width = 0, height = 0, cx = 0, cy = 0;
         let circleRadius = 150;
@@ -97,6 +99,7 @@
         let userPoints = [];
         let draggingPoint = null; 
         let showProof = false;
+        let activeTriangles = new Set(); // 빗금 표시할 삼각형 ID 저장
 
         function resizeCanvas() {
             const container = document.getElementById('canvas-container');
@@ -105,7 +108,6 @@
             canvas.width = width * dpr; canvas.height = height * dpr;
             ctx.scale(dpr, dpr);
             
-            // 원의 반지름 비율을 높이고 최대 크기 제한을 상향 조정
             circleRadius = Math.min(width, height) * 0.38;
             if (circleRadius < 120) circleRadius = 120;
             if (circleRadius > 550) circleRadius = 550;
@@ -116,19 +118,22 @@
 
         window.addEventListener('resize', resizeCanvas);
 
-        // 초기화 버튼: 점과 각도비교 정보를 모두 없앰
+        // 초기화 버튼: 점 P, Q 및 각도 비교 정보, 빗금 선택 상태를 모두 제거
         resetBtn.addEventListener('click', () => {
             angleA = Math.PI * 0.75; 
             angleB = Math.PI * 0.25;
             userPoints = []; 
             draggingPoint = null;
             showProof = false;
+            activeTriangles.clear();
             draw();
         });
 
         // P 지우기
         deletePBtn.addEventListener('click', () => {
             userPoints = userPoints.filter(p => p.id !== 'P');
+            activeTriangles.delete('OPA');
+            activeTriangles.delete('OPB');
             if (userPoints.length === 0) showProof = false;
             draw();
         });
@@ -136,19 +141,31 @@
         // Q 지우기
         deleteQBtn.addEventListener('click', () => {
             userPoints = userPoints.filter(p => p.id !== 'Q');
+            activeTriangles.delete('OQA');
+            activeTriangles.delete('OQB');
             if (userPoints.length === 0) showProof = false;
             draw();
         });
 
-        // 증명하기 토글
+        // 증명하기 토글 (점이 없는 경우 자동으로 점 P 생성 후 증명 실행)
         proofBtn.addEventListener('click', () => {
             if (userPoints.length === 0) {
-                alert('원 테두리를 클릭하여 원주각 점(P 또는 Q)을 먼저 만들어주세요!');
-                return;
+                userPoints.push({ id: 'P', angle: Math.PI * 1.35 });
             }
             showProof = !showProof;
             draw();
         });
+
+        // 삼각형 빗금 토글 함수
+        function toggleTriangle(id) {
+            if (activeTriangles.has(id)) {
+                activeTriangles.delete(id);
+            } else {
+                activeTriangles.add(id);
+            }
+            draw();
+        }
+        window.toggleTriangle = toggleTriangle;
 
         function norm(a) {
             let res = a % (Math.PI * 2);
@@ -167,6 +184,43 @@
             } else {
                 return norm(p - b) <= (Math.PI * 2 - diffAB);
             }
+        }
+
+        // 빗금 쳐진 삼각형 그리기 함수
+        function drawHatchedTriangle(p1, p2, p3, strokeColor, fillColor) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.lineTo(p3.x, p3.y);
+            ctx.closePath();
+
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+
+            ctx.clip(); // 삼각형 내부 영역으로 제한
+
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+
+            const minX = Math.min(p1.x, p2.x, p3.x) - 30;
+            const maxX = Math.max(p1.x, p2.x, p3.x) + 30;
+            const minY = Math.min(p1.y, p2.y, p3.y) - 30;
+            const maxY = Math.max(p1.y, p2.y, p3.y) + 30;
+
+            const spacing = 12;
+            for (let x = minX - (maxY - minY); x < maxX; x += spacing) {
+                ctx.moveTo(x, minY);
+                ctx.lineTo(x + (maxY - minY), maxY);
+            }
+            ctx.stroke();
+
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.restore();
         }
 
         canvas.addEventListener('pointerdown', (e) => {
@@ -215,7 +269,6 @@
         function draw() {
             ctx.clearRect(0, 0, width, height);
 
-            // 0. 점 P/Q가 짧은 호(minor arc) 위에 있는지 판단
             let activePt = userPoints.find(p => p.id === draggingPoint) || userPoints[0];
             let pOnMinor = activePt ? isPointOnMinorArc(activePt.angle, angleA, angleB) : false;
 
@@ -228,12 +281,10 @@
 
             let startArc, endArc, subtendedArc;
             if (pOnMinor) {
-                // P가 짧은 호 위에 위치하면 중심각은 반대편(우등각/긴 호)을 바라봄
                 startArc = minorEnd;
                 endArc = minorStart;
                 subtendedArc = Math.PI * 2 - minorSpan;
             } else {
-                // P가 긴 호 위에 있거나 점이 없으면 중심각은 짧은 호를 바라봄
                 startArc = minorStart;
                 endArc = minorEnd;
                 subtendedArc = minorSpan;
@@ -263,10 +314,29 @@
             drawLine(cx, cy, pA.x, pA.y, '#f97316', 2.5);
             drawLine(cx, cy, pB.x, pB.y, '#f97316', 2.5);
 
-            // 4. 증명 모드 보조선 (원주 위 점에서 출발하여 중심 O를 지나는 검은색 반직선/지름)
+            // 4. 증명 모드 보조선 및 선택된 삼각형 빗금 그리기
             if (showProof && userPoints.length > 0) {
                 userPoints.forEach(up => {
                     const pPt = { x: cx + circleRadius * Math.cos(up.angle), y: cy + circleRadius * Math.sin(up.angle) };
+                    const triA_id = `O${up.id}A`;
+                    const triB_id = `O${up.id}B`;
+
+                    if (activeTriangles.has(triA_id)) {
+                        drawHatchedTriangle(
+                            { x: cx, y: cy }, pPt, pA,
+                            up.id === 'P' ? '#2563eb' : '#9333ea',
+                            up.id === 'P' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(168, 85, 247, 0.15)'
+                        );
+                    }
+                    if (activeTriangles.has(triB_id)) {
+                        drawHatchedTriangle(
+                            { x: cx, y: cy }, pPt, pB,
+                            up.id === 'P' ? '#2563eb' : '#9333ea',
+                            up.id === 'P' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(168, 85, 247, 0.15)'
+                        );
+                    }
+
+                    // 지름 보조선
                     const oppX = cx - (pPt.x - cx);
                     const oppY = cy - (pPt.y - cy);
                     
@@ -275,7 +345,7 @@
                     ctx.setLineDash([6, 4]);
                     ctx.moveTo(pPt.x, pPt.y);
                     ctx.lineTo(oppX, oppY);
-                    ctx.strokeStyle = '#0f172a'; // 검은색 (Dark Slate)
+                    ctx.strokeStyle = '#0f172a';
                     ctx.lineWidth = 2.5;
                     ctx.stroke();
                     ctx.restore();
@@ -295,7 +365,6 @@
                     const style = styles[index];
                     const pPt = { x: cx + circleRadius * Math.cos(up.angle), y: cy + circleRadius * Math.sin(up.angle) };
                     
-                    // 원주각 변 (PA, PB)
                     drawLine(pPt.x, pPt.y, pA.x, pA.y, style.line, 2);
                     drawLine(pPt.x, pPt.y, pB.x, pB.y, style.line, 2);
                     
@@ -337,8 +406,47 @@
 
             if (showProof && userPoints.length > 0) {
                 proofBadge.classList.remove('hidden');
+                
+                let triButtonsHTML = '';
+                userPoints.forEach(up => {
+                    const triA_id = `O${up.id}A`;
+                    const triB_id = `O${up.id}B`;
+                    const isAActive = activeTriangles.has(triA_id);
+                    const isBActive = activeTriangles.has(triB_id);
+
+                    triButtonsHTML += `
+                        <div class="grid grid-cols-2 gap-2 my-1">
+                            <button onclick="toggleTriangle('${triA_id}')" class="px-2.5 py-1.5 rounded-lg border flex items-center justify-between text-xs transition-all ${isAActive ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm font-bold' : 'bg-white text-emerald-800 border-emerald-300 hover:bg-emerald-100 font-medium'}">
+                                <span>△O${up.id}A</span>
+                                <span class="text-[10px] ${isAActive ? 'text-emerald-100' : 'text-emerald-600'}">${isAActive ? '빗금 ON' : '보기'}</span>
+                            </button>
+                            <button onclick="toggleTriangle('${triB_id}')" class="px-2.5 py-1.5 rounded-lg border flex items-center justify-between text-xs transition-all ${isBActive ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm font-bold' : 'bg-white text-emerald-800 border-emerald-300 hover:bg-emerald-100 font-medium'}">
+                                <span>△O${up.id}B</span>
+                                <span class="text-[10px] ${isBActive ? 'text-emerald-100' : 'text-emerald-600'}">${isBActive ? '빗금 ON' : '보기'}</span>
+                            </button>
+                        </div>
+                    `;
+                });
+
+                proofInfo.innerHTML = `
+                    <div class="bg-emerald-50/90 p-3 rounded-xl border border-emerald-200 space-y-1.5">
+                        <div class="font-bold text-xs text-emerald-900 flex items-center justify-between mb-1">
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                이등변삼각형 선택
+                            </span>
+                            <span class="text-[10px] text-emerald-700 font-normal">(클릭 시 빗금)</span>
+                        </div>
+                        ${triButtonsHTML}
+                        <p class="text-[11px] text-slate-500 pt-1 border-t border-emerald-200/60">
+                            * OA = OB = O${userPoints.map(p => p.id).join(' = O')} (반지름)
+                        </p>
+                    </div>
+                `;
+                proofInfo.classList.remove('hidden');
             } else {
                 proofBadge.classList.add('hidden');
+                proofInfo.classList.add('hidden');
             }
 
             // 점 O 및 A, B 라벨 표시
