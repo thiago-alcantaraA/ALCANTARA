@@ -78,10 +78,16 @@
                     </select>
                 </div>
 
-                <!-- Single Sample Button -->
+                <!-- Concept Open (Formerly Sample) Button -->
                 <button id="btn-sample" class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-semibold rounded-xl transition flex items-center gap-2 border border-indigo-200 cursor-pointer">
-                    <i class="fa-solid fa-school text-indigo-600"></i>
-                    <span>샘플 (학교 점수)</span>
+                    <i class="fa-solid fa-book-open text-indigo-600"></i>
+                    <span>개념열기</span>
+                </button>
+
+                <!-- Problem 5 Button (Moved here) -->
+                <button id="btn-problem5" class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-sm font-semibold rounded-xl transition flex items-center gap-2 cursor-pointer shadow-sm">
+                    <i class="fa-solid fa-file-pen text-amber-600"></i>
+                    <span>문제 5</span>
                 </button>
             </div>
         </div>
@@ -97,10 +103,6 @@
                 <button id="btn-calculate" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-bold rounded-xl shadow-md shadow-indigo-500/20 transition flex items-center gap-2 cursor-pointer">
                     <i class="fa-solid fa-calculator"></i>
                     <span>통계 계산하기</span>
-                </button>
-                <button id="btn-problem5" class="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-sm font-bold rounded-xl transition flex items-center gap-2 cursor-pointer shadow-sm">
-                    <i class="fa-solid fa-file-pen text-amber-600"></i>
-                    <span>문제 5</span>
                 </button>
                 <button id="btn-clear" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold rounded-xl transition flex items-center gap-2 cursor-pointer">
                     <i class="fa-solid fa-trash-can"></i>
@@ -294,18 +296,14 @@
         // Standard Deviation Radical Formatter (분산에 근호 표기)
         function formatStdDevRadical(variance) {
             if (variance === null || variance === undefined || isNaN(variance)) return '-';
-            // 분산이 0인 경우
             if (Math.abs(variance) < 1e-9) return '0';
             
-            // 정수 제곱수인 경우 깔끔하게 정수로 표현 (예: 분산이 4 -> 2)
             if (Number.isInteger(variance)) {
                 const sqrtInt = Math.round(Math.sqrt(variance));
                 if (sqrtInt * sqrtInt === variance) {
                     return `${sqrtInt} \\ (\\sqrt{${variance}})`;
                 }
             }
-            
-            // 그 외에는 근사값 대신 분산값에 근호를 붙여 표현
             return `\\sqrt{${formatNum(variance)}}`;
         }
 
@@ -345,7 +343,6 @@
 
         // Render Tables according to currentCount, showDeviations, showDevSquared
         function renderTables() {
-            // Save existing input values before re-rendering
             const existingA = [];
             const existingB = [];
             for (let i = 1; i <= 12; i++) {
@@ -355,7 +352,6 @@
                 existingB[i] = elB ? elB.value : '';
             }
 
-            // Category column gets ~13% width, Sum column gets ~13%, N items share the remaining width evenly
             const itemWidthPercent = ((74 / currentCount)).toFixed(2);
 
             let headerA = `<th class="p-2 border border-indigo-200 bg-indigo-100/70 font-bold text-xs sm:text-sm w-[13%]">구분</th>`;
@@ -371,7 +367,6 @@
             tableAHeader.innerHTML = headerA;
             tableBHeader.innerHTML = headerB;
 
-            // Body Rows Generation
             buildTableBody('A', tableABody, existingA, 'indigo', lastStatsA);
             buildTableBody('B', tableBBody, existingB, 'emerald', lastStatsB);
 
@@ -495,54 +490,21 @@
             };
         }
 
-        // Helper to update statistics tags (Mean, Variance, StdDev)
-        function updateStatTags() {
-            if (lastStatsA) {
-                let textA = `평균 $m_A = \\mathbf{${formatNum(lastStatsA.mean)}}$`;
-                if (showDevSquared) {
-                    textA += ` <span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded-lg border border-purple-200">분산 $V_A = \\mathbf{${formatNum(lastStatsA.variance)}}$</span>`;
-                    textA += ` <span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded-lg border border-purple-200">표준편차 $\\sigma_A = \\mathbf{${formatStdDevRadical(lastStatsA.variance)}}$</span>`;
-                }
-                statTagA.innerHTML = textA;
-            } else {
-                statTagA.innerHTML = `평균 $m_A = -$`;
-            }
-
-            if (lastStatsB) {
-                let textB = `평균 $m_B = \\mathbf{${formatNum(lastStatsB.mean)}}$`;
-                if (showDevSquared) {
-                    textB += ` <span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded-lg border border-purple-200">분산 $V_B = \\mathbf{${formatNum(lastStatsB.variance)}}$</span>`;
-                    textB += ` <span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded-lg border border-purple-200">표준편차 $\\sigma_B = \\mathbf{${formatStdDevRadical(lastStatsB.variance)}}$</span>`;
-                }
-                statTagB.innerHTML = textB;
-            } else {
-                statTagB.innerHTML = `평균 $m_B = -$`;
-            }
-
-            if (window.MathJax && MathJax.typesetPromise) {
-                MathJax.typesetPromise();
-            }
-        }
-
         // Main Calculation Function
         function calculateStats() {
             lastStatsA = computeGroupStats('A');
             lastStatsB = computeGroupStats('B');
 
-            // Update Header Tag Badges
             updateStatHeader('A', lastStatsA, statTagA, 'indigo');
             updateStatHeader('B', lastStatsB, statTagB, 'emerald');
 
-            // Re-render Tables with fresh stats
             renderTables();
 
-            // Update Separate Charts if Graph Mode is ON
             if (showGraph) {
                 updateSeparateCharts();
             }
         }
 
-        // Helper to update header badges (Mean, Variance, StdDev)
         function updateStatHeader(type, stats, targetEl, color) {
             if (!stats) {
                 targetEl.innerHTML = `
@@ -561,10 +523,10 @@
 
             if (showDevSquared) {
                 html += `
-                    <span class="text-sm font-bold text-purple-700 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200 shadow-sm animate-fade-in">
+                    <span class="text-sm font-bold text-purple-700 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200 shadow-sm">
                         분산 $V_${type} = \\mathbf{${formatNum(stats.variance)}}$
                     </span>
-                    <span class="text-sm font-bold text-fuchsia-700 bg-fuchsia-50 px-3 py-1.5 rounded-xl border border-fuchsia-200 shadow-sm animate-fade-in">
+                    <span class="text-sm font-bold text-fuchsia-700 bg-fuchsia-50 px-3 py-1.5 rounded-xl border border-fuchsia-200 shadow-sm">
                         표준편차 $\\sigma_${type} = \\mathbf{${formatNum(stats.stdDev)}}$
                     </span>
                 `;
@@ -650,17 +612,6 @@
             }
         }
 
-        // Fill Sample Data
-        function fillSample(sampleA, sampleB) {
-            for (let i = 1; i <= currentCount; i++) {
-                const elA = document.getElementById(`cell-a-${i}`);
-                const elB = document.getElementById(`cell-b-${i}`);
-                if (elA) elA.value = sampleA[i - 1];
-                if (elB) elB.value = sampleB[i - 1];
-            }
-            calculateStats();
-        }
-
         // Event Listeners
         selectCount.addEventListener('change', (e) => {
             currentCount = parseInt(e.target.value);
@@ -741,7 +692,6 @@
                 badgeDevsq.innerText = "OFF";
                 badgeDevsq.className = "text-xs px-2 py-0.5 bg-slate-200 text-slate-600 rounded-md ml-0.5";
             }
-            // Update header badges to toggle Variance & StdDev
             updateStatHeader('A', lastStatsA, statTagA, 'indigo');
             updateStatHeader('B', lastStatsB, statTagB, 'emerald');
             renderTables();
@@ -756,7 +706,6 @@
                 badgeGraph.innerText = "ON";
                 badgeGraph.className = "text-xs px-2 py-0.5 bg-white/20 text-white font-bold rounded-md ml-0.5";
                 
-                // Show Mean Line Button
                 toggleMean.classList.remove('hidden');
                 toggleMean.classList.add('flex');
 
@@ -769,7 +718,6 @@
                 badgeGraph.innerText = "OFF";
                 badgeGraph.className = "text-xs px-2 py-0.5 bg-slate-200 text-slate-600 rounded-md ml-0.5";
 
-                // Hide Mean Line Button
                 toggleMean.classList.add('hidden');
                 toggleMean.classList.remove('flex');
 
