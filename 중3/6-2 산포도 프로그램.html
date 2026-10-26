@@ -98,9 +98,9 @@
                     <i class="fa-solid fa-calculator"></i>
                     <span>통계 계산하기</span>
                 </button>
-                <button id="btn-random" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition flex items-center gap-2 cursor-pointer">
-                    <i class="fa-solid fa-shuffle"></i>
-                    <span>랜덤 채우기</span>
+                <button id="btn-problem5" class="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-sm font-bold rounded-xl transition flex items-center gap-2 cursor-pointer shadow-sm">
+                    <i class="fa-solid fa-file-pen text-amber-600"></i>
+                    <span>문제 5</span>
                 </button>
                 <button id="btn-clear" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold rounded-xl transition flex items-center gap-2 cursor-pointer">
                     <i class="fa-solid fa-trash-can"></i>
@@ -147,14 +147,16 @@
             <!-- Variable A Card (Left Side) -->
             <section class="bg-white rounded-2xl p-5 shadow-sm border border-indigo-200 space-y-4 flex flex-col justify-between">
                 <div class="space-y-4">
-                    <div class="flex items-center justify-between border-b border-indigo-100 pb-3">
+                    <div class="flex items-center justify-between border-b border-indigo-100 pb-3 flex-wrap gap-2">
                         <div class="flex items-center gap-2.5">
                             <span class="w-3.5 h-3.5 rounded-full bg-indigo-600"></span>
                             <h2 class="font-bold text-slate-900 text-base">변량 A ($x_A$) 표</h2>
                         </div>
-                        <span id="stat-tag-a" class="text-sm font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100">
-                            평균 $m_A = -$
-                        </span>
+                        <div id="stat-tag-a" class="flex flex-wrap items-center gap-2">
+                            <span class="text-sm font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100">
+                                평균 $m_A = -$
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Table A -->
@@ -187,14 +189,16 @@
             <!-- Variable B Card (Right Side) -->
             <section class="bg-white rounded-2xl p-5 shadow-sm border border-emerald-200 space-y-4 flex flex-col justify-between">
                 <div class="space-y-4">
-                    <div class="flex items-center justify-between border-b border-emerald-100 pb-3">
+                    <div class="flex items-center justify-between border-b border-emerald-100 pb-3 flex-wrap gap-2">
                         <div class="flex items-center gap-2.5">
                             <span class="w-3.5 h-3.5 rounded-full bg-emerald-600"></span>
                             <h2 class="font-bold text-slate-900 text-base">변량 B ($x_B$) 표</h2>
                         </div>
-                        <span id="stat-tag-b" class="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100">
-                            평균 $m_B = -$
-                        </span>
+                        <div id="stat-tag-b" class="flex flex-wrap items-center gap-2">
+                            <span class="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100">
+                                평균 $m_B = -$
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Table B -->
@@ -246,6 +250,10 @@
         const sample_A = [4, 5, 5, 5, 6, 5, 4, 5, 6, 5];
         const sample_B = [3, 4, 3, 5, 4, 5, 6, 7, 6, 7];
 
+        // Problem 5 Dataset (재연, 세원 - 5 items)
+        const problem5_A = [120, 126, 123, 124, 122];
+        const problem5_B = [92, 96, 93, 98, 96];
+
         // DOM Elements
         const selectCount = document.getElementById('select-count');
         const tableAHeader = document.getElementById('table-a-header');
@@ -254,7 +262,7 @@
         const tableBBody = document.getElementById('table-b-body');
 
         const btnCalculate = document.getElementById('btn-calculate');
-        const btnRandom = document.getElementById('btn-random');
+        const btnProblem5 = document.getElementById('btn-problem5');
         const btnClear = document.getElementById('btn-clear');
         const btnSample = document.getElementById('btn-sample');
 
@@ -281,6 +289,24 @@
             if (num === null || num === undefined || isNaN(num)) return '-';
             if (Number.isInteger(num)) return num.toString();
             return parseFloat(num.toFixed(dec)).toString();
+        }
+
+        // Standard Deviation Radical Formatter (분산에 근호 표기)
+        function formatStdDevRadical(variance) {
+            if (variance === null || variance === undefined || isNaN(variance)) return '-';
+            // 분산이 0인 경우
+            if (Math.abs(variance) < 1e-9) return '0';
+            
+            // 정수 제곱수인 경우 깔끔하게 정수로 표현 (예: 분산이 4 -> 2)
+            if (Number.isInteger(variance)) {
+                const sqrtInt = Math.round(Math.sqrt(variance));
+                if (sqrtInt * sqrtInt === variance) {
+                    return `${sqrtInt} \\ (\\sqrt{${variance}})`;
+                }
+            }
+            
+            // 그 외에는 근사값 대신 분산값에 근호를 붙여 표현
+            return `\\sqrt{${formatNum(variance)}}`;
         }
 
         // Chart.js Plugin for Horizontal Mean Line
@@ -469,21 +495,33 @@
             };
         }
 
-        // Helper to generate integer array where mean is guaranteed to be an integer
-        function generateIntegerMeanDataWithSpread(count, mean, spread) {
-            let arr = Array.from({ length: count }, () => mean + Math.floor(Math.random() * (spread * 2 + 1)) - spread);
-            let sum = arr.reduce((a, b) => a + b, 0);
-            let targetSum = mean * count;
-            let diff = targetSum - sum;
-
-            let idx = 0;
-            while (diff !== 0) {
-                const step = diff > 0 ? 1 : -1;
-                arr[idx % count] += step;
-                diff -= step;
-                idx++;
+        // Helper to update statistics tags (Mean, Variance, StdDev)
+        function updateStatTags() {
+            if (lastStatsA) {
+                let textA = `평균 $m_A = \\mathbf{${formatNum(lastStatsA.mean)}}$`;
+                if (showDevSquared) {
+                    textA += ` <span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded-lg border border-purple-200">분산 $V_A = \\mathbf{${formatNum(lastStatsA.variance)}}$</span>`;
+                    textA += ` <span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded-lg border border-purple-200">표준편차 $\\sigma_A = \\mathbf{${formatStdDevRadical(lastStatsA.variance)}}$</span>`;
+                }
+                statTagA.innerHTML = textA;
+            } else {
+                statTagA.innerHTML = `평균 $m_A = -$`;
             }
-            return arr;
+
+            if (lastStatsB) {
+                let textB = `평균 $m_B = \\mathbf{${formatNum(lastStatsB.mean)}}$`;
+                if (showDevSquared) {
+                    textB += ` <span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded-lg border border-purple-200">분산 $V_B = \\mathbf{${formatNum(lastStatsB.variance)}}$</span>`;
+                    textB += ` <span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded-lg border border-purple-200">표준편차 $\\sigma_B = \\mathbf{${formatStdDevRadical(lastStatsB.variance)}}$</span>`;
+                }
+                statTagB.innerHTML = textB;
+            } else {
+                statTagB.innerHTML = `평균 $m_B = -$`;
+            }
+
+            if (window.MathJax && MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
         }
 
         // Main Calculation Function
@@ -492,17 +530,8 @@
             lastStatsB = computeGroupStats('B');
 
             // Update Header Tag Badges
-            if (lastStatsA) {
-                statTagA.innerHTML = `평균 $m_A = \\mathbf{${formatNum(lastStatsA.mean)}}$`;
-            } else {
-                statTagA.innerHTML = `평균 $m_A = -$`;
-            }
-
-            if (lastStatsB) {
-                statTagB.innerHTML = `평균 $m_B = \\mathbf{${formatNum(lastStatsB.mean)}}$`;
-            } else {
-                statTagB.innerHTML = `평균 $m_B = -$`;
-            }
+            updateStatHeader('A', lastStatsA, statTagA, 'indigo');
+            updateStatHeader('B', lastStatsB, statTagB, 'emerald');
 
             // Re-render Tables with fresh stats
             renderTables();
@@ -511,6 +540,37 @@
             if (showGraph) {
                 updateSeparateCharts();
             }
+        }
+
+        // Helper to update header badges (Mean, Variance, StdDev)
+        function updateStatHeader(type, stats, targetEl, color) {
+            if (!stats) {
+                targetEl.innerHTML = `
+                    <span class="text-sm font-bold text-${color}-700 bg-${color}-50 px-3 py-1.5 rounded-xl border border-${color}-100">
+                        평균 $m_${type} = -$
+                    </span>
+                `;
+                return;
+            }
+
+            let html = `
+                <span class="text-sm font-bold text-${color}-700 bg-${color}-50 px-3 py-1.5 rounded-xl border border-${color}-100">
+                    평균 $m_${type} = \\mathbf{${formatNum(stats.mean)}}$
+                </span>
+            `;
+
+            if (showDevSquared) {
+                html += `
+                    <span class="text-sm font-bold text-purple-700 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200 shadow-sm animate-fade-in">
+                        분산 $V_${type} = \\mathbf{${formatNum(stats.variance)}}$
+                    </span>
+                    <span class="text-sm font-bold text-fuchsia-700 bg-fuchsia-50 px-3 py-1.5 rounded-xl border border-fuchsia-200 shadow-sm animate-fade-in">
+                        표준편차 $\\sigma_${type} = \\mathbf{${formatNum(stats.stdDev)}}$
+                    </span>
+                `;
+            }
+
+            targetEl.innerHTML = html;
         }
 
         function updateSeparateCharts() {
@@ -610,20 +670,15 @@
 
         btnCalculate.addEventListener('click', calculateStats);
 
-        btnRandom.addEventListener('click', () => {
-            const commonMean = Math.floor(Math.random() * 10) + 10; // 공통 정수 평균 (10 ~ 19)
-            
-            // 한쪽은 평균 주변에 밀집(작은 분산), 다른 쪽은 넓게 분포(큰 분산)
-            const isAClustered = Math.random() < 0.5;
-            const spreadA = isAClustered ? 1 : 6;
-            const spreadB = isAClustered ? 6 : 1;
-
-            const dataA = generateIntegerMeanDataWithSpread(currentCount, commonMean, spreadA);
-            const dataB = generateIntegerMeanDataWithSpread(currentCount, commonMean, spreadB);
-
+        btnProblem5.addEventListener('click', () => {
+            selectCount.value = "5";
+            currentCount = 5;
+            renderTables();
             for (let i = 1; i <= currentCount; i++) {
-                document.getElementById(`cell-a-${i}`).value = dataA[i - 1];
-                document.getElementById(`cell-b-${i}`).value = dataB[i - 1];
+                const elA = document.getElementById(`cell-a-${i}`);
+                const elB = document.getElementById(`cell-b-${i}`);
+                if (elA) elA.value = problem5_A[i - 1];
+                if (elB) elB.value = problem5_B[i - 1];
             }
             calculateStats();
         });
@@ -637,8 +692,8 @@
             }
             lastStatsA = null;
             lastStatsB = null;
-            statTagA.innerHTML = `평균 $m_A = -$`;
-            statTagB.innerHTML = `평균 $m_B = -$`;
+            updateStatHeader('A', null, statTagA, 'indigo');
+            updateStatHeader('B', null, statTagB, 'emerald');
             renderTables();
         });
 
@@ -686,6 +741,9 @@
                 badgeDevsq.innerText = "OFF";
                 badgeDevsq.className = "text-xs px-2 py-0.5 bg-slate-200 text-slate-600 rounded-md ml-0.5";
             }
+            // Update header badges to toggle Variance & StdDev
+            updateStatHeader('A', lastStatsA, statTagA, 'indigo');
+            updateStatHeader('B', lastStatsB, statTagB, 'emerald');
             renderTables();
         });
 
