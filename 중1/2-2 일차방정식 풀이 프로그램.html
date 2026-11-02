@@ -15,20 +15,21 @@
     body {
       font-family: 'Gamja Flower', 'Gaegu', cursive, sans-serif;
       background-color: #0b120e;
+      overflow: hidden; /* 웹페이지 삽입 시 불필요한 스크롤 방지 */
     }
 
     /* 칠판 배경 및 프레임 */
     .blackboard {
       background: radial-gradient(circle at 50% 30%, #1c3b2e 0%, #12271e 75%, #0a1812 100%);
-      box-shadow: inset 0 0 85px rgba(0, 0, 0, 0.8), 0 20px 45px rgba(0, 0, 0, 0.9);
-      border: 12px solid #543320;
-      outline: 4px solid #361f13;
+      box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.8), 0 10px 30px rgba(0, 0, 0, 0.9);
+      border: 8px solid #543320;
+      outline: 3px solid #361f13;
     }
 
     /* 분필 받침대 */
     .chalk-ledge {
       background: linear-gradient(to bottom, #6d4027, #3e2214);
-      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), 0 6px 14px rgba(0, 0, 0, 0.7);
+      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), 0 4px 10px rgba(0, 0, 0, 0.7);
     }
 
     /* 분필 텍스트 글로우 */
@@ -78,22 +79,22 @@
     }
   </style>
 </head>
-<body class="p-1 sm:p-2.5 min-h-screen flex items-stretch justify-center text-slate-100">
+<body class="p-1 sm:p-2 h-screen w-screen flex items-stretch justify-center text-slate-100 overflow-hidden box-border">
 
-  <!-- 메인 칠판 컨테이너 (캡처 화면의 비율과 구도 그대로 반영) -->
-  <main class="w-full blackboard rounded-2xl overflow-hidden p-3 sm:p-4 flex flex-col justify-between relative shadow-2xl">
+  <!-- 메인 칠판 컨테이너 (화면 높이 100% 핏 & 넘침 방지) -->
+  <main class="w-full h-full blackboard rounded-xl overflow-hidden p-2 sm:p-3 flex flex-col justify-between relative shadow-2xl">
 
-    <!-- 메인 가로 분할 레이아웃: 좌측(약 30%) / 우측 판서 영역(약 70%) -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch flex-1">
+    <!-- 메인 가로 분할 레이아웃: 좌측(약 32%) / 우측 판서 영역(약 68%) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-stretch flex-1 overflow-hidden min-h-0">
 
       <!-- [좌측 영역: lg:col-span-4] 입력 섹션 + 등식 성질 4개 세로 스택 -->
-      <div class="lg:col-span-4 flex flex-col gap-2.5">
+      <div class="lg:col-span-4 flex flex-col gap-2 min-h-0 h-full justify-between">
         
         <!-- 입력 섹션 -->
-        <section class="chalk-box-solid p-2.5 sm:p-3 bg-black/40 shrink-0">
-          <form id="solveForm" class="flex flex-col gap-2">
+        <section class="chalk-box-solid p-2 sm:p-2.5 bg-black/40 shrink-0">
+          <form id="solveForm" class="flex flex-col gap-1.5">
             <div>
-              <label for="eqInput" class="block text-3xl sm:text-5xl chalk-white font-bold mb-2">
+              <label for="eqInput" class="block text-xl sm:text-2xl chalk-white font-bold mb-1">
                 방정식 입력 (터치 또는 키보드)
               </label>
               <input 
@@ -101,21 +102,21 @@
                 id="eqInput" 
                 value="4x - 3 = 2x + 7" 
                 placeholder="예: 4x - 3 = 2x + 7" 
-                class="w-full px-5 py-3 sm:py-5 rounded-xl bg-emerald-950/80 border-4 border-yellow-300/60 text-5xl sm:text-6xl chalk-yellow font-bold focus:outline-none focus:border-yellow-300 placeholder:text-white/25 shadow-inner"
+                class="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-emerald-950/80 border-2 sm:border-3 border-yellow-300/60 text-2xl sm:text-3xl chalk-yellow font-bold focus:outline-none focus:border-yellow-300 placeholder:text-white/25 shadow-inner"
               >
             </div>
 
             <div class="flex gap-2">
               <button 
                 type="submit" 
-                class="flex-1 py-3 sm:py-4 bg-yellow-400/25 hover:bg-yellow-400/35 active:scale-95 text-4xl sm:text-5xl font-bold chalk-yellow border-4 border-yellow-300 rounded-xl transition shadow"
+                class="flex-1 py-1.5 sm:py-2 bg-yellow-400/25 hover:bg-yellow-400/35 active:scale-95 text-2xl sm:text-3xl font-bold chalk-yellow border-2 border-yellow-300 rounded-lg transition shadow"
               >
                 풀이 시작 ✎
               </button>
               <button 
                 type="button"
                 onclick="document.getElementById('eqInput').value=''; document.getElementById('eqInput').focus();"
-                class="px-6 py-3 sm:py-4 bg-white/10 hover:bg-white/20 active:scale-95 text-3xl sm:text-4xl chalk-white border-2 border-white/30 rounded-xl transition font-bold"
+                class="px-4 py-1.5 sm:py-2 bg-white/10 hover:bg-white/20 active:scale-95 text-xl sm:text-2xl chalk-white border-2 border-white/30 rounded-lg transition font-bold"
                 title="지우기"
               >
                 지우기
@@ -125,58 +126,58 @@
         </section>
 
         <!-- 에러 메시지 팝업창 -->
-        <div id="errorBox" class="hidden p-4 rounded-lg bg-red-950/70 border-2 border-red-500/60 text-red-200 text-2xl sm:text-3xl font-bold">
+        <div id="errorBox" class="hidden p-2 rounded-lg bg-red-950/70 border-2 border-red-500/60 text-red-200 text-lg sm:text-xl font-bold">
           <span>⚠️ 입력 오류:</span> <span id="errorMsg">올바른 일차방정식 형식을 입력해주세요.</span>
         </div>
 
-        <!-- 등식의 성질 4가지 박스 (이미지와 동일한 가로형 2분할 레이아웃) -->
-        <section class="p-3 sm:p-4 bg-black/35 rounded-xl border-2 border-white/20 text-slate-200 shadow flex-1 flex flex-col justify-between gap-2">
-          <span class="chalk-yellow text-3xl sm:text-5xl font-bold block border-b-2 border-white/20 pb-2 text-center">
+        <!-- 등식의 성질 4가지 박스 (화면 높이에 맞춰 유연하게 채워짐) -->
+        <section class="p-2 sm:p-3 bg-black/35 rounded-xl border border-white/20 text-slate-200 shadow flex-1 flex flex-col justify-between gap-1.5 min-h-0 overflow-hidden">
+          <span class="chalk-yellow text-lg sm:text-2xl font-bold block border-b border-white/20 pb-1 text-center shrink-0">
             💡 등식의 4가지 기본 성질 (a = b 일 때)
           </span>
 
-          <div class="flex flex-col gap-3 flex-1 justify-around">
+          <div class="flex flex-col gap-1.5 flex-1 justify-between min-h-0 py-0.5">
             <!-- ① 덧셈 성질 -->
-            <div class="p-3 sm:p-4 rounded-xl bg-white/5 border-2 border-pink-400/40 shadow-inner flex items-center justify-between">
+            <div class="p-1.5 sm:p-2 rounded-lg bg-white/5 border border-pink-400/40 shadow-inner flex items-center justify-between flex-1">
               <div class="w-2/5 text-left pl-1">
-                <span class="chalk-pink font-bold text-3xl sm:text-5xl block">① 덧셈 성질</span>
+                <span class="chalk-pink font-bold text-lg sm:text-2xl block">① 덧셈 성질</span>
               </div>
               <div class="w-3/5 text-center">
-                <span class="text-5xl sm:text-7xl font-bold chalk-white tracking-wider block">a + c = b + c</span>
-                <span class="text-2xl sm:text-3xl text-slate-300 font-semibold block mt-1">양변에 같은 수를 더해도 등식 성립</span>
+                <span class="text-2xl sm:text-4xl font-bold chalk-white tracking-wider block leading-tight">a + c = b + c</span>
+                <span class="text-xs sm:text-base text-slate-300 font-semibold block">양변에 같은 수를 더해도 등식 성립</span>
               </div>
             </div>
 
             <!-- ② 뺄셈 성질 -->
-            <div class="p-3 sm:p-4 rounded-xl bg-white/5 border-2 border-blue-400/40 shadow-inner flex items-center justify-between">
+            <div class="p-1.5 sm:p-2 rounded-lg bg-white/5 border border-blue-400/40 shadow-inner flex items-center justify-between flex-1">
               <div class="w-2/5 text-left pl-1">
-                <span class="chalk-blue font-bold text-3xl sm:text-5xl block">② 뺄셈 성질</span>
+                <span class="chalk-blue font-bold text-lg sm:text-2xl block">② 뺄셈 성질</span>
               </div>
               <div class="w-3/5 text-center">
-                <span class="text-5xl sm:text-7xl font-bold chalk-white tracking-wider block">a - c = b - c</span>
-                <span class="text-2xl sm:text-3xl text-slate-300 font-semibold block mt-1">양변에서 같은 수를 빼도 등식 성립</span>
+                <span class="text-2xl sm:text-4xl font-bold chalk-white tracking-wider block leading-tight">a - c = b - c</span>
+                <span class="text-xs sm:text-base text-slate-300 font-semibold block">양변에서 같은 수를 빼도 등식 성립</span>
               </div>
             </div>
 
             <!-- ③ 곱셈 성질 -->
-            <div class="p-3 sm:p-4 rounded-xl bg-white/5 border-2 border-yellow-400/40 shadow-inner flex items-center justify-between">
+            <div class="p-1.5 sm:p-2 rounded-lg bg-white/5 border border-yellow-400/40 shadow-inner flex items-center justify-between flex-1">
               <div class="w-2/5 text-left pl-1">
-                <span class="chalk-yellow font-bold text-3xl sm:text-5xl block">③ 곱셈 성질</span>
+                <span class="chalk-yellow font-bold text-lg sm:text-2xl block">③ 곱셈 성질</span>
               </div>
               <div class="w-3/5 text-center">
-                <span class="text-5xl sm:text-7xl font-bold chalk-white tracking-wider block">a × c = b × c</span>
-                <span class="text-2xl sm:text-3xl text-slate-300 font-semibold block mt-1">양변에 같은 수를 곱해도 등식 성립</span>
+                <span class="text-2xl sm:text-4xl font-bold chalk-white tracking-wider block leading-tight">a × c = b × c</span>
+                <span class="text-xs sm:text-base text-slate-300 font-semibold block">양변에 같은 수를 곱해도 등식 성립</span>
               </div>
             </div>
 
             <!-- ④ 나눗셈 성질 -->
-            <div class="p-3 sm:p-4 rounded-xl bg-white/5 border-2 border-green-400/40 shadow-inner flex items-center justify-between">
+            <div class="p-1.5 sm:p-2 rounded-lg bg-white/5 border border-green-400/40 shadow-inner flex items-center justify-between flex-1">
               <div class="w-2/5 text-left pl-1">
-                <span class="chalk-green font-bold text-3xl sm:text-5xl block">④ 나눗셈 성질</span>
+                <span class="chalk-green font-bold text-lg sm:text-2xl block">④ 나눗셈 성질</span>
               </div>
               <div class="w-3/5 text-center">
-                <span class="text-5xl sm:text-7xl font-bold chalk-white tracking-wider block">a ÷ c = b ÷ c</span>
-                <span class="text-2xl sm:text-3xl text-emerald-200 font-semibold block mt-1">(단, c ≠ 0 일 때 성립)</span>
+                <span class="text-2xl sm:text-4xl font-bold chalk-white tracking-wider block leading-tight">a ÷ c = b ÷ c</span>
+                <span class="text-xs sm:text-base text-emerald-200 font-semibold block">(단, c ≠ 0 일 때 성립)</span>
               </div>
             </div>
           </div>
@@ -185,30 +186,30 @@
       </div>
 
       <!-- [우측 메인 판서 영역: lg:col-span-8] 풀이 카드 (2×2 그리드) + 하단 와이드 최종 해 -->
-      <div class="lg:col-span-8 flex flex-col justify-between">
+      <div class="lg:col-span-8 flex flex-col justify-between min-h-0 h-full">
         
         <!-- 상단 헤더: 타이틀 & 단계 뱃지 -->
-        <div class="flex items-center justify-between border-b-2 border-white/20 pb-2 mb-2 px-1">
-          <h2 class="text-4xl sm:text-6xl chalk-yellow font-bold tracking-wide">
+        <div class="flex items-center justify-between border-b border-white/20 pb-1 mb-1.5 px-1 shrink-0">
+          <h2 class="text-2xl sm:text-4xl chalk-yellow font-bold tracking-wide">
             칠판 판서 풀이 과정 (Solution Steps)
           </h2>
-          <span id="stepCountBadge" class="text-2xl sm:text-3xl px-5 py-1.5 rounded-full border-4 border-green-400 text-green-300 font-bold">
+          <span id="stepCountBadge" class="text-base sm:text-xl px-3 py-0.5 rounded-full border-2 border-green-400 text-green-300 font-bold">
             총 4단계
           </span>
         </div>
 
-        <!-- 풀이 카드 2×2 그리드 (이미지와 동일한 여백과 카드 높이) -->
-        <div id="stepsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 items-stretch">
+        <!-- 풀이 카드 2×2 그리드 (부모 높이에 맞춰 스케일됨) -->
+        <div id="stepsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-2 flex-1 items-stretch min-h-0 overflow-hidden">
           <!-- 동적으로 렌더링됨 -->
         </div>
 
-        <!-- 하단 전면 와이드 최종 해 카드 (이미지와 동일한 구도) -->
-        <div id="finalAnswerBox" class="mt-3 p-4 sm:p-5 rounded-xl bg-emerald-950/70 border-4 border-emerald-400/80 text-center shadow-xl">
-          <span class="text-3xl sm:text-4xl chalk-white block font-bold">따라서 구하는 일차방정식의 해:</span>
-          <span id="finalAnswerText" class="text-8xl sm:text-9xl font-bold chalk-yellow tracking-widest inline-block my-2">
+        <!-- 하단 전면 와이드 최종 해 카드 -->
+        <div id="finalAnswerBox" class="mt-2 p-2 sm:p-2.5 rounded-xl bg-emerald-950/70 border-2 sm:border-3 border-emerald-400/80 text-center shadow-xl shrink-0">
+          <span class="text-base sm:text-xl chalk-white block font-bold">따라서 구하는 일차방정식의 해:</span>
+          <span id="finalAnswerText" class="text-5xl sm:text-7xl font-bold chalk-yellow tracking-widest inline-block my-1 leading-none">
             x = 5
           </span>
-          <p class="text-2xl sm:text-3xl chalk-green font-bold">
+          <p class="text-sm sm:text-lg chalk-green font-bold">
             ★ 검산: 원래 식의 x 자리에 대입하면 (좌변) = (우변)이 참이 됩니다!
           </p>
         </div>
@@ -218,14 +219,14 @@
     </div>
 
     <!-- 하단 원목 분필 받침대 -->
-    <footer class="chalk-ledge w-full h-7 mt-2.5 rounded flex items-center justify-between px-4 shrink-0">
-      <div class="flex items-center gap-3">
-        <div class="chalk-stick w-10 h-2.5 bg-slate-100 transform -rotate-2" title="흰색 분필"></div>
-        <div class="chalk-stick w-8 h-2.5 bg-yellow-300 transform rotate-3" title="노란색 분필"></div>
-        <div class="chalk-stick w-6 h-2.5 bg-pink-400 transform -rotate-1" title="분홍색 분필"></div>
-        <div class="chalk-stick w-11 h-2.5 bg-sky-300 transform rotate-1" title="하늘색 분필"></div>
+    <footer class="chalk-ledge w-full h-5 sm:h-6 mt-1.5 rounded flex items-center justify-between px-3 shrink-0">
+      <div class="flex items-center gap-2">
+        <div class="chalk-stick w-8 h-2 bg-slate-100 transform -rotate-2" title="흰색 분필"></div>
+        <div class="chalk-stick w-6 h-2 bg-yellow-300 transform rotate-3" title="노란색 분필"></div>
+        <div class="chalk-stick w-5 h-2 bg-pink-400 transform -rotate-1" title="분홍색 분필"></div>
+        <div class="chalk-stick w-9 h-2 bg-sky-300 transform rotate-1" title="하늘색 분필"></div>
       </div>
-      <div class="w-14 h-3.5 bg-[#2a170f] border border-[#1b0f0a] rounded flex flex-col justify-end shadow" title="분필 지우개">
+      <div class="w-12 h-3 bg-[#2a170f] border border-[#1b0f0a] rounded flex flex-col justify-end shadow" title="분필 지우개">
         <div class="w-full h-1 bg-[#d7c49e] rounded-b"></div>
       </div>
     </footer>
@@ -549,28 +550,28 @@
 
       steps.forEach((step, idx) => {
         const card = document.createElement('div');
-        // 이미지와 일치하는 카드 내부 여백 및 텍스트 밸런스
-        card.className = "step-card p-3 sm:p-4 rounded-xl bg-black/50 border border-white/30 flex flex-col justify-between h-full shadow-lg";
+        // 높이 넘침 없이 화면에 딱 맞도록 flex 및 패딩 핏 조정
+        card.className = "step-card p-2 sm:p-2.5 rounded-lg bg-black/50 border border-white/30 flex flex-col justify-between h-full shadow-lg min-h-0 overflow-hidden";
         card.style.animationDelay = `${idx * 0.08}s`;
 
         card.innerHTML = `
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-2">
-              <div class="flex items-center gap-3">
-                <span class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-yellow-400/30 text-yellow-300 border-4 border-yellow-300 flex items-center justify-center text-3xl sm:text-4xl font-bold shrink-0">
+          <div class="min-h-0">
+            <div class="flex items-center justify-between gap-1.5 mb-1">
+              <div class="flex items-center gap-2">
+                <span class="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-yellow-400/30 text-yellow-300 border-2 border-yellow-300 flex items-center justify-center text-lg sm:text-2xl font-bold shrink-0">
                   ${idx + 1}
                 </span>
-                <span class="text-3xl sm:text-5xl font-bold chalk-white tracking-wide">${step.title}</span>
+                <span class="text-lg sm:text-2xl font-bold chalk-white tracking-wide truncate">${step.title}</span>
               </div>
-              <span class="text-xl sm:text-2xl px-4 py-1.5 rounded-xl bg-white/10 ${step.color} border-2 border-white/30 font-bold whitespace-nowrap">
+              <span class="text-xs sm:text-sm px-2 py-0.5 rounded-lg bg-white/10 ${step.color} border border-white/30 font-bold whitespace-nowrap">
                 ${step.property}
               </span>
             </div>
-            <p class="text-2xl sm:text-4xl text-slate-200 mb-2 pl-1 font-semibold leading-relaxed">
+            <p class="text-sm sm:text-base text-slate-200 mb-1 pl-1 font-semibold leading-snug line-clamp-2">
               • ${step.action}
             </p>
           </div>
-          <div class="py-2.5 px-4 rounded-xl bg-emerald-950/85 border-2 border-white/30 text-center text-3xl sm:text-5xl lg:text-6xl font-bold ${step.color} tracking-wider mt-1 shadow-inner flex items-center justify-center min-h-[75px]">
+          <div class="py-1 sm:py-1.5 px-3 rounded-lg bg-emerald-950/85 border border-white/30 text-center text-2xl sm:text-3xl lg:text-4xl font-bold ${step.color} tracking-wider mt-0.5 shadow-inner flex items-center justify-center min-h-[42px] shrink-0">
             ${step.eq}
           </div>
         `;
