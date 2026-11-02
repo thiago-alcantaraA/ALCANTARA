@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>정비례 & 반비례 그래프 칠판 시뮬레이터</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 칠판 손글씨 폰트 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gamja+Flower&family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Gamja Flower', 'Gaegu', cursive, sans-serif;
+      background-color: #0b120e;
+      overflow: hidden;
+    }
+
+    /* 칠판 배경 및 프레임 */
+    .blackboard {
+      background: radial-gradient(circle at 50% 30%, #1c3b2e 0%, #12271e 75%, #0a1812 100%);
+      box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.8), 0 10px 30px rgba(0, 0, 0, 0.9);
+      border: 8px solid #543320;
+      outline: 3px solid #361f13;
+    }
+
+    /* 하단 분필 받침대 */
+    .chalk-ledge {
+      background: linear-gradient(to bottom, #6d4027, #3e2214);
+      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), 0 4px 10px rgba(0, 0, 0, 0.7);
+    }
+
+    /* 분필 발광 텍스트 */
+    .chalk-white {
+      color: #f8fafc;
+      text-shadow: 0 0 2px rgba(255, 255, 255, 0.8), 0 0 5px rgba(255, 255, 255, 0.35);
+    }
+    .chalk-yellow {
+      color: #ffeb3b;
+      text-shadow: 0 0 2px rgba(255, 235, 59, 0.9), 0 0 6px rgba(255, 235, 59, 0.5);
+    }
+    .chalk-pink {
+      color: #ff80ab;
+      text-shadow: 0 0 2px rgba(255, 128, 171, 0.9), 0 0 6px rgba(255, 128, 171, 0.5);
+    }
+    .chalk-blue {
+      color: #80d8ff;
+      text-shadow: 0 0 2px rgba(128, 216, 255, 0.9), 0 0 6px rgba(128, 216, 255, 0.5);
+    }
+    .chalk-green {
+      color: #a7f3d0;
+      text-shadow: 0 0 2px rgba(167, 243, 208, 0.9), 0 0 6px rgba(167, 243, 208, 0.5);
+    }
+
+    .chalk-box {
+      border: 2px dashed rgba(255, 255, 255, 0.35);
+      border-radius: 12px;
+    }
+    .chalk-box-solid {
+      border: 2px solid rgba(255, 235, 59, 0.5);
+      border-radius: 12px;
+    }
+
+    .chalk-stick {
+      border-radius: 3px 6px 6px 3px;
+      box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    input[type=range] {
+      accent-color: #ffeb3b;
+    }
+  </style>
+</head>
+<body class="p-1 sm:p-2 h-screen w-screen flex items-stretch justify-center text-slate-100 overflow-hidden box-border">
+
+  <!-- 메인 전자칠판 컨테이너 -->
+  <main class="w-full h-full blackboard rounded-xl overflow-hidden p-2 sm:p-3 flex flex-col justify-between relative shadow-2xl">
+
+    <!-- 와이드 그리드 분할 레이아웃: 좌측 컨트롤 & 개념 (약 35%) / 우측 칠판 좌표평면 캔버스 (약 65%) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch flex-1 overflow-hidden min-h-0">
+
+      <!-- [좌측 컨트롤 & 판서 요약: lg:col-span-4] -->
+      <div class="lg:col-span-4 flex flex-col gap-2 min-h-0 h-full justify-between">
+        
+        <!-- 함수 모드 탭 선택 (정비례 vs 반비례 vs 동시 비교) -->
+        <section class="chalk-box-solid p-2 sm:p-2.5 bg-black/45 shrink-0">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xl sm:text-2xl chalk-white font-bold">그래프 유형 선택</span>
+            <span class="text-xs sm:text-sm chalk-green border border-green-400/40 px-2 py-0.5 rounded-full">실시간 연동</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1.5 text-base sm:text-xl font-bold">
+            <button id="btnDirect" onclick="setMode('direct')" class="py-1.5 rounded-lg border-2 border-yellow-300 bg-yellow-400/25 chalk-yellow transition active:scale-95">
+              정비례 (y=ax)
+            </button>
+            <button id="btnInverse" onclick="setMode('inverse')" class="py-1.5 rounded-lg border-2 border-pink-400/50 bg-black/30 chalk-pink transition active:scale-95">
+              반비례 (y=a/x)
+            </button>
+            <button id="btnBoth" onclick="setMode('both')" class="py-1.5 rounded-lg border-2 border-blue-400/50 bg-black/30 chalk-blue transition active:scale-95">
+              둘 다 비교
+            </button>
+          </div>
+        </section>
+
+        <!-- 비례상수(a) 조절 슬라이더 및 빠른 선택 -->
+        <section class="chalk-box p-2.5 sm:p-3 bg-black/40 flex flex-col gap-2 shrink-0">
+          <div class="flex justify-between items-center">
+            <span class="chalk-yellow text-xl sm:text-2xl font-bold">비례상수 a 조절 (실수)</span>
+            <span class="text-sm sm:text-base chalk-white/70">범위: -6.0 ~ +6.0 (a ≠ 0)</span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <input 
+              type="range" 
+              id="sliderA" 
+              min="-6" 
+              max="6" 
+              step="0.1" 
+              value="2" 
+              class="flex-1 cursor-pointer h-3 bg-emerald-950/80 rounded-lg"
+            >
+            <span id="labelA" class="text-3xl sm:text-4xl font-bold chalk-yellow w-16 text-center">2</span>
+          </div>
+
+          <!-- 숫자 직접 입력 영역 -->
+          <div class="flex items-center gap-2 pt-1 border-t border-white/20">
+            <span class="text-base sm:text-lg chalk-white font-bold shrink-0">직접 입력:</span>
+            <input 
+              type="number" 
+              id="inputA" 
+              min="-6" 
+              max="6" 
+              step="0.1" 
+              value="2" 
+              placeholder="예: 2.5, -1.8"
+              class="w-24 px-2 py-0.5 rounded bg-emerald-950/90 border border-yellow-300/60 text-yellow-300 font-bold text-center text-lg sm:text-xl focus:outline-none focus:border-yellow-300"
+            >
+            <button 
+              type="button" 
+              onclick="applyDirectInputA()" 
+              class="px-2.5 py-0.5 rounded bg-yellow-400/20 hover:bg-yellow-400/30 text-yellow-200 border border-yellow-300/50 font-bold text-sm sm:text-base active:scale-95 transition"
+            >
+              적용
+            </button>
+            <span class="text-xs chalk-white/60 ml-auto hidden sm:inline">(Enter 적용)</span>
+          </div>
+
+          <!-- 빠른 a값 선택 버튼 -->
+          <div class="flex items-center justify-between gap-1 pt-1 border-t border-white/20">
+            <span class="text-sm chalk-white font-bold shrink-0">추천 a값:</span>
+            <div class="flex gap-1 flex-wrap">
+              <button onclick="setParamA(0.5)" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm border border-white/30">0.5</button>
+              <button onclick="setParamA(1)" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm border border-white/30">1</button>
+              <button onclick="setParamA(2)" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-yellow-300 text-xs sm:text-sm border border-white/30">2</button>
+              <button onclick="setParamA(3.5)" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-yellow-300 text-xs sm:text-sm border border-white/30">3.5</button>
+              <button onclick="setParamA(-0.5)" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-pink-300 text-xs sm:text-sm border border-white/30">-0.5</button>
+              <button onclick="setParamA(-2)" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-pink-300 text-xs sm:text-sm border border-white/30">-2</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 핵심 성질 비교 판서 카드 (세로 스택) -->
+        <section class="p-2 sm:p-2.5 bg-black/35 rounded-xl border border-white/20 flex-1 flex flex-col justify-between gap-2 min-h-0 overflow-hidden shadow">
+          
+          <!-- 정비례 개념 박스 -->
+          <div id="cardDirect" class="p-2.5 rounded-lg bg-yellow-950/30 border border-yellow-400/50 flex-1 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="chalk-yellow text-2xl sm:text-4xl font-bold">■ 정비례 : y = ax</span>
+              <span class="text-base sm:text-2xl px-3 py-1 rounded bg-yellow-400/20 text-yellow-200 border border-yellow-300/40 font-bold">원점(0,0) 지나는 직선</span>
+            </div>
+            <p class="text-lg sm:text-2xl chalk-white leading-snug mt-1.5 font-bold">
+              • <b class="chalk-green">모양:</b> 원점을 반드시 지나는 곧은 직선<br>
+              • <b id="directQuadText" class="chalk-yellow">a &gt; 0 일 때 : 제 1, 3 사분면 통과 (↗ 오른쪽 위)</b><br>
+              • <span class="text-slate-200">|a|가 클수록 y축에 가깝게 가파르게 섭니다.</span>
+            </p>
+          </div>
+
+          <!-- 반비례 개념 박스 -->
+          <div id="cardInverse" class="p-2.5 rounded-lg bg-pink-950/30 border border-pink-400/50 flex-1 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="chalk-pink text-2xl sm:text-4xl font-bold">■ 반비례 : y = a / x</span>
+              <span class="text-base sm:text-2xl px-3 py-1 rounded bg-pink-400/20 text-pink-200 border border-pink-300/40 font-bold">한 쌍의 매끄러운 곡선</span>
+            </div>
+            <p class="text-lg sm:text-2xl chalk-white leading-snug mt-1.5 font-bold">
+              • <b class="chalk-green">모양:</b> 좌표축과 만나지 않는 쌍곡선<br>
+              • <b id="inverseQuadText" class="chalk-pink">a &gt; 0 일 때 : 제 1, 3 사분면에 위치</b><br>
+              • <span class="text-slate-200">|a|가 클수록 원점에서 멀리 떨어집니다.</span>
+            </p>
+          </div>
+
+          <!-- 지나가는 주요 정수 좌표표 -->
+          <div class="p-2 rounded-lg bg-black/45 border border-white/20 text-center shrink-0">
+            <span class="text-base sm:text-xl chalk-white block font-bold mb-0.5">지나는 주요 정수 좌표 (x = 1, 2, -1, -2)</span>
+            <div id="coordGuideText" class="text-lg sm:text-2xl chalk-green font-bold truncate">
+              정비례 (1, 2), (2, 4) | 반비례 (1, 2), (2, 1)
+            </div>
+          </div>
+
+        </section>
+
+      </div>
+
+      <!-- [우측 메인 판서 영역: lg:col-span-8] 칠판 분필 좌표평면 캔버스 -->
+      <div class="lg:col-span-8 flex flex-col justify-between min-h-0 h-full">
+
+        <!-- 상단 헤더: 실시간 수식 표기 & 안내 -->
+        <div class="flex items-center justify-between border-b border-white/20 pb-1 mb-1.5 px-2 shrink-0">
+          <div class="flex items-center gap-3">
+            <span class="text-xl sm:text-3xl chalk-yellow font-bold">칠판 좌표평면</span>
+            <div id="formulaDisplay" class="flex items-center gap-3 text-lg sm:text-2xl font-bold">
+              <span class="chalk-yellow" id="formulaDirectText">y = 2x</span>
+              <span class="chalk-pink hidden" id="formulaInverseText">y = 2 / x</span>
+            </div>
+          </div>
+          <span class="text-xs sm:text-base px-2.5 py-0.5 rounded-full border border-pink-400/80 chalk-pink bg-pink-400/15 animate-pulse font-bold">
+            💡 핑크색 점 P를 곡선 위에서 드래그해보세요! (넓이 일정)
+          </span>
+        </div>
+
+        <!-- 분필 캔버스 컨테이너 (비율 유지 및 꽉 찬 핏) -->
+        <div class="flex-1 rounded-xl border-2 border-white/30 bg-[#14281e] relative shadow-inner overflow-hidden min-h-0 flex items-center justify-center p-1">
+          <canvas id="graphCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+
+          <!-- 사분면 표시 워터마크 -->
+          <div class="absolute top-3 right-4 text-white/20 text-xl sm:text-2xl font-bold select-none pointer-events-none">제 1 사분면</div>
+          <div class="absolute top-3 left-4 text-white/20 text-xl sm:text-2xl font-bold select-none pointer-events-none">제 2 사분면</div>
+          <div class="absolute bottom-3 left-4 text-white/20 text-xl sm:text-2xl font-bold select-none pointer-events-none">제 3 사분면</div>
+          <div class="absolute bottom-3 right-4 text-white/20 text-xl sm:text-2xl font-bold select-none pointer-events-none">제 4 사분면</div>
+        </div>
+
+        <!-- 하단 실시간 분석 판서 배너 -->
+        <div class="mt-1.5 p-2 rounded-xl bg-emerald-950/70 border-2 border-emerald-400/70 flex items-center justify-between px-4 shrink-0 shadow">
+          <div class="flex items-center gap-2">
+            <span class="text-base sm:text-xl chalk-white font-bold">★ 판서 요약 :</span>
+            <span id="summaryText" class="text-base sm:text-xl chalk-yellow font-bold">
+              a가 양수(2)이므로 제 1, 3 사분면을 지납니다.
+            </span>
+          </div>
+          <span class="text-xs sm:text-sm text-slate-300 hidden sm:inline-block">※ 마우스를 올리면 좌표를 읽을 수 있습니다</span>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- 하단 원목 분필 받침대 -->
+    <footer class="chalk-ledge w-full h-5 sm:h-6 mt-1.5 rounded flex items-center justify-between px-3 shrink-0">
+      <div class="flex items-center gap-2">
+        <div class="chalk-stick w-8 h-2 bg-slate-100 transform -rotate-2" title="흰색 분필"></div>
+        <div class="chalk-stick w-6 h-2 bg-yellow-300 transform rotate-3" title="노란색 분필"></div>
+        <div class="chalk-stick w-5 h-2 bg-pink-400 transform -rotate-1" title="분홍색 분필"></div>
+        <div class="chalk-stick w-9 h-2 bg-sky-300 transform rotate-1" title="하늘색 분필"></div>
+      </div>
+      <div class="w-12 h-3 bg-[#2a170f] border border-[#1b0f0a] rounded flex flex-col justify-end shadow" title="분필 지우개">
+        <div class="w-full h-1 bg-[#d7c49e] rounded-b"></div>
+      </div>
+    </footer>
+
+  </main>
+
+  <script>
+    const canvas = document.getElementById('graphCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const sliderA = document.getElementById('sliderA');
+    const labelA = document.getElementById('labelA');
+    const inputA = document.getElementById('inputA');
+    const formulaDirectText = document.getElementById('formulaDirectText');
+    const formulaInverseText = document.getElementById('formulaInverseText');
+    const directQuadText = document.getElementById('directQuadText');
+    const inverseQuadText = document.getElementById('inverseQuadText');
+    const coordGuideText = document.getElementById('coordGuideText');
+    const summaryText = document.getElementById('summaryText');
+
+    const btnDirect = document.getElementById('btnDirect');
+    const btnInverse = document.getElementById('btnInverse');
+    const btnBoth = document.getElementById('btnBoth');
+    const cardDirect = document.getElementById('cardDirect');
+    const cardInverse = document.getElementById('cardInverse');
+
+    // 현재 모드: 'direct' | 'inverse' | 'both'
+    let currentMode = 'direct';
+    let a = 2;
+
+    // 반비례 인터랙티브 기준점 P의 x좌표 및 드래그 상태 관리
+    let sampleX = 2;
+    let isDraggingPoint = false;
+
+    // 마우스 호버 좌표
+    let hoveredCoords = null;
+
+    function setMode(mode) {
+      currentMode = mode;
+
+      // 버튼 스타일 갱신
+      btnDirect.className = mode === 'direct' 
+        ? "py-1.5 rounded-lg border-2 border-yellow-300 bg-yellow-400/25 chalk-yellow transition active:scale-95" 
+        : "py-1.5 rounded-lg border-2 border-yellow-300/40 bg-black/30 chalk-white transition active:scale-95";
+
+      btnInverse.className = mode === 'inverse' 
+        ? "py-1.5 rounded-lg border-2 border-pink-400 bg-pink-400/25 chalk-pink transition active:scale-95" 
+        : "py-1.5 rounded-lg border-2 border-pink-400/40 bg-black/30 chalk-white transition active:scale-95";
+
+      btnBoth.className = mode === 'both' 
+        ? "py-1.5 rounded-lg border-2 border-blue-400 bg-blue-400/25 chalk-blue transition active:scale-95" 
+        : "py-1.5 rounded-lg border-2 border-blue-400/40 bg-black/30 chalk-white transition active:scale-95";
+
+      // 카드 하이라이트
+      if (mode === 'direct') {
+        cardDirect.style.opacity = '1';
+        cardInverse.style.opacity = '0.45';
+        formulaDirectText.classList.remove('hidden');
+        formulaInverseText.classList.add('hidden');
+      } else if (mode === 'inverse') {
+        cardDirect.style.opacity = '0.45';
+        cardInverse.style.opacity = '1';
+        formulaDirectText.classList.add('hidden');
+        formulaInverseText.classList.remove('hidden');
+      } else {
+        cardDirect.style.opacity = '1';
+        cardInverse.style.opacity = '1';
+        formulaDirectText.classList.remove('hidden');
+        formulaInverseText.classList.remove('hidden');
+      }
+
+      updateUI();
+    }
+
+    function setParamA(val) {
+      a = parseFloat(Number(val).toFixed(2));
+      sliderA.value = a;
+      if (inputA) inputA.value = a;
+      // a의 부호에 따라 기준점 x 초기화
+      sampleX = a > 0 ? (sampleX > 0 ? sampleX : 2) : (sampleX < 0 ? sampleX : -2);
+      updateUI();
+    }
+
+    sliderA.addEventListener('input', (e) => {
+      let val = parseFloat(e.target.value);
+      if (Math.abs(val) < 0.05) {
+        // a=0 건너뛰기
+        val = e.target.value >= 0 ? 0.1 : -0.1;
+        sliderA.value = val;
+      }
+      a = parseFloat(val.toFixed(2));
+      if (inputA) inputA.value = a;
+      // a의 부호에 맞춰 sampleX 부호 보정
+      if (a > 0 && sampleX < 0) sampleX = 2;
+      if (a < 0 && sampleX > 0) sampleX = -2;
+      updateUI();
+    });
+
+    // 숫자 직접 입력 적용 함수
+    function applyDirectInputA() {
+      let val = parseFloat(inputA.value);
+      if (isNaN(val)) {
+        inputA.value = a;
+        return;
+      }
+      // 범위 제한 (-6 ~ 6)
+      if (val > 6) val = 6;
+      if (val < -6) val = -6;
+      if (Math.abs(val) < 0.05) {
+        val = val >= 0 ? 0.1 : -0.1;
+      }
+      val = parseFloat(val.toFixed(2));
+      a = val;
+      sliderA.value = a;
+      inputA.value = a;
+      if (a > 0 && sampleX < 0) sampleX = 2;
+      if (a < 0 && sampleX > 0) sampleX = -2;
+      updateUI();
+    }
+
+    sliderA.addEventListener('input', (e) => {
+      let val = parseFloat(e.target.value);
+      if (Math.abs(val) < 0.05) {
+        // a=0 건너뛰기
+        val = e.target.value >= 0 ? 0.1 : -0.1;
+        sliderA.value = val;
+      }
+      a = parseFloat(val.toFixed(2));
+      if (inputA) inputA.value = a;
+      updateUI();
+    });
+
+    // 숫자 직접 입력 적용 함수
+    function applyDirectInputA() {
+      let val = parseFloat(inputA.value);
+      if (isNaN(val)) {
+        inputA.value = a;
+        return;
+      }
+      // 범위 제한 (-6 ~ 6)
+      if (val > 6) val = 6;
+      if (val < -6) val = -6;
+      if (Math.abs(val) < 0.05) {
+        val = val >= 0 ? 0.1 : -0.1;
+      }
+      val = parseFloat(val.toFixed(2));
+      a = val;
+      sliderA.value = a;
+      inputA.value = a;
+      updateUI();
+    }
+
+    inputA.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        applyDirectInputA();
+      }
+    });
+
+    inputA.addEventListener('blur', () => {
+      applyDirectInputA();
+    });
+
+    function updateUI() {
+      labelA.textContent = a;
+      if (inputA && document.activeElement !== inputA) {
+        inputA.value = a;
+      }
+
+      // 수식 표기
+      let directStr = "y = ";
+      if (a === 1) directStr += "x";
+      else if (a === -1) directStr += "-x";
+      else directStr += `${a}x`;
+      formulaDirectText.textContent = directStr;
+
+      let inverseStr = `y = ${a} / x`;
+      formulaInverseText.textContent = inverseStr;
+
+      // 사분면 안내
+      const quad = a > 0 ? "제 1, 3 사분면" : "제 2, 4 사분면";
+      const dirGuide = a > 0 ? "(↗ 오른쪽 위로 향함)" : "(↘ 오른쪽 아래로 향함)";
+      directQuadText.textContent = `a ${a > 0 ? '> 0' : '< 0'} 일 때 : ${quad} 통과 ${dirGuide}`;
+      inverseQuadText.textContent = `a ${a > 0 ? '> 0' : '< 0'} 일 때 : ${quad}에 위치 (쌍곡선)`;
+
+      // 주요 정수 좌표
+      const d1 = `(1, ${a})`, d2 = `(2, ${(a * 2).toFixed(1)})`, d_1 = `(-1, ${-a})`;
+      const inv1 = `(1, ${a})`, invA = `(${a}, 1)`, inv_1 = `(-1, ${-a})`;
+      coordGuideText.textContent = `정비례: ${d1}, ${d2}, ${d_1} | 반비례: ${inv1}, ${invA}, ${inv_1}`;
+
+      // 요약 배너 문구
+      if (currentMode === 'direct') {
+        summaryText.textContent = `정비례 ${directStr} : 원점(0,0)을 지나고 ${quad}을 지나는 직선입니다.`;
+      } else if (currentMode === 'inverse') {
+        summaryText.textContent = `반비례 ${inverseStr} : 좌표축에 닿지 않고 ${quad}에 나타나는 쌍곡선입니다.`;
+      } else {
+        summaryText.textContent = `정비례(노란색 직선)와 반비례(분홍색 쌍곡선)가 ${quad}에서 함께 나타납니다.`;
+      }
+
+      draw();
+    }
+
+    // 캔버스 크기 반응형 조절
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+      draw();
+    }
+
+    // 좌표 드로잉 루틴
+    function draw() {
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // 모눈 설정 (-6 ~ +6)
+      const range = 6;
+      const originX = w / 2;
+      const originY = h / 2;
+      const scaleX = w / (range * 2);
+      const scaleY = h / (range * 2);
+
+      // 1. 모눈 분필선
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+      ctx.setLineDash([2, 4]);
+
+      for (let i = -range; i <= range; i++) {
+        const x = originX + i * scaleX;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+
+        const y = originY - i * scaleY;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      // 2. 주 축 (X축, Y축) 분필선
+      ctx.setLineDash([]);
+      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+      ctx.shadowColor = "rgba(255, 255, 255, 0.5)";
+      ctx.shadowBlur = 4;
+
+      // X축
+      ctx.beginPath();
+      ctx.moveTo(0, originY);
+      ctx.lineTo(w, originY);
+      ctx.stroke();
+
+      // Y축
+      ctx.beginPath();
+      ctx.moveTo(originX, 0);
+      ctx.lineTo(originX, h);
+      ctx.stroke();
+
+      // 축 레이블 및 원점
+      ctx.font = "bold 26px 'Gamja Flower', cursive";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText("x", w - 24, originY - 12);
+      ctx.fillText("y", originX + 12, 28);
+      ctx.fillText("O", originX - 22, originY + 24);
+
+      // 눈금 수치 라벨 (-5 ~ 5) - 2배 확대
+      ctx.font = "bold 22px 'Gamja Flower', cursive";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+      for (let i = -range + 1; i <= range - 1; i++) {
+        if (i === 0) continue;
+        const tx = originX + i * scaleX;
+        ctx.fillText(i, tx - 6, originY + 22);
+        const ty = originY - i * scaleY;
+        ctx.fillText(i, originX + 8, ty + 6);
+      }
+
+      // 3. 정비례 그래프 (y = ax) : 노란 분필
+      if (currentMode === 'direct' || currentMode === 'both') {
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = "#ffeb3b";
+        ctx.shadowColor = "rgba(255, 235, 59, 0.9)";
+        ctx.shadowBlur = 8;
+
+        const x1 = -range;
+        const y1 = a * x1;
+        const x2 = range;
+        const y2 = a * x2;
+
+        ctx.beginPath();
+        ctx.moveTo(originX + x1 * scaleX, originY - y1 * scaleY);
+        ctx.lineTo(originX + x2 * scaleX, originY - y2 * scaleY);
+        ctx.stroke();
+
+        // 원점 점 표시 (0,0)
+        ctx.fillStyle = "#ffeb3b";
+        ctx.beginPath();
+        ctx.arc(originX, originY, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 기준 점 (1, a)
+        const p1x = originX + 1 * scaleX;
+        const p1y = originY - a * scaleY;
+        if (Math.abs(a) <= range) {
+          ctx.beginPath();
+          ctx.arc(p1x, p1y, 5.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.font = "bold 22px 'Gamja Flower', cursive";
+          ctx.fillText(`(1, ${a})`, p1x + 8, p1y - 8);
+        }
+      }
+
+      // 4. 반비례 그래프 (y = a / x) : 분홍 분필 쌍곡선
+      if (currentMode === 'inverse' || currentMode === 'both') {
+        // 반비례 핵심 개념: 점 P(x, y)가 곡선을 따라 움직여도 넓이 S = |x × y| = |a| 가 항상 불변!
+        // 유효 범위 클램프
+        if (Math.abs(sampleX) < 0.2) sampleX = sampleX >= 0 ? 0.2 : -0.2;
+        if (sampleX > range) sampleX = range;
+        if (sampleX < -range) sampleX = -range;
+
+        let sampleY = a / sampleX;
+        // y값이 캔버스 밖으로 너무 벗어나는 경우 보정
+        if (Math.abs(sampleY) > range) {
+          sampleY = sampleY > 0 ? range : -range;
+          sampleX = a / sampleY;
+        }
+
+        const rectOriginX = originX;
+        const rectOriginY = originY;
+        const rectTargetX = originX + sampleX * scaleX;
+        const rectTargetY = originY - sampleY * scaleY;
+
+        const rx = Math.min(rectOriginX, rectTargetX);
+        const ry = Math.min(rectOriginY, rectTargetY);
+        const rw = Math.abs(rectTargetX - rectOriginX);
+        const rh = Math.abs(rectTargetY - rectOriginY);
+
+        // 직사각형 내부 분필 음영 채우기
+        ctx.save();
+        ctx.fillStyle = isDraggingPoint ? "rgba(255, 128, 171, 0.32)" : "rgba(255, 128, 171, 0.20)";
+        ctx.fillRect(rx, ry, rw, rh);
+
+        // 직사각형 분필 점선 테두리
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 2.4;
+        ctx.strokeStyle = "#ff80ab";
+        ctx.shadowColor = "rgba(255, 128, 171, 0.8)";
+        ctx.shadowBlur = 6;
+        ctx.strokeRect(rx, ry, rw, rh);
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        // 직사각형 한가운데 넓이 표시 (넓이 = |x × y| = |a| 공식 강조)
+        const areaVal = Math.abs(a).toFixed(2).replace(/\.?0+$/, '');
+        const centerX = rx + rw / 2;
+        const centerY = ry + rh / 2;
+
+        ctx.save();
+        // 텍스트 배경 칠판 하이라이트 배지
+        ctx.fillStyle = "rgba(10, 24, 18, 0.9)";
+        ctx.beginPath();
+        const badgeWidth = 140;
+        const badgeHeight = 44;
+        ctx.roundRect(centerX - badgeWidth / 2, centerY - badgeHeight / 2, badgeWidth, badgeHeight, 8);
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#ff80ab";
+        ctx.stroke();
+
+        ctx.font = "bold 22px 'Gamja Flower', cursive";
+        ctx.fillStyle = "#ffeb3b";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.shadowColor = "rgba(255, 235, 59, 0.9)";
+        ctx.shadowBlur = 5;
+        ctx.fillText(`넓이 = |a| = ${areaVal}`, centerX, centerY - 8);
+
+        ctx.font = "bold 15px 'Gamja Flower', cursive";
+        ctx.fillStyle = "#a7f3d0";
+        const curW = Math.abs(sampleX).toFixed(1);
+        const curH = Math.abs(sampleY).toFixed(1);
+        ctx.fillText(`(${curW} × ${curH} = ${areaVal})`, centerX, centerY + 12);
+        ctx.restore();
+
+        // 반비례 쌍곡선 드로잉
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = "#ff80ab";
+        ctx.shadowColor = "rgba(255, 128, 171, 0.9)";
+        ctx.shadowBlur = 8;
+
+        // 양수 구간 (x > 0)
+        ctx.beginPath();
+        let started = false;
+        for (let x = 0.15; x <= range; x += 0.05) {
+          const y = a / x;
+          const px = originX + x * scaleX;
+          const py = originY - y * scaleY;
+
+          if (!started) {
+            ctx.moveTo(px, py);
+            started = true;
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+        ctx.stroke();
+
+        // 음수 구간 (x < 0)
+        ctx.beginPath();
+        started = false;
+        for (let x = -range; x <= -0.15; x += 0.05) {
+          const y = a / x;
+          const px = originX + x * scaleX;
+          const py = originY - y * scaleY;
+
+          if (!started) {
+            ctx.moveTo(px, py);
+            started = true;
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+        ctx.stroke();
+
+        // 반비례 곡선 위의 기준점 P(x, y) - 드래그 가능한 손잡이 스타일
+        ctx.save();
+        ctx.shadowColor = "rgba(255, 255, 255, 0.9)";
+        ctx.shadowBlur = 12;
+
+        // 점 바깥 펄스 원
+        ctx.strokeStyle = "#ffeb3b";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(rectTargetX, rectTargetY, isDraggingPoint ? 14 : 11, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 점 내부 채우기
+        ctx.fillStyle = "#ff80ab";
+        ctx.beginPath();
+        ctx.arc(rectTargetX, rectTargetY, isDraggingPoint ? 9 : 7.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = "bold 22px 'Gamja Flower', cursive";
+        ctx.fillStyle = "#ffffff";
+        ctx.textAlign = "left";
+        const labelOffsetY = sampleY > 0 ? -16 : 26;
+        ctx.fillText(`P(${sampleX.toFixed(2)}, ${sampleY.toFixed(2)}) ◀ 드래그`, rectTargetX + 14, rectTargetY + labelOffsetY);
+
+        // 원점 꼭짓점 O(0,0) 강조
+        ctx.fillStyle = "#ff80ab";
+        ctx.beginPath();
+        ctx.arc(originX, originY, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // 5. 마우스 호버 가이드
+      if (hoveredCoords) {
+        ctx.shadowBlur = 0;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = "rgba(128, 216, 255, 0.8)";
+
+        const hx = originX + hoveredCoords.x * scaleX;
+        const hy = originY - hoveredCoords.y * scaleY;
+
+        ctx.beginPath();
+        ctx.moveTo(hx, originY);
+        ctx.lineTo(hx, hy);
+        ctx.lineTo(originX, hy);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = "#80d8ff";
+        ctx.beginPath();
+        ctx.arc(hx, hy, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = "bold 22px 'Gamja Flower', cursive";
+        ctx.fillText(`(${hoveredCoords.x.toFixed(1)}, ${hoveredCoords.y.toFixed(1)})`, hx + 10, hy - 10);
+      }
+
+      ctx.shadowBlur = 0;
+    }
+
+    // 마우스 및 터치 좌표 변환 도우미
+    function getCanvasMathPos(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = clientX - rect.left;
+      const mouseY = clientY - rect.top;
+      const range = 6;
+      const originX = rect.width / 2;
+      const originY = rect.height / 2;
+      const scaleX = rect.width / (range * 2);
+      const scaleY = rect.height / (range * 2);
+
+      return {
+        pixelX: mouseX,
+        pixelY: mouseY,
+        mathX: (mouseX - originX) / scaleX,
+        mathY: (originY - mouseY) / scaleY,
+        originX,
+        originY,
+        scaleX,
+        scaleY
+      };
+    }
+
+    // 곡선 위 드래그 인터랙션 (마우스 & 터치)
+    function checkPointHit(clientX, clientY) {
+      if (currentMode !== 'inverse' && currentMode !== 'both') return false;
+      const pos = getCanvasMathPos(clientX, clientY);
+      const sampleY = a / sampleX;
+      const targetPx = pos.originX + sampleX * pos.scaleX;
+      const targetPy = pos.originY - sampleY * pos.scaleY;
+      const dist = Math.hypot(pos.pixelX - targetPx, pos.pixelY - targetPy);
+      return dist <= 28; // 터치 및 마우스 판정 반경 28px
+    }
+
+    function movePointAlongCurve(clientX, clientY) {
+      const pos = getCanvasMathPos(clientX, clientY);
+      let newX = pos.mathX;
+
+      // a의 부호와 동일한 사분면의 곡선 위에 머물도록 제한
+      if (a > 0) {
+        if (newX <= 0.2) newX = 0.2;
+        if (newX > 6) newX = 6;
+      } else {
+        if (newX >= -0.2) newX = -0.2;
+        if (newX < -6) newX = -6;
+      }
+
+      sampleX = parseFloat(newX.toFixed(2));
+      draw();
+    }
+
+    // 마우스 이벤트
+    canvas.addEventListener('mousedown', (e) => {
+      if (checkPointHit(e.clientX, e.clientY)) {
+        isDraggingPoint = true;
+        canvas.style.cursor = 'grabbing';
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDraggingPoint) {
+        isDraggingPoint = false;
+        canvas.style.cursor = 'crosshair';
+        draw();
+      }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (isDraggingPoint) {
+        movePointAlongCurve(e.clientX, e.clientY);
+        return;
+      }
+
+      // 커서 스타일 동적 변경
+      if (checkPointHit(e.clientX, e.clientY)) {
+        canvas.style.cursor = 'grab';
+      } else {
+        canvas.style.cursor = 'crosshair';
+      }
+
+      const pos = getCanvasMathPos(e.clientX, e.clientY);
+      const range = 6;
+      if (Math.abs(pos.mathX) <= range && Math.abs(pos.mathY) <= range) {
+        hoveredCoords = { x: pos.mathX, y: pos.mathY };
+      } else {
+        hoveredCoords = null;
+      }
+      draw();
+    });
+
+    // 전자칠판 터치 지원 (touchstart, touchmove, touchend)
+    canvas.addEventListener('touchstart', (e) => {
+      const touch = e.touches[0];
+      if (checkPointHit(touch.clientX, touch.clientY)) {
+        isDraggingPoint = true;
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      if (isDraggingPoint) {
+        const touch = e.touches[0];
+        movePointAlongCurve(touch.clientX, touch.clientY);
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', () => {
+      isDraggingPoint = false;
+      draw();
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      if (!isDraggingPoint) {
+        hoveredCoords = null;
+        draw();
+      }
+    });
+
+    window.addEventListener('load', () => {
+      resizeCanvas();
+      setMode('direct');
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+  </script>
+</body>
+</html>
