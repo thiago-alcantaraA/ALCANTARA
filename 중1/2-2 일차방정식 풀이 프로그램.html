@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>등식의 성질 일차방정식 풀이 마스터</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 칠판 손글씨 폰트 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gamja+Flower&family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Gamja Flower', 'Gaegu', cursive, sans-serif;
+      background-color: #0b120e;
+    }
+
+    /* 칠판 배경 및 프레임 */
+    .blackboard {
+      background: radial-gradient(circle at 50% 30%, #1c3b2e 0%, #12271e 75%, #0a1812 100%);
+      box-shadow: inset 0 0 85px rgba(0, 0, 0, 0.8), 0 20px 45px rgba(0, 0, 0, 0.9);
+      border: 12px solid #543320;
+      outline: 4px solid #361f13;
+    }
+
+    /* 분필 받침대 */
+    .chalk-ledge {
+      background: linear-gradient(to bottom, #6d4027, #3e2214);
+      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), 0 6px 14px rgba(0, 0, 0, 0.7);
+    }
+
+    /* 분필 텍스트 글로우 */
+    .chalk-white {
+      color: #f8fafc;
+      text-shadow: 0 0 2px rgba(255, 255, 255, 0.8), 0 0 5px rgba(255, 255, 255, 0.35);
+    }
+    .chalk-yellow {
+      color: #ffeb3b;
+      text-shadow: 0 0 2px rgba(255, 235, 59, 0.9), 0 0 6px rgba(255, 235, 59, 0.5);
+    }
+    .chalk-pink {
+      color: #ff80ab;
+      text-shadow: 0 0 2px rgba(255, 128, 171, 0.9), 0 0 6px rgba(255, 128, 171, 0.5);
+    }
+    .chalk-blue {
+      color: #80d8ff;
+      text-shadow: 0 0 2px rgba(128, 216, 255, 0.9), 0 0 6px rgba(128, 216, 255, 0.5);
+    }
+    .chalk-green {
+      color: #a7f3d0;
+      text-shadow: 0 0 2px rgba(167, 243, 208, 0.9), 0 0 6px rgba(167, 243, 208, 0.5);
+    }
+
+    /* 분필 대시 테두리 */
+    .chalk-box {
+      border: 2px dashed rgba(255, 255, 255, 0.35);
+      border-radius: 12px;
+    }
+    .chalk-box-solid {
+      border: 2px solid rgba(255, 235, 59, 0.5);
+      border-radius: 12px;
+    }
+
+    .chalk-stick {
+      border-radius: 3px 6px 6px 3px;
+      box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    /* 수식 하이라이트 애니메이션 */
+    @keyframes fadeInSlide {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .step-card {
+      animation: fadeInSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="p-1 sm:p-2.5 min-h-screen flex items-stretch justify-center text-slate-100">
+
+  <!-- 메인 칠판 컨테이너 (캡처 화면의 비율과 구도 그대로 반영) -->
+  <main class="w-full blackboard rounded-2xl overflow-hidden p-3 sm:p-4 flex flex-col justify-between relative shadow-2xl">
+
+    <!-- 메인 가로 분할 레이아웃: 좌측(약 30%) / 우측 판서 영역(약 70%) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch flex-1">
+
+      <!-- [좌측 영역: lg:col-span-4] 입력 섹션 + 등식 성질 4개 세로 스택 -->
+      <div class="lg:col-span-4 flex flex-col gap-2.5">
+        
+        <!-- 입력 섹션 -->
+        <section class="chalk-box-solid p-2.5 sm:p-3 bg-black/40 shrink-0">
+          <form id="solveForm" class="flex flex-col gap-2">
+            <div>
+              <label for="eqInput" class="block text-3xl sm:text-5xl chalk-white font-bold mb-2">
+                방정식 입력 (터치 또는 키보드)
+              </label>
+              <input 
+                type="text" 
+                id="eqInput" 
+                value="4x - 3 = 2x + 7" 
+                placeholder="예: 4x - 3 = 2x + 7" 
+                class="w-full px-5 py-3 sm:py-5 rounded-xl bg-emerald-950/80 border-4 border-yellow-300/60 text-5xl sm:text-6xl chalk-yellow font-bold focus:outline-none focus:border-yellow-300 placeholder:text-white/25 shadow-inner"
+              >
+            </div>
+
+            <div class="flex gap-2">
+              <button 
+                type="submit" 
+                class="flex-1 py-3 sm:py-4 bg-yellow-400/25 hover:bg-yellow-400/35 active:scale-95 text-4xl sm:text-5xl font-bold chalk-yellow border-4 border-yellow-300 rounded-xl transition shadow"
+              >
+                풀이 시작 ✎
+              </button>
+              <button 
+                type="button"
+                onclick="document.getElementById('eqInput').value=''; document.getElementById('eqInput').focus();"
+                class="px-6 py-3 sm:py-4 bg-white/10 hover:bg-white/20 active:scale-95 text-3xl sm:text-4xl chalk-white border-2 border-white/30 rounded-xl transition font-bold"
+                title="지우기"
+              >
+                지우기
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- 에러 메시지 팝업창 -->
+        <div id="errorBox" class="hidden p-4 rounded-lg bg-red-950/70 border-2 border-red-500/60 text-red-200 text-2xl sm:text-3xl font-bold">
+          <span>⚠️ 입력 오류:</span> <span id="errorMsg">올바른 일차방정식 형식을 입력해주세요.</span>
+        </div>
+
+        <!-- 등식의 성질 4가지 박스 (이미지와 동일한 가로형 2분할 레이아웃) -->
+        <section class="p-3 sm:p-4 bg-black/35 rounded-xl border-2 border-white/20 text-slate-200 shadow flex-1 flex flex-col justify-between gap-2">
+          <span class="chalk-yellow text-3xl sm:text-5xl font-bold block border-b-2 border-white/20 pb-2 text-center">
+            💡 등식의 4가지 기본 성질 (a = b 일 때)
+          </span>
+
+          <div class="flex flex-col gap-3 flex-1 justify-around">
+            <!-- ① 덧셈 성질 -->
+            <div class="p-3 sm:p-4 rounded-xl bg-white/5 border-2 border-pink-400/40 shadow-inner flex items-center justify-between">
+              <div class="w-2/5 text-left pl-1">
+                <span class="chalk-pink font-bold text-3xl sm:text-5xl block">① 덧셈 성질</span>
+              </div>
+              <div class="w-3/5 text-center">
+                <span class="text-5xl sm:text-7xl font-bold chalk-white tracking-wider block">a + c = b + c</span>
+                <span class="text-2xl sm:text-3xl text-slate-300 font-semibold block mt-1">양변에 같은 수를 더해도 등식 성립</span>
+              </div>
+            </div>
+
+            <!-- ② 뺄셈 성질 -->
+            <div class="p-3 sm:p-4 rounded-xl bg-white/5 border-2 border-blue-400/40 shadow-inner flex items-center justify-between">
+              <div class="w-2/5 text-left pl-1">
+                <span class="chalk-blue font-bold text-3xl sm:text-5xl block">② 뺄셈 성질</span>
+              </div>
+              <div class="w-3/5 text-center">
+                <span class="text-5xl sm:text-7xl font-bold chalk-white tracking-wider block">a - c = b - c</span>
+                <span class="text-2xl sm:text-3xl text-slate-300 font-semibold block mt-1">양변에서 같은 수를 빼도 등식 성립</span>
+              </div>
+            </div>
+
+            <!-- ③ 곱셈 성질 -->
+            <div class="p-3 sm:p-4 rounded-xl bg-white/5 border-2 border-yellow-400/40 shadow-inner flex items-center justify-between">
+              <div class="w-2/5 text-left pl-1">
+                <span class="chalk-yellow font-bold text-3xl sm:text-5xl block">③ 곱셈 성질</span>
+              </div>
+              <div class="w-3/5 text-center">
+                <span class="text-5xl sm:text-7xl font-bold chalk-white tracking-wider block">a × c = b × c</span>
+                <span class="text-2xl sm:text-3xl text-slate-300 font-semibold block mt-1">양변에 같은 수를 곱해도 등식 성립</span>
+              </div>
+            </div>
+
+            <!-- ④ 나눗셈 성질 -->
+            <div class="p-3 sm:p-4 rounded-xl bg-white/5 border-2 border-green-400/40 shadow-inner flex items-center justify-between">
+              <div class="w-2/5 text-left pl-1">
+                <span class="chalk-green font-bold text-3xl sm:text-5xl block">④ 나눗셈 성질</span>
+              </div>
+              <div class="w-3/5 text-center">
+                <span class="text-5xl sm:text-7xl font-bold chalk-white tracking-wider block">a ÷ c = b ÷ c</span>
+                <span class="text-2xl sm:text-3xl text-emerald-200 font-semibold block mt-1">(단, c ≠ 0 일 때 성립)</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- [우측 메인 판서 영역: lg:col-span-8] 풀이 카드 (2×2 그리드) + 하단 와이드 최종 해 -->
+      <div class="lg:col-span-8 flex flex-col justify-between">
+        
+        <!-- 상단 헤더: 타이틀 & 단계 뱃지 -->
+        <div class="flex items-center justify-between border-b-2 border-white/20 pb-2 mb-2 px-1">
+          <h2 class="text-4xl sm:text-6xl chalk-yellow font-bold tracking-wide">
+            칠판 판서 풀이 과정 (Solution Steps)
+          </h2>
+          <span id="stepCountBadge" class="text-2xl sm:text-3xl px-5 py-1.5 rounded-full border-4 border-green-400 text-green-300 font-bold">
+            총 4단계
+          </span>
+        </div>
+
+        <!-- 풀이 카드 2×2 그리드 (이미지와 동일한 여백과 카드 높이) -->
+        <div id="stepsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 items-stretch">
+          <!-- 동적으로 렌더링됨 -->
+        </div>
+
+        <!-- 하단 전면 와이드 최종 해 카드 (이미지와 동일한 구도) -->
+        <div id="finalAnswerBox" class="mt-3 p-4 sm:p-5 rounded-xl bg-emerald-950/70 border-4 border-emerald-400/80 text-center shadow-xl">
+          <span class="text-3xl sm:text-4xl chalk-white block font-bold">따라서 구하는 일차방정식의 해:</span>
+          <span id="finalAnswerText" class="text-8xl sm:text-9xl font-bold chalk-yellow tracking-widest inline-block my-2">
+            x = 5
+          </span>
+          <p class="text-2xl sm:text-3xl chalk-green font-bold">
+            ★ 검산: 원래 식의 x 자리에 대입하면 (좌변) = (우변)이 참이 됩니다!
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- 하단 원목 분필 받침대 -->
+    <footer class="chalk-ledge w-full h-7 mt-2.5 rounded flex items-center justify-between px-4 shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="chalk-stick w-10 h-2.5 bg-slate-100 transform -rotate-2" title="흰색 분필"></div>
+        <div class="chalk-stick w-8 h-2.5 bg-yellow-300 transform rotate-3" title="노란색 분필"></div>
+        <div class="chalk-stick w-6 h-2.5 bg-pink-400 transform -rotate-1" title="분홍색 분필"></div>
+        <div class="chalk-stick w-11 h-2.5 bg-sky-300 transform rotate-1" title="하늘색 분필"></div>
+      </div>
+      <div class="w-14 h-3.5 bg-[#2a170f] border border-[#1b0f0a] rounded flex flex-col justify-end shadow" title="분필 지우개">
+        <div class="w-full h-1 bg-[#d7c49e] rounded-b"></div>
+      </div>
+    </footer>
+
+  </main>
+
+  <script>
+    const solveForm = document.getElementById('solveForm');
+    const eqInput = document.getElementById('eqInput');
+    const stepsContainer = document.getElementById('stepsContainer');
+    const stepCountBadge = document.getElementById('stepCountBadge');
+    const finalAnswerBox = document.getElementById('finalAnswerBox');
+    const finalAnswerText = document.getElementById('finalAnswerText');
+    const errorBox = document.getElementById('errorBox');
+    const errorMsg = document.getElementById('errorMsg');
+
+    // 빠른 예제 버튼 클릭
+    function loadExample(eq) {
+      eqInput.value = eq;
+      solveEquation();
+    }
+
+    solveForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      solveEquation();
+    });
+
+    // 다항식 텍스트 파싱 헬퍼 함수
+    // 괄호 전개: k(ax + b) 또는 (ax + b)
+    function expandParentheses(expr) {
+      let expanded = expr.replace(/\s+/g, '');
+
+      // 부호 보정
+      expanded = expanded.replace(/-\(/g, '-1(');
+      expanded = expanded.replace(/\+\(/g, '+1(');
+      if (expanded.startsWith('(')) expanded = '1' + expanded;
+
+      // k(ax + b) 패턴 전개 (계수가 정수/소수)
+      const parenRegex = /([+-]?\d*(?:\.\d+)?)\(([^)]+)\)/;
+      let match;
+      let loopLimit = 10;
+      
+      while ((match = parenRegex.exec(expanded)) !== null && loopLimit-- > 0) {
+        let multStr = match[1];
+        let multiplier = 1;
+        if (multStr === '' || multStr === '+') multiplier = 1;
+        else if (multStr === '-') multiplier = -1;
+        else multiplier = parseFloat(multStr);
+
+        const innerExpr = match[2];
+        const innerTerms = parseLinearSide(innerExpr);
+        const expCoeff = innerTerms.coeff * multiplier;
+        const expConst = innerTerms.constVal * multiplier;
+
+        let replacement = '';
+        if (expCoeff !== 0) {
+          replacement += (expCoeff > 0 ? '+' : '') + (expCoeff === 1 ? 'x' : expCoeff === -1 ? '-x' : `${expCoeff}x`);
+        }
+        if (expConst !== 0) {
+          replacement += (expConst > 0 ? `+${expConst}` : `${expConst}`);
+        }
+        if (replacement === '') replacement = '+0';
+
+        expanded = expanded.replace(match[0], replacement);
+        // 선두의 + 제거
+        if (expanded.startsWith('+')) expanded = expanded.slice(1);
+      }
+
+      return expanded;
+    }
+
+    // 한 변의 x계수(coeff)와 상수(constVal) 추출
+    function parseLinearSide(str) {
+      let clean = str.replace(/\s+/g, '');
+      if (clean === '') return { coeff: 0, constVal: 0 };
+      
+      // 양수 첫 항에 + 보충
+      if (clean[0] !== '+' && clean[0] !== '-') clean = '+' + clean;
+
+      // 정규식으로 항 단위 분리: (+/-)(숫자/x 등)
+      const termRegex = /([+-])([0-9]*\.?[0-9]*)(x?)/g;
+      let coeff = 0;
+      let constVal = 0;
+      let match;
+
+      while ((match = termRegex.exec(clean)) !== null) {
+        if (!match[0]) continue;
+        const sign = match[1] === '-' ? -1 : 1;
+        const numPart = match[2];
+        const hasX = match[3] === 'x';
+
+        let val;
+        if (hasX) {
+          if (numPart === '') val = 1;
+          else val = parseFloat(numPart);
+          coeff += sign * val;
+        } else {
+          if (numPart !== '') {
+            val = parseFloat(numPart);
+            constVal += sign * val;
+          }
+        }
+      }
+
+      return { coeff, constVal };
+    }
+
+    // 식을 보기 좋은 형태로 변환 (예: 2x - 4)
+    function formatSide(coeff, constVal) {
+      let parts = [];
+      if (coeff !== 0) {
+        if (coeff === 1) parts.push("x");
+        else if (coeff === -1) parts.push("-x");
+        else parts.push(`${coeff}x`);
+      }
+      if (constVal !== 0 || parts.length === 0) {
+        if (parts.length > 0) {
+          parts.push(constVal > 0 ? `+ ${constVal}` : `- ${Math.abs(constVal)}`);
+        } else {
+          parts.push(`${constVal}`);
+        }
+      }
+      return parts.join(' ');
+    }
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorBox.classList.remove('hidden');
+      stepsContainer.innerHTML = '';
+      finalAnswerBox.classList.add('hidden');
+      stepCountBadge.textContent = "오류";
+    }
+
+    function clearError() {
+      errorBox.classList.add('hidden');
+    }
+
+    // 최대공약수 (기약분수 변환용)
+    function getGCD(a, b) {
+      a = Math.abs(a);
+      b = Math.abs(b);
+      while (b !== 0) {
+        let temp = b;
+        b = a % b;
+        a = temp;
+      }
+      return a;
+    }
+
+    // 유리수를 정수 또는 기약분수 형태로 포맷팅
+    function formatFraction(numerator, denominator) {
+      if (denominator < 0) {
+        numerator = -numerator;
+        denominator = -denominator;
+      }
+
+      // 소수가 포함된 경우 10의 거듭제곱을 곱해 정수비로 전환
+      let factor = 1;
+      while (!Number.isInteger(numerator * factor) || !Number.isInteger(denominator * factor)) {
+        factor *= 10;
+        if (factor > 100000) break; // 오버플로우 방지
+      }
+      let n = Math.round(numerator * factor);
+      let d = Math.round(denominator * factor);
+
+      const common = getGCD(n, d);
+      n = n / common;
+      d = d / common;
+
+      if (d === 1) {
+        return `${n}`;
+      } else {
+        const sign = n < 0 ? "-" : "";
+        return `${sign}${Math.abs(n)}/${d}`;
+      }
+    }
+
+    // 메인 풀이 알고리즘
+    function solveEquation() {
+      clearError();
+      const raw = eqInput.value.trim();
+
+      if (!raw.includes('=')) {
+        showError("등호(=)가 포함된 일차방정식을 입력해주세요!");
+        return;
+      }
+
+      const sides = raw.split('=');
+      if (sides.length !== 2) {
+        showError("등호(=)는 1개만 입력해야 합니다.");
+        return;
+      }
+
+      let leftRaw = sides[0].trim();
+      let rightRaw = sides[1].trim();
+
+      if (!leftRaw || !rightRaw) {
+        showError("좌변과 우변을 모두 입력해주세요.");
+        return;
+      }
+
+      const steps = [];
+
+      // 초기 상태 기록
+      steps.push({
+        title: "초기 문제 확인",
+        property: "주어진 일차방정식",
+        action: "주어진 등식의 좌변과 우변의 상태를 확인합니다.",
+        eq: `${leftRaw} = ${rightRaw}`,
+        color: "chalk-white"
+      });
+
+      // 1단계: 괄호 검사 및 분배법칙 전개
+      let hasLeftParen = leftRaw.includes('(');
+      let hasRightParen = rightRaw.includes('(');
+
+      if (hasLeftParen || hasRightParen) {
+        leftRaw = expandParentheses(leftRaw);
+        rightRaw = expandParentheses(rightRaw);
+
+        steps.push({
+          title: "괄호 풀기 (분배법칙)",
+          property: "분배법칙 적용",
+          action: "괄호 앞의 수를 괄호 안의 모든 항에 곱하여 괄호를 풉니다.",
+          eq: `${leftRaw} = ${rightRaw}`,
+          color: "chalk-yellow"
+        });
+      }
+
+      // 좌변과 우변의 동류항 정리
+      let left = parseLinearSide(leftRaw);
+      let right = parseLinearSide(rightRaw);
+
+      if (isNaN(left.coeff) || isNaN(left.constVal) || isNaN(right.coeff) || isNaN(right.constVal)) {
+        showError("식의 형식을 해석할 수 없습니다. 문자 x와 숫자, 연산 기호를 바르게 입력했는지 확인해주세요.");
+        return;
+      }
+
+      // 2단계: 상수항 좌변에서 제거하기 (등식의 성질: 덧셈 또는 뺄셈)
+      if (left.constVal !== 0) {
+        const valToEliminate = left.constVal;
+        const isPositive = valToEliminate > 0;
+        const absVal = Math.abs(valToEliminate);
+
+        const propertyName = isPositive ? "등식의 성질 ② (뺄셈 성질)" : "등식의 성질 ① (덧셈 성질)";
+        const actionDesc = isPositive 
+          ? `좌변의 상수항 +${absVal}을 없애기 위해 <b>양변에서 ${absVal}을 뺍니다.</b>` 
+          : `좌변의 상수항 -${absVal}을 없애기 위해 <b>양변에 ${absVal}을 더합니다.</b>`;
+
+        // 계산
+        left.constVal -= valToEliminate; // 0이 됨
+        right.constVal -= valToEliminate;
+
+        steps.push({
+          title: "상수항 우변으로 이항",
+          property: propertyName,
+          action: actionDesc,
+          eq: `${formatSide(left.coeff, left.constVal)} = ${formatSide(right.coeff, right.constVal)}`,
+          color: isPositive ? "chalk-blue" : "chalk-pink"
+        });
+      }
+
+      // 3단계: 우변의 x항 제거하기 (등식의 성질: x항 덧셈/뺄셈)
+      if (right.coeff !== 0) {
+        const coeffToEliminate = right.coeff;
+        const isPositive = coeffToEliminate > 0;
+        const absCoeff = Math.abs(coeffToEliminate);
+        const termName = absCoeff === 1 ? 'x' : `${absCoeff}x`;
+
+        const propertyName = isPositive ? "등식의 성질 ② (뺄셈 성질)" : "등식의 성질 ① (덧셈 성질)";
+        const actionDesc = isPositive
+          ? `우변의 미지수항 +${termName}을 없애기 위해 <b>양변에서 ${termName}을 뺍니다.</b>`
+          : `우변의 미지수항 -${termName}을 없애기 위해 <b>양변에 ${termName}을 더합니다.</b>`;
+
+        left.coeff -= coeffToEliminate;
+        right.coeff = 0;
+
+        steps.push({
+          title: "미지수(x)항 좌변으로 이항",
+          property: propertyName,
+          action: actionDesc,
+          eq: `${formatSide(left.coeff, left.constVal)} = ${formatSide(right.coeff, right.constVal)}`,
+          color: "chalk-blue"
+        });
+      }
+
+      // 일차방정식 성립 여부 검증
+      if (left.coeff === 0) {
+        if (right.constVal === 0) {
+          showError("0 = 0 형태로 x에 어떤 수를 넣어도 항상 성립하는 '항등식'입니다. (해가 무수히 많음)");
+        } else {
+          showError(`0 = ${right.constVal} 형태로 모순이 발생하여 '해가 없는 방정식'입니다.`);
+        }
+        return;
+      }
+
+      // 4단계: x의 계수로 양변 나누기 (등식의 성질 ④)
+      if (left.coeff !== 1) {
+        const divCoeff = left.coeff;
+        const fractionDisplay = formatFraction(right.constVal, divCoeff);
+
+        steps.push({
+          title: "x의 계수를 1로 만들기",
+          property: "등식의 성질 ④ (나눗셈 성질)",
+          action: `x의 계수인 <b>${divCoeff}로 양변을 똑같이 나눕니다.</b> (${divCoeff} ÷ ${divCoeff} = 1)`,
+          eq: `x = ${fractionDisplay}`,
+          color: "chalk-green"
+        });
+
+        renderSteps(steps, fractionDisplay);
+      } else {
+        const finalVal = formatFraction(right.constVal, 1);
+        renderSteps(steps, finalVal);
+      }
+    }
+
+    // 단계별 카드 칠판 렌더링
+    function renderSteps(steps, solution) {
+      stepsContainer.innerHTML = '';
+      stepCountBadge.textContent = `총 ${steps.length}단계`;
+
+      steps.forEach((step, idx) => {
+        const card = document.createElement('div');
+        // 이미지와 일치하는 카드 내부 여백 및 텍스트 밸런스
+        card.className = "step-card p-3 sm:p-4 rounded-xl bg-black/50 border border-white/30 flex flex-col justify-between h-full shadow-lg";
+        card.style.animationDelay = `${idx * 0.08}s`;
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <div class="flex items-center gap-3">
+                <span class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-yellow-400/30 text-yellow-300 border-4 border-yellow-300 flex items-center justify-center text-3xl sm:text-4xl font-bold shrink-0">
+                  ${idx + 1}
+                </span>
+                <span class="text-3xl sm:text-5xl font-bold chalk-white tracking-wide">${step.title}</span>
+              </div>
+              <span class="text-xl sm:text-2xl px-4 py-1.5 rounded-xl bg-white/10 ${step.color} border-2 border-white/30 font-bold whitespace-nowrap">
+                ${step.property}
+              </span>
+            </div>
+            <p class="text-2xl sm:text-4xl text-slate-200 mb-2 pl-1 font-semibold leading-relaxed">
+              • ${step.action}
+            </p>
+          </div>
+          <div class="py-2.5 px-4 rounded-xl bg-emerald-950/85 border-2 border-white/30 text-center text-3xl sm:text-5xl lg:text-6xl font-bold ${step.color} tracking-wider mt-1 shadow-inner flex items-center justify-center min-h-[75px]">
+            ${step.eq}
+          </div>
+        `;
+
+        stepsContainer.appendChild(card);
+      });
+
+      // 최종 해 카드 노출
+      finalAnswerText.textContent = `x = ${solution}`;
+      finalAnswerBox.classList.remove('hidden');
+    }
+
+    // 최초 1회 기본 로딩 예제 실행
+    window.addEventListener('load', () => {
+      solveEquation();
+    });
+  </script>
+</body>
+</html>
