@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일차함수 인터랙티브 학습관</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc;
+        }
+        /* Vertical Fraction Display Styling */
+        .v-frac {
+            display: inline-flex;
+            flex-direction: row;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 4px;
+        }
+        .v-frac .sign {
+            margin-right: 3px;
+        }
+        .v-frac .frac-body {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.15;
+            padding: 0 2px;
+        }
+        .v-frac .num {
+            border-bottom: 2px solid currentColor;
+            padding-bottom: 2px;
+            width: 100%;
+            text-align: center;
+        }
+        .v-frac .den {
+            padding-top: 2px;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col text-slate-800 select-none">
+
+    <!-- Header Bar -->
+    <header class="bg-indigo-600 text-white px-6 py-3.5 flex justify-between items-center shadow-md z-10 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+            <i class="fa-solid fa-chart-line text-2xl text-indigo-200"></i>
+            <h1 class="text-xl font-bold tracking-tight">일차함수 인터랙티브 탐구실</h1>
+        </div>
+        <div class="text-xs bg-indigo-700/60 border border-indigo-400/40 px-3 py-1.5 rounded-full flex items-center gap-2">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>한눈에 이해하는 y = ax + b</span>
+        </div>
+    </header>
+
+    <!-- Main Workspace Layout -->
+    <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+
+        <!-- LEFT PANEL: Controls & Output Info -->
+        <div class="w-full md:w-[440px] lg:w-[480px] bg-white border-r border-slate-200 flex flex-col h-full overflow-y-auto z-10 shadow-lg flex-shrink-0">
+            
+            <!-- Mode Selector Tabs -->
+            <div class="p-4 bg-slate-50 border-b border-slate-200">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">학습 모드 선택</label>
+                <div class="grid grid-cols-2 gap-2 bg-slate-200/70 p-1 rounded-xl">
+                    <button id="tab-param-mode" onclick="switchMode('param')" 
+                            class="py-2.5 px-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-white text-indigo-600 shadow-sm">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span>계수 직접 입력</span>
+                    </button>
+                    <button id="tab-point-mode" onclick="switchMode('point')" 
+                            class="py-2.5 px-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900">
+                        <i class="fa-solid fa-hand-pointer"></i>
+                        <span>두 점 찍기</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CONTROLS SECTION -->
+            <div class="p-5 flex-1 space-y-5">
+
+                <!-- 1. Parameter Mode Controls -->
+                <div id="section-param-inputs" class="space-y-4">
+                    <div class="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3.5">
+                        <h3 class="font-bold text-slate-700 text-sm mb-1 flex items-center gap-2">
+                            <i class="fa-solid fa-gear text-indigo-500"></i> 일차함수 표준형: <span class="text-indigo-700 font-mono text-base">y = ax + b</span>
+                        </h3>
+                        <p class="text-xs text-slate-500">기울기(a)와 y절편(b) 수치를 조절해보세요.</p>
+                    </div>
+
+                    <!-- Slope (a) Slider & Input -->
+                    <div class="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <div class="flex justify-between items-center">
+                            <label for="slope-input" class="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 inline-block"></span>
+                                기울기 (a):
+                            </label>
+                            <input type="number" id="slope-input" step="0.1" value="1" 
+                                   class="w-20 px-2 py-1 border border-slate-300 rounded-lg text-right font-mono font-bold text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                   oninput="onParamInputChange()">
+                        </div>
+                        <input type="range" id="slope-slider" min="-5" max="5" step="0.1" value="1" 
+                               class="w-full accent-indigo-600 cursor-pointer h-2 bg-slate-200 rounded-lg"
+                               oninput="syncSliderToInput('slope-slider', 'slope-input'); updateGraphFromParams();">
+                        <div class="flex justify-between text-[11px] text-slate-400 font-mono">
+                            <span>-5</span>
+                            <span>0</span>
+                            <span>+5</span>
+                        </div>
+                    </div>
+
+                    <!-- Y-Intercept (b) Slider & Input -->
+                    <div class="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <div class="flex justify-between items-center">
+                            <label for="intercept-input" class="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                                y절편 (b):
+                            </label>
+                            <input type="number" id="intercept-input" step="0.5" value="2" 
+                                   class="w-20 px-2 py-1 border border-slate-300 rounded-lg text-right font-mono font-bold text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                   oninput="onParamInputChange()">
+                        </div>
+                        <input type="range" id="intercept-slider" min="-10" max="10" step="0.5" value="2" 
+                               class="w-full accent-emerald-500 cursor-pointer h-2 bg-slate-200 rounded-lg"
+                               oninput="syncSliderToInput('intercept-slider', 'intercept-input'); updateGraphFromParams();">
+                        <div class="flex justify-between text-[11px] text-slate-400 font-mono">
+                            <span>-10</span>
+                            <span>0</span>
+                            <span>+10</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Two-Point Click Mode Controls -->
+                <div id="section-point-inputs" class="space-y-3.5 hidden">
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-900 text-xs leading-relaxed">
+                        <div class="font-bold text-sm mb-0.5 text-amber-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-hand-pointer"></i> 사용 방법
+                        </div>
+                        오른쪽 좌표평면 위에 <strong>두 점을 클릭하거나 드래그</strong>해 이동시키세요.
+                    </div>
+
+                    <!-- Clicked Points Status Box -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                            <span class="text-xs text-slate-400 block font-semibold mb-1">첫 번째 점 (A)</span>
+                            <span id="point-a-coords" class="font-mono font-bold text-sky-600 text-lg">미선택</span>
+                        </div>
+                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                            <span class="text-xs text-slate-400 block font-semibold mb-1">두 번째 점 (B)</span>
+                            <span id="point-b-coords" class="font-mono font-bold text-amber-600 text-lg">미선택</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MATHEMATICAL ANALYSIS OUTPUT CARD (ENLARGED TEXT SIZE x2) -->
+                <div class="border border-slate-700 rounded-xl bg-slate-900 text-white p-5 shadow-xl space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
+                        <span class="text-xs font-bold text-indigo-400 tracking-wider uppercase flex items-center gap-1.5">
+                            <i class="fa-solid fa-square-root-variable"></i> 분석 결과
+                        </span>
+                        <span id="status-badge" class="text-xs bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 px-2.5 py-0.5 rounded-full font-medium">정상</span>
+                    </div>
+
+                    <!-- Dynamic Function Equation with Enlarged Text x2 -->
+                    <div>
+                        <span class="text-xs text-slate-400 block mb-2 font-semibold">직선의 방정식</span>
+                        <div id="equation-display" class="font-mono text-3xl md:text-4xl font-black text-amber-300 tracking-wide min-h-[60px] flex items-center flex-wrap gap-1">
+                            y = x + 2
+                        </div>
+                    </div>
+
+                    <!-- Calculated Properties Grid (Enlarged Values x2) -->
+                    <div class="grid grid-cols-3 gap-2.5 pt-3 border-t border-slate-800 text-center">
+                        <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700/60 flex flex-col items-center justify-center min-h-[90px]">
+                            <span class="text-xs text-slate-400 block mb-1 font-semibold">기울기 (a)</span>
+                            <div id="res-slope" class="font-mono font-black text-amber-300 text-2xl md:text-3xl">1</div>
+                        </div>
+                        <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700/60 flex flex-col items-center justify-center min-h-[90px]">
+                            <span class="text-xs text-slate-400 block mb-1 font-semibold">x절편</span>
+                            <div id="res-x-intercept" class="font-mono font-black text-rose-400 text-2xl md:text-3xl">-2</div>
+                        </div>
+                        <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700/60 flex flex-col items-center justify-center min-h-[90px]">
+                            <span class="text-xs text-slate-400 block mb-1 font-semibold">y절편</span>
+                            <div id="res-y-intercept" class="font-mono font-black text-emerald-400 text-2xl md:text-3xl">2</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slope Triangle Toggle Button (Visible in Point Mode) -->
+                <div id="slope-triangle-btn-container" class="hidden">
+                    <button id="btn-toggle-triangle" onclick="toggleSlopeTriangle()" 
+                            class="w-full py-3 px-4 bg-teal-500 hover:bg-teal-600 active:bg-teal-700 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-shapes text-lg"></i>
+                        <span id="triangle-btn-text">기울기 확인하기 (직각삼각형 켜기)</span>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- View Controls at Bottom Left -->
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs text-slate-500 mt-auto">
+                <button onclick="resetPoints()" class="text-rose-600 hover:text-rose-800 font-bold text-xs px-3.5 py-2 bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200 transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash-can"></i> 두 점 초기화
+                </button>
+                <button onclick="resetGraphView()" class="text-indigo-600 hover:text-indigo-800 font-bold text-xs px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate-left"></i> 전체 초기화
+                </button>
+            </div>
+
+        </div>
+
+        <!-- RIGHT PANEL: Cartesian Coordinate Canvas -->
+        <div class="flex-1 bg-slate-900 relative overflow-hidden flex items-center justify-center" id="graph-container">
+            <!-- Grid Coordinate Mouse Tracker -->
+            <div id="hover-coords" class="absolute top-4 left-4 bg-slate-800/90 backdrop-blur border border-slate-700 text-slate-200 px-4 py-2 rounded-xl font-mono text-lg font-bold shadow-lg pointer-events-none z-10 flex items-center gap-2">
+                <i class="fa-solid fa-crosshairs text-indigo-400"></i>
+                <span id="hover-text">x: 0, y: 0</span>
+            </div>
+
+            <!-- Interactive SVG Canvas -->
+            <svg id="coordinate-plane" class="w-full h-full cursor-crosshair">
+                <!-- SVG Content Dynamically Generated via JS -->
+            </svg>
+        </div>
+
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Global State Management
+        let currentMode = 'param'; // 'param' or 'point'
+        let slopeNum = 1, slopeDen = 1;
+        let interceptNum = 2, interceptDen = 1;
+        let points = []; 
+        let draggingPointIndex = -1;
+        let showSlopeTriangle = false;
+
+        // Canvas Scale Parameters
+        const gridRange = 10; // -10 to +10
+        let width = 0;
+        let height = 0;
+
+        // DOM Elements
+        const svg = document.getElementById('coordinate-plane');
+        const container = document.getElementById('graph-container');
+        const hoverText = document.getElementById('hover-text');
+
+        // Helper: Greatest Common Divisor
+        function gcd(a, b) {
+            a = Math.abs(a);
+            b = Math.abs(b);
+            while (b) {
+                let t = b;
+                b = a % b;
+                a = t;
+            }
+            return a;
+        }
+
+        // Helper: Convert decimal to simplified fraction object { num, den }
+        function decimalToFraction(val) {
+            if (val === 0) return { num: 0, den: 1 };
+            let den = 100;
+            let num = Math.round(val * 100);
+            let common = gcd(num, den);
+            num /= common;
+            den /= common;
+            if (den < 0) {
+                num = -num;
+                den = -den;
+            }
+            return { num, den };
+        }
+
+        // Helper: Render HTML Vertical Fraction (Numerator above Denominator)
+        function getVerticalFractionHTML(num, den, inlineScale = "1em") {
+            if (den === 0) return '<span>없음</span>';
+            if (num === 0) return '<span>0</span>';
+            if (den === 1) return `<span>${num}</span>`;
+            if (den === -1) return `<span>${-num}</span>`;
+
+            let isNegative = false;
+            if ((num < 0 && den > 0) || (num > 0 && den < 0)) {
+                isNegative = true;
+            }
+            const absNum = Math.abs(num);
+            const absDen = Math.abs(den);
+
+            return `
+                <span class="v-frac" style="font-size: ${inlineScale};">
+                    ${isNegative ? '<span class="sign">-</span>' : ''}
+                    <span class="frac-body">
+                        <span class="num">${absNum}</span>
+                        <span class="den">${absDen}</span>
+                    </span>
+                </span>
+            `;
+        }
+
+        // Helper: Simple Inline String Fraction (e.g. 3/2) for SVG Labels
+        function getSimpleFractionStr(num, den) {
+            if (den === 0) return "없음";
+            if (num === 0) return "0";
+            if (den === 1) return `${num}`;
+            if (den === -1) return `${-num}`;
+            let isNeg = (num < 0 && den > 0) || (num > 0 && den < 0);
+            return `${isNeg ? '-' : ''}${Math.abs(num)}/${Math.abs(den)}`;
+        }
+
+        // Initialize App
+        window.addEventListener('load', () => {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            setupSvgEvents();
+            updateGraphFromParams();
+        });
+
+        // Resize Canvas and Redraw Grid
+        function resizeCanvas() {
+            width = container.clientWidth;
+            height = container.clientHeight;
+            svg.setAttribute('width', width);
+            svg.setAttribute('height', height);
+            render();
+        }
+
+        // Coordinate Conversions
+        function mathToSvgX(x) {
+            const centerX = width / 2;
+            const scaleX = width / (gridRange * 2);
+            return centerX + x * scaleX;
+        }
+
+        function mathToSvgY(y) {
+            const centerY = height / 2;
+            const scaleY = height / (gridRange * 2);
+            return centerY - y * scaleY;
+        }
+
+        function svgToMathX(svgX) {
+            const centerX = width / 2;
+            const scaleX = width / (gridRange * 2);
+            return (svgX - centerX) / scaleX;
+        }
+
+        function svgToMathY(svgY) {
+            const centerY = height / 2;
+            const scaleY = height / (gridRange * 2);
+            return (centerY - svgY) / scaleY;
+        }
+
+        // Mode Switching
+        function switchMode(mode) {
+            currentMode = mode;
+            const tabParam = document.getElementById('tab-param-mode');
+            const tabPoint = document.getElementById('tab-point-mode');
+            const secParam = document.getElementById('section-param-inputs');
+            const secPoint = document.getElementById('section-point-inputs');
+            const triangleBtnContainer = document.getElementById('slope-triangle-btn-container');
+
+            if (mode === 'param') {
+                tabParam.className = "py-2.5 px-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-white text-indigo-600 shadow-sm";
+                tabPoint.className = "py-2.5 px-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900";
+                secParam.classList.remove('hidden');
+                secPoint.classList.add('hidden');
+                triangleBtnContainer.classList.add('hidden');
+                showSlopeTriangle = false;
+                updateGraphFromParams();
+            } else {
+                tabPoint.className = "py-2.5 px-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-white text-indigo-600 shadow-sm";
+                tabParam.className = "py-2.5 px-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900";
+                secPoint.classList.remove('hidden');
+                secParam.classList.add('hidden');
+                triangleBtnContainer.classList.remove('hidden');
+                updateGraphFromPoints();
+            }
+        }
+
+        // Toggle Slope Right-Triangle Helper
+        function toggleSlopeTriangle() {
+            if (points.length < 2) {
+                alert("두 점을 먼저 클릭하여 지정해 주세요!");
+                return;
+            }
+            showSlopeTriangle = !showSlopeTriangle;
+            const btnText = document.getElementById('triangle-btn-text');
+            const btn = document.getElementById('btn-toggle-triangle');
+            if (showSlopeTriangle) {
+                btnText.innerText = "기울기 확인하기 (직각삼각형 끄기)";
+                btn.className = "w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2";
+            } else {
+                btnText.innerText = "기울기 확인하기 (직각삼각형 켜기)";
+                btn.className = "w-full py-3 px-4 bg-teal-500 hover:bg-teal-600 active:bg-teal-700 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2";
+            }
+            render();
+        }
+
+        // Sync Sliders and Inputs
+        function syncSliderToInput(sliderId, inputId) {
+            const slider = document.getElementById(sliderId);
+            const input = document.getElementById(inputId);
+            input.value = slider.value;
+        }
+
+        function onParamInputChange() {
+            const sVal = parseFloat(document.getElementById('slope-input').value);
+            const iVal = parseFloat(document.getElementById('intercept-input').value);
+
+            if (!isNaN(sVal)) document.getElementById('slope-slider').value = sVal;
+            if (!isNaN(iVal)) document.getElementById('intercept-slider').value = iVal;
+
+            updateGraphFromParams();
+        }
+
+        // Update Logic when parameters change
+        function updateGraphFromParams() {
+            const sVal = parseFloat(document.getElementById('slope-input').value) || 0;
+            const iVal = parseFloat(document.getElementById('intercept-input').value) || 0;
+
+            const sFrac = decimalToFraction(sVal);
+            slopeNum = sFrac.num;
+            slopeDen = sFrac.den;
+
+            const iFrac = decimalToFraction(iVal);
+            interceptNum = iFrac.num;
+            interceptDen = iFrac.den;
+
+            calculateAndDisplayProps();
+            render();
+        }
+
+        // Update Logic when 2 points are selected
+        function updateGraphFromPoints() {
+            if (points.length === 2) {
+                const p1 = points[0];
+                const p2 = points[1];
+
+                const dy = p2.y - p1.y;
+                const dx = p2.x - p1.x;
+
+                if (dx === 0) {
+                    slopeNum = 1;
+                    slopeDen = 0;
+                    interceptNum = 0;
+                    interceptDen = 0;
+                } else {
+                    const gSlope = gcd(dy, dx);
+                    slopeNum = dy / gSlope;
+                    slopeDen = dx / gSlope;
+                    if (slopeDen < 0) {
+                        slopeNum = -slopeNum;
+                        slopeDen = -slopeDen;
+                    }
+
+                    const bNum = p1.y * slopeDen - slopeNum * p1.x;
+                    const bDen = slopeDen;
+                    const gInt = gcd(bNum, bDen);
+                    interceptNum = bNum / gInt;
+                    interceptDen = bDen / gInt;
+                    if (interceptDen < 0) {
+                        interceptNum = -interceptNum;
+                        interceptDen = -interceptDen;
+                    }
+                }
+            }
+            calculateAndDisplayProps();
+            render();
+        }
+
+        // Calculate Properties & Update Info Panel (Enlarged Text Font Styles)
+        function calculateAndDisplayProps() {
+            const eqDisplay = document.getElementById('equation-display');
+            const resSlope = document.getElementById('res-slope');
+            const resXInt = document.getElementById('res-x-intercept');
+            const resYInt = document.getElementById('res-y-intercept');
+            const statusBadge = document.getElementById('status-badge');
+
+            if (slopeDen === 0) {
+                eqDisplay.innerHTML = `<span>x = ${points[0] ? points[0].x : 0}</span>`;
+                resSlope.innerHTML = "<span>없음</span>";
+                resXInt.innerHTML = `<span>${points[0] ? points[0].x : 0}</span>`;
+                resYInt.innerHTML = "<span>없음</span>";
+                statusBadge.innerText = "수직선 (일차함수 아님)";
+                statusBadge.className = "text-xs bg-rose-500/30 text-rose-300 border border-rose-400/30 px-2.5 py-0.5 rounded-full font-medium";
+                return;
+            }
+
+            statusBadge.innerText = "정상";
+            statusBadge.className = "text-xs bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 px-2.5 py-0.5 rounded-full font-medium";
+
+            // Format Equation Text with Vertical Fractions (Enlarged Size)
+            let eqHTML = '<span>y = </span>';
+            if (slopeNum === 0) {
+                eqHTML += getVerticalFractionHTML(interceptNum, interceptDen, "0.9em");
+            } else {
+                // Slope + x
+                if (slopeNum === 1 && slopeDen === 1) {
+                    eqHTML += '<span>x</span>';
+                } else if (slopeNum === -1 && slopeDen === 1) {
+                    eqHTML += '<span>-x</span>';
+                } else {
+                    eqHTML += getVerticalFractionHTML(slopeNum, slopeDen, "0.9em") + '<span class="ml-0.5">x</span>';
+                }
+
+                // Intercept b
+                if (interceptNum > 0) {
+                    eqHTML += '<span class="mx-1.5">+</span>' + getVerticalFractionHTML(interceptNum, interceptDen, "0.9em");
+                } else if (interceptNum < 0) {
+                    eqHTML += '<span class="mx-1.5">-</span>' + getVerticalFractionHTML(Math.abs(interceptNum), interceptDen, "0.9em");
+                }
+            }
+            eqDisplay.innerHTML = eqHTML;
+
+            // Slope (Enlarged)
+            resSlope.innerHTML = getVerticalFractionHTML(slopeNum, slopeDen, "0.85em");
+
+            // y-intercept (Enlarged)
+            resYInt.innerHTML = getVerticalFractionHTML(interceptNum, interceptDen, "0.85em");
+
+            // x-intercept (Enlarged)
+            if (slopeNum === 0) {
+                resXInt.innerHTML = interceptNum === 0 ? "<span>전체</span>" : "<span>없음</span>";
+            } else {
+                let xNum = -interceptNum * slopeDen;
+                let xDen = interceptDen * slopeNum;
+                let g = gcd(xNum, xDen);
+                xNum /= g;
+                xDen /= g;
+                if (xDen < 0) {
+                    xNum = -xNum;
+                    xDen = -xDen;
+                }
+                resXInt.innerHTML = getVerticalFractionHTML(xNum, xDen, "0.85em");
+            }
+
+            // Update Point Mode status UI
+            if (currentMode === 'point') {
+                const ptA = document.getElementById('point-a-coords');
+                const ptB = document.getElementById('point-b-coords');
+                ptA.innerText = points[0] ? `(${points[0].x}, ${points[0].y})` : "미선택";
+                ptB.innerText = points[1] ? `(${points[1].x}, ${points[1].y})` : "미선택";
+            }
+        }
+
+        // Reset points clicked
+        function resetPoints() {
+            points = [];
+            showSlopeTriangle = false;
+            const btnText = document.getElementById('triangle-btn-text');
+            const btn = document.getElementById('btn-toggle-triangle');
+            if (btnText && btn) {
+                btnText.innerText = "기울기 확인하기 (직각삼각형 켜기)";
+                btn.className = "w-full py-3 px-4 bg-teal-500 hover:bg-teal-600 active:bg-teal-700 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2";
+            }
+            updateGraphFromPoints();
+        }
+
+        // Reset Graph to Default state
+        function resetGraphView() {
+            document.getElementById('slope-input').value = 1;
+            document.getElementById('slope-slider').value = 1;
+            document.getElementById('intercept-input').value = 2;
+            document.getElementById('intercept-slider').value = 2;
+            points = [];
+            showSlopeTriangle = false;
+            if (currentMode === 'point') switchMode('param');
+            else updateGraphFromParams();
+        }
+
+        // Setup SVG Mouse & Touch Interactions
+        function setupSvgEvents() {
+            function getEventMathCoords(e) {
+                const rect = svg.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                const mouseX = clientX - rect.left;
+                const mouseY = clientY - rect.top;
+
+                let mathX = Math.round(svgToMathX(mouseX));
+                let mathY = Math.round(svgToMathY(mouseY));
+                mathX = Math.max(-gridRange, Math.min(gridRange, mathX));
+                mathY = Math.max(-gridRange, Math.min(gridRange, mathY));
+                return { mathX, mathY };
+            }
+
+            const onMove = (e) => {
+                const { mathX, mathY } = getEventMathCoords(e);
+                hoverText.innerText = `x: ${mathX > 0 ? '+' + mathX : mathX}, y: ${mathY > 0 ? '+' + mathY : mathY}`;
+
+                if (draggingPointIndex !== -1 && currentMode === 'point') {
+                    const otherIdx = draggingPointIndex === 0 ? 1 : 0;
+                    if (points[otherIdx] && points[otherIdx].x === mathX && points[otherIdx].y === mathY) {
+                        return;
+                    }
+                    points[draggingPointIndex] = { x: mathX, y: mathY };
+                    updateGraphFromPoints();
+                }
+            };
+
+            const onStart = (e) => {
+                if (currentMode !== 'point') return;
+                const { mathX, mathY } = getEventMathCoords(e);
+
+                const hitIndex = points.findIndex(pt => Math.abs(pt.x - mathX) <= 1 && Math.abs(pt.y - mathY) <= 1);
+
+                if (hitIndex !== -1) {
+                    draggingPointIndex = hitIndex;
+                } else {
+                    if (points.length >= 2) {
+                        points = [{ x: mathX, y: mathY }];
+                        draggingPointIndex = 0;
+                    } else {
+                        if (points.length === 1 && points[0].x === mathX && points[0].y === mathY) return;
+                        points.push({ x: mathX, y: mathY });
+                        draggingPointIndex = points.length - 1;
+                    }
+                    updateGraphFromPoints();
+                }
+            };
+
+            const onEnd = () => {
+                draggingPointIndex = -1;
+            };
+
+            svg.addEventListener('mousemove', onMove);
+            svg.addEventListener('mousedown', onStart);
+            window.addEventListener('mouseup', onEnd);
+
+            svg.addEventListener('touchmove', onMove, { passive: true });
+            svg.addEventListener('touchstart', onStart, { passive: true });
+            window.addEventListener('touchend', onEnd);
+        }
+
+        // Render Coordinate Plane & Function Graph (SVG)
+        function render() {
+            let svgContent = '';
+
+            // 1. Grid Lines
+            for (let i = -gridRange; i <= gridRange; i++) {
+                if (i === 0) continue;
+                const x = mathToSvgX(i);
+                const y = mathToSvgY(i);
+
+                svgContent += `<line x1="${x}" y1="0" x2="${x}" y2="${height}" stroke="#334155" stroke-width="1" stroke-dasharray="3,3" />`;
+                svgContent += `<line x1="0" y1="${y}" x2="${width}" y2="${y}" stroke="#334155" stroke-width="1" stroke-dasharray="3,3" />`;
+
+                const centerX = mathToSvgX(0);
+                const centerY = mathToSvgY(0);
+
+                // 2x Enlarged Axis Numbers
+                svgContent += `<text x="${x}" y="${centerY + 26}" fill="#94a3b8" font-size="20" font-weight="bold" font-family="monospace" text-anchor="middle">${i}</text>`;
+                svgContent += `<text x="${centerX - 14}" y="${y + 7}" fill="#94a3b8" font-size="20" font-weight="bold" font-family="monospace" text-anchor="end">${i}</text>`;
+            }
+
+            // Origin Label
+            const originX = mathToSvgX(0);
+            const originY = mathToSvgY(0);
+            svgContent += `<text x="${originX - 18}" y="${originY + 26}" fill="#94a3b8" font-size="22" font-weight="bold" font-family="sans-serif">O</text>`;
+
+            // 2. Main Axes
+            svgContent += `<line x1="0" y1="${originY}" x2="${width}" y2="${originY}" stroke="#cbd5e1" stroke-width="2.5" />`;
+            svgContent += `<line x1="${originX}" y1="0" x2="${originX}" y2="${height}" stroke="#cbd5e1" stroke-width="2.5" />`;
+
+            // Axis Arrows & Labels
+            svgContent += `<polygon points="${width},${originY} ${width-12},${originY-6} ${width-12},${originY+6}" fill="#cbd5e1" />`;
+            svgContent += `<polygon points="${originX},0 ${originX-6},12 ${originX+6},12" fill="#cbd5e1" />`;
+            svgContent += `<text x="${width - 25}" y="${originY - 12}" fill="#e2e8f0" font-size="22" font-weight="bold">x</text>`;
+            svgContent += `<text x="${originX + 14}" y="24" fill="#e2e8f0" font-size="22" font-weight="bold">y</text>`;
+
+            // 3. Render Function Line
+            if (currentMode === 'param' || (currentMode === 'point' && points.length === 2)) {
+                if (slopeDen === 0) {
+                    // Vertical Line
+                    const vx = mathToSvgX(points[0].x);
+                    svgContent += `<line x1="${vx}" y1="0" x2="${vx}" y2="${height}" stroke="#818cf8" stroke-width="4" stroke-linecap="round" />`;
+                } else {
+                    const m = slopeNum / slopeDen;
+                    const b = interceptNum / interceptDen;
+
+                    const xStart = -gridRange * 1.5;
+                    const xEnd = gridRange * 1.5;
+                    const yStart = m * xStart + b;
+                    const yEnd = m * xEnd + b;
+
+                    const svgX1 = mathToSvgX(xStart);
+                    const svgY1 = mathToSvgY(yStart);
+                    const svgX2 = mathToSvgX(xEnd);
+                    const svgY2 = mathToSvgY(yEnd);
+
+                    // Solid function line
+                    svgContent += `<line x1="${svgX1}" y1="${svgY1}" x2="${svgX2}" y2="${svgY2}" stroke="#6366f1" stroke-width="6" stroke-opacity="0.25" stroke-linecap="round" />`;
+                    svgContent += `<line x1="${svgX1}" y1="${svgY1}" x2="${svgX2}" y2="${svgY2}" stroke="#818cf8" stroke-width="4" stroke-linecap="round" />`;
+                }
+            }
+
+            // 4. Render Slope Right-Triangle (White Dashed Line Visualizer)
+            if (currentMode === 'point' && points.length === 2 && showSlopeTriangle && slopeDen !== 0) {
+                const p1 = points[0];
+                const p2 = points[1];
+
+                // Always place the right-angle corner to the RIGHT side of the line
+                // Find the point with the larger x-coordinate (rightmost point)
+                const rightPt = p1.x >= p2.x ? p1 : p2;
+                const leftPt = p1.x >= p2.x ? p2 : p1;
+
+                // Triangle vertices in SVG coordinates
+                // Hypotenuase: from leftPt to rightPt
+                // Right angle corner C is at (rightPt.x, leftPt.y)
+                const ax = mathToSvgX(leftPt.x);
+                const ay = mathToSvgY(leftPt.y);
+                const bx = mathToSvgX(rightPt.x);
+                const by = mathToSvgY(rightPt.y);
+                const cx = mathToSvgX(rightPt.x);
+                const cy = mathToSvgY(leftPt.y);
+
+                const dx = rightPt.x - leftPt.x; // Always positive
+                const dy = rightPt.y - leftPt.y;
+
+                // Triangle Base (dx) & Height (dy) dashed lines
+                svgContent += `<line x1="${ax}" y1="${ay}" x2="${cx}" y2="${cy}" stroke="#ffffff" stroke-width="3.5" stroke-dasharray="6,4" />`;
+                svgContent += `<line x1="${cx}" y1="${cy}" x2="${bx}" y2="${by}" stroke="#ffffff" stroke-width="3.5" stroke-dasharray="6,4" />`;
+
+                // Right angle mark at C(cx, cy)
+                const cornerSize = 14;
+                const signY = dy >= 0 ? 1 : -1;
+                svgContent += `<path d="M ${cx - cornerSize} ${cy} L ${cx - cornerSize} ${cy + signY * cornerSize} L ${cx} ${cy + signY * cornerSize}" fill="none" stroke="#ffffff" stroke-width="2" />`;
+
+                // Base text label (dx)
+                const midX = (ax + cx) / 2;
+                const dxText = `Δx = +${dx}`;
+                svgContent += `<rect x="${midX - 40}" y="${cy + (dy >= 0 ? 10 : -35)}" width="80" height="26" rx="6" fill="#0f172a" fill-opacity="0.9" stroke="#ffffff" stroke-width="1.5" />`;
+                svgContent += `<text x="${midX}" y="${cy + (dy >= 0 ? 28 : -17)}" fill="#67e8f9" font-size="15" font-weight="bold" text-anchor="middle">${dxText}</text>`;
+
+                // Height text label (dy)
+                const midY = (cy + by) / 2;
+                const dyText = `Δy = ${dy > 0 ? '+' + dy : dy}`;
+                svgContent += `<rect x="${cx + 12}" y="${midY - 13}" width="80" height="26" rx="6" fill="#0f172a" fill-opacity="0.9" stroke="#ffffff" stroke-width="1.5" />`;
+                svgContent += `<text x="${cx + 52}" y="${midY + 5}" fill="#f472b6" font-size="15" font-weight="bold" text-anchor="middle">${dyText}</text>`;
+            }
+
+            // 5. Highlight Intercepts with Protective White Background Box
+            if (slopeDen !== 0 && (currentMode === 'param' || points.length === 2)) {
+                const b = interceptNum / interceptDen;
+
+                // y-intercept
+                const yIntSvgX = mathToSvgX(0);
+                const yIntSvgY = mathToSvgY(b);
+                if (yIntSvgY >= 0 && yIntSvgY <= height) {
+                    const yStr = getSimpleFractionStr(interceptNum, interceptDen);
+                    const labelText = `y절편 (0, ${yStr})`;
+                    
+                    svgContent += `<circle cx="${yIntSvgX}" cy="${yIntSvgY}" r="7" fill="#10b981" stroke="#ffffff" stroke-width="2.5" />`;
+                    // Label White Shield Box
+                    svgContent += `<rect x="${yIntSvgX + 10}" y="${yIntSvgY - 26}" width="${labelText.length * 11 + 16}" height="28" rx="6" fill="#ffffff" fill-opacity="0.95" stroke="#10b981" stroke-width="1.5" />`;
+                    svgContent += `<text x="${yIntSvgX + 18}" y="${yIntSvgY - 7}" fill="#047857" font-size="16" font-weight="bold">${labelText}</text>`;
+                }
+
+                // x-intercept
+                if (slopeNum !== 0) {
+                    let xNum = -interceptNum * slopeDen;
+                    let xDen = interceptDen * slopeNum;
+                    let g = gcd(xNum, xDen);
+                    xNum /= g;
+                    xDen /= g;
+                    if (xDen < 0) {
+                        xNum = -xNum;
+                        xDen = -xDen;
+                    }
+                    const xIntVal = xNum / xDen;
+                    const xIntSvgX = mathToSvgX(xIntVal);
+                    const xIntSvgY = mathToSvgY(0);
+                    if (xIntSvgX >= 0 && xIntSvgX <= width) {
+                        const xStr = getSimpleFractionStr(xNum, xDen);
+                        const labelText = `x절편 (${xStr}, 0)`;
+                        
+                        svgContent += `<circle cx="${xIntSvgX}" cy="${xIntSvgY}" r="7" fill="#f43f5e" stroke="#ffffff" stroke-width="2.5" />`;
+                        // Label White Shield Box
+                        svgContent += `<rect x="${xIntSvgX - 45}" y="${xIntSvgY + 12}" width="${labelText.length * 11 + 16}" height="28" rx="6" fill="#ffffff" fill-opacity="0.95" stroke="#f43f5e" stroke-width="1.5" />`;
+                        svgContent += `<text x="${xIntSvgX - 37}" y="${xIntSvgY + 31}" fill="#be123c" font-size="16" font-weight="bold">${labelText}</text>`;
+                    }
+                }
+            }
+
+            // 6. Render User Clicked Points (Interactive Draggable Dots with White Shield Boxes)
+            if (currentMode === 'point') {
+                points.forEach((pt, idx) => {
+                    const px = mathToSvgX(pt.x);
+                    const py = mathToSvgY(pt.y);
+                    const label = idx === 0 ? 'A' : 'B';
+                    const color = idx === 0 ? '#0284c7' : '#d97706';
+                    const bgColor = idx === 0 ? '#e0f2fe' : '#fef3c7';
+                    const labelText = `${label}(${pt.x}, ${pt.y})`;
+
+                    // Draggable circles
+                    svgContent += `<circle cx="${px}" cy="${py}" r="16" fill="${color}" fill-opacity="0.2" class="cursor-grab" />`;
+                    svgContent += `<circle cx="${px}" cy="${py}" r="8" fill="${color}" stroke="#ffffff" stroke-width="2.5" class="cursor-grab" />`;
+                    
+                    // White Shield Box for Point Label
+                    svgContent += `<rect x="${px + 12}" y="${py - 30}" width="${labelText.length * 12 + 16}" height="30" rx="6" fill="${bgColor}" fill-opacity="0.95" stroke="${color}" stroke-width="1.5" />`;
+                    svgContent += `<text x="${px + 20}" y="${py - 10}" fill="${color}" font-size="18" font-weight="bold">${labelText}</text>`;
+                });
+            }
+
+            svg.innerHTML = svgContent;
+        }
+    </script>
+</body>
+</html>
