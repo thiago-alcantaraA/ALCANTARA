@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중1 수학: 동위각·엇각·맞꼭지각 탐험기</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Sans KR & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+        #canvas-wrapper {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        input[type=range] {
+            accent-color: #38bdf8;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.5);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-screen w-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- 좌측 컨트롤 패널 (전자칠판 수업용 큰 글씨 & 넓은 폭) -->
+    <aside class="w-full md:w-[460px] lg:w-[500px] h-1/2 md:h-full bg-slate-900/95 border-t md:border-t-0 md:border-r border-slate-800 flex flex-col z-10 shadow-2xl order-2 md:order-1">
+        <!-- 상단 헤더 -->
+        <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900">
+            <div>
+                <h1 class="text-2xl font-bold text-white flex items-center gap-2.5">
+                    <span class="w-4 h-4 rounded-full bg-amber-400 inline-block animate-pulse"></span>
+                    중1 수학: 8개 교각 탐험
+                </h1>
+                <p class="text-sm text-slate-300 mt-1">화면의 각(∠a ~ ∠h)을 직접 터치해 보세요!</p>
+            </div>
+            <button id="btn-reset" class="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-sm font-bold text-slate-100 rounded-xl border border-slate-600 transition shrink-0">
+                🔄 처음 모양
+            </button>
+        </div>
+
+        <!-- 3가지 관계 선택 탭 (맞꼭지각 / 동위각 / 엇각) -->
+        <div class="grid grid-cols-3 gap-2 p-3 bg-slate-950/60 border-b border-slate-800 text-base font-bold">
+            <button data-mode="vertical" class="mode-btn py-3.5 px-2 rounded-xl bg-amber-500 text-slate-950 shadow-md transition">
+                ✂️ 맞꼭지각
+            </button>
+            <button data-mode="corresponding" class="mode-btn py-3.5 px-2 rounded-xl text-slate-300 hover:bg-slate-800 transition">
+                📍 동위각
+            </button>
+            <button data-mode="alternate" class="mode-btn py-3.5 px-2 rounded-xl text-slate-300 hover:bg-slate-800 transition">
+                🔀 엇각
+            </button>
+        </div>
+
+        <!-- 메인 제어 및 설명 스크롤 영역 -->
+        <div class="flex-1 overflow-y-auto p-5 space-y-5">
+
+            <!-- 선택된 각과 짝꿍 각 결과 카드 -->
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-5 rounded-2xl border border-slate-700 shadow-inner space-y-3">
+                <div class="flex items-center justify-between">
+                    <span id="mode-badge" class="px-3 py-1 text-xs font-bold rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        맞꼭지각 찾기
+                    </span>
+                    <span id="parallel-status-pill" class="px-3 py-1 text-xs font-bold rounded-lg bg-slate-700 text-slate-300">
+                        일반 두 직선
+                    </span>
+                </div>
+
+                <!-- 실시간 짝꿍 각 표시 박스 -->
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div class="bg-slate-950/90 p-3.5 rounded-xl border border-sky-500/50 text-center">
+                        <div class="text-xs text-sky-300 font-bold mb-1">내가 선택한 각</div>
+                        <div id="selected-angle-name" class="text-2xl font-extrabold text-sky-400">∠a</div>
+                        <div id="selected-angle-deg" class="text-base font-mono font-bold text-slate-200 mt-0.5">65°</div>
+                    </div>
+                    <div class="bg-slate-950/90 p-3.5 rounded-xl border border-amber-500/50 text-center">
+                        <div id="partner-label-title" class="text-xs text-amber-300 font-bold mb-1">맞꼭지각 짝꿍</div>
+                        <div id="partner-angle-name" class="text-2xl font-extrabold text-amber-400">∠c</div>
+                        <div id="partner-angle-deg" class="text-base font-mono font-bold text-slate-200 mt-0.5">65°</div>
+                    </div>
+                </div>
+
+                <!-- 개념 설명 텍스트 -->
+                <p id="mode-desc" class="text-base text-slate-200 leading-relaxed pt-1">
+                    가위처럼 두 직선이 만날 때 서로 마주 보는 각이에요. 맞꼭지각의 크기는 <strong>언제나 서로 같아요!</strong>
+                </p>
+
+                <div id="mode-tip" class="text-sm font-bold bg-slate-950/80 p-3.5 rounded-xl text-emerald-300 border border-slate-700/80">
+                    💡 꿀팁: 8개의 각 중 아무 각이나 클릭하면 짝꿍이 바로 빛나요!
+                </div>
+            </div>
+
+            <!-- 평행선 만들기 원터치 버튼 & 직선 기울기 조절 -->
+            <div class="bg-slate-800/70 p-4 rounded-2xl border border-slate-700/80 space-y-4">
+                <button id="btn-make-parallel" class="w-full py-3.5 px-4 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.99] text-slate-950 font-extrabold text-base rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                    <span>🟰 두 직선 l, m 평행하게 만들기 (l ∥ m)</span>
+                </button>
+
+                <div class="space-y-2 pt-1">
+                    <div class="flex justify-between items-center text-sm font-bold">
+                        <span class="text-slate-200">직선 l의 기울기 조절</span>
+                        <span id="slope-l-val" class="font-mono text-sky-400 bg-slate-950 px-2.5 py-0.5 rounded">0°</span>
+                    </div>
+                    <input type="range" id="slider-l" min="-25" max="25" value="8" class="w-full h-3 cursor-pointer">
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center text-sm font-bold">
+                        <span class="text-slate-200">직선 m의 기울기 조절</span>
+                        <span id="slope-m-val" class="font-mono text-indigo-400 bg-slate-950 px-2.5 py-0.5 rounded">0°</span>
+                    </div>
+                    <input type="range" id="slider-m" min="-25" max="25" value="-7" class="w-full h-3 cursor-pointer">
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center text-sm font-bold">
+                        <span class="text-slate-200">가로지르는 직선 n 각도 조절</span>
+                        <span id="slope-n-val" class="font-mono text-rose-400 bg-slate-950 px-2.5 py-0.5 rounded">65°</span>
+                    </div>
+                    <input type="range" id="slider-n" min="35" max="145" value="65" class="w-full h-3 cursor-pointer">
+                </div>
+            </div>
+
+            <!-- 수업용 보조 표시 옵션 (전자칠판 터치용 큰 체크박스) -->
+            <div class="pt-2 border-t border-slate-800 flex flex-wrap gap-4 text-sm font-bold">
+                <label class="flex items-center gap-2.5 cursor-pointer text-slate-200 hover:text-white py-1">
+                    <input type="checkbox" id="chk-show-deg" checked class="w-5 h-5 rounded bg-slate-800 border-slate-600 text-sky-500 focus:ring-0">
+                    <span>각도(°) 숫자 보기</span>
+                </label>
+                <label class="flex items-center gap-2.5 cursor-pointer text-amber-300 hover:text-amber-200 py-1">
+                    <input type="checkbox" id="chk-show-fz" checked class="w-5 h-5 rounded bg-slate-800 border-slate-600 text-amber-500 focus:ring-0">
+                    <span>✨ F자 / Z자 모양 가이드</span>
+                </label>
+                <label class="flex items-center gap-2.5 cursor-pointer text-slate-300 hover:text-white py-1">
+                    <input type="checkbox" id="chk-show-grid" checked class="w-5 h-5 rounded bg-slate-800 border-slate-600 text-sky-500 focus:ring-0">
+                    <span>모눈종이 배경</span>
+                </label>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 우측 2D 인터랙티브 평면좌표 캔버스 (깔끔한 화이트보드 스타일) -->
+    <main class="relative flex-1 h-1/2 md:h-full bg-white order-1 md:order-2 overflow-hidden">
+        <div id="canvas-wrapper">
+            <canvas id="angle-canvas"></canvas>
+        </div>
+
+        <!-- 좌상단 빠른 각 선택 버튼 바 (전자칠판에서 각을 누르기 힘들 때도 바로 선택 가능) -->
+        <div class="absolute top-4 left-4 bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-slate-300 shadow-lg">
+            <div class="text-xs font-bold text-slate-600 mb-2">👆 각 버튼으로 바로 선택하기:</div>
+            <div class="grid grid-cols-4 gap-1.5" id="quick-angle-btns">
+                <!-- JS로 ∠a ~ ∠h 생성 -->
+            </div>
+        </div>
+
+        <!-- 우상단 평행 상태 알림 배지 -->
+        <div id="top-parallel-banner" class="hidden absolute top-4 right-4 bg-emerald-50 border-2 border-emerald-600 text-emerald-900 px-4 py-2.5 rounded-2xl font-extrabold text-base shadow-lg flex items-center gap-2">
+            <span>🟰 l ∥ m (평행!)</span>
+            <span class="text-sm font-semibold text-emerald-700">동위각과 엇각의 크기가 같아요!</span>
+        </div>
+
+        <!-- 하단 직선 이름 안내 -->
+        <div class="absolute bottom-4 right-4 flex items-center gap-4 text-sm font-bold bg-white/95 text-slate-900 px-4 py-2 rounded-full border border-slate-300 shadow-sm pointer-events-none">
+            <span>직선 l (위)</span>
+            <span class="text-slate-300">|</span>
+            <span>직선 m (아래)</span>
+            <span class="text-slate-300">|</span>
+            <span>직선 n (만나는 선)</span>
+        </div>
+    </main>
+
+    <script>
+        /**
+         * 중학교 1학년 수학: 두 직선과 한 직선이 만나서 생기는 8개의 교각 탐험 시뮬레이터
+         * - 8개 각(a~h) 직접 클릭/터치 판별
+         * - 맞꼭지각, 동위각, 엇각 실시간 하이라이트 및 F자/Z자 시각 가이드
+         * - 평행선(l ∥ m) 원터치 변환 및 각도 비교
+         */
+
+        const canvas = document.getElementById('angle-canvas');
+        const ctx = canvas.getContext('2d');
+        const wrapper = document.getElementById('canvas-wrapper');
+
+        // 상태 변수
+        let state = {
+            mode: 'vertical',     // 'vertical' (맞꼭지각) | 'corresponding' (동위각) | 'alternate' (엇각)
+            selectedAngle: 'a',   // 'a' ~ 'h'
+            angleL: 8,            // 직선 l의 기울기 각도 (deg)
+            angleM: -7,           // 직선 m의 기울기 각도 (deg)
+            angleN: 65,           // 횡단선 n의 각도 (deg, 수평 기준 반시계)
+            showDeg: true,
+            showFZ: true,
+            showGrid: true
+        };
+
+        // 8개 각의 관계 매핑 테이블
+        // 교점 P (위쪽, 직선 l과 n의 교점):
+        //   a: 오른쪽 위, b: 왼쪽 위, c: 왼쪽 아래, d: 오른쪽 아래
+        // 교점 Q (아래쪽, 직선 m과 n의 교점):
+        //   e: 오른쪽 위, f: 왼쪽 위, g: 왼쪽 아래, h: 오른쪽 아래
+        const ANGLE_RELATIONS = {
+            a: { vertical: 'c', corresponding: 'e', alternate: null },
+            b: { vertical: 'd', corresponding: 'f', alternate: null },
+            c: { vertical: 'a', corresponding: 'g', alternate: 'e' },
+            d: { vertical: 'b', corresponding: 'h', alternate: 'f' },
+            e: { vertical: 'g', corresponding: 'a', alternate: 'c' },
+            f: { vertical: 'h', corresponding: 'b', alternate: 'd' },
+            g: { vertical: 'e', corresponding: 'c', alternate: null },
+            h: { vertical: 'f', corresponding: 'd', alternate: null }
+        };
+
+        const MODE_INFO = {
+            vertical: {
+                badge: '맞꼭지각 찾기',
+                badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+                partnerTitle: '맞꼭지각 짝꿍',
+                desc: '두 직선이 한 점에서 만날 때 서로 마주 보는 각이에요. 가위 날이 벌어지는 것처럼 맞꼭지각의 크기는 <strong>언제나 서로 같아요!</strong>',
+                tip: '💡 어느 각을 눌러도 바로 반대편에 맞꼭지각이 1개씩 있어요!'
+            },
+            corresponding: {
+                badge: '동위각 찾기 (같은 위치)',
+                badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+                partnerTitle: '동위각 짝꿍',
+                desc: '위 교점과 아래 교점에서 <strong>같은 방향(오른쪽 위, 왼쪽 위 등)</strong>에 있는 두 각이에요! 알파벳 <strong>F자 모양</strong>을 떠올리면 찾기 쉬워요.',
+                tip: '💡 평행할 때(l ∥ m)만 동위각의 크기가 서로 같아져요!'
+            },
+            alternate: {
+                badge: '엇각 찾기 (엇갈린 위치)',
+                badgeClass: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/40',
+                partnerTitle: '엇각 짝꿍',
+                desc: '두 직선 안쪽에서 직선 n을 사이에 두고 <strong>서로 엇갈린 위치(대각선 방향)</strong>에 있는 두 각이에요! 알파벳 <strong>Z자 모양</strong> 안에 쏙 들어 있어요.',
+                tip: '💡 엇각은 두 직선 안쪽(∠c, ∠d, ∠e, ∠f)에서만 찾을 수 있어요!'
+            }
+        };
+
+        // 렌더링 시 계산된 8개 각의 기하 정보 저장 (클릭 판별용)
+        let renderedSectors = [];
+
+        // 각도 정규화 (0 ~ 2π)
+        function normRad(rad) {
+            let r = rad % (Math.PI * 2);
+            if (r < 0) r += Math.PI * 2;
+            return r;
+        }
+
+        // 반시계 방향으로 startRad에서 endRad까지의 각도 차이 (0 ~ 2π)
+        function ccwDiff(startRad, endRad) {
+            return normRad(endRad - startRad);
+        }
+
+        // 캔버스 리사이즈
+        function resizeCanvas() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            const rect = wrapper.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            draw();
+        }
+
+        // 두 직선의 교점 계산
+        function intersectLines(p1, d1, p2, d2) {
+            const cross = d1.x * d2.y - d1.y * d2.x;
+            if (Math.abs(cross) < 1e-6) return null;
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const t = (dx * d2.y - dy * d2.x) / cross;
+            return {
+                x: p1.x + t * d1.x,
+                y: p1.y + t * d1.y
+            };
+        }
+
+        // 메인 그리기 함수
+        function draw() {
+            const w = wrapper.clientWidth;
+            const h = wrapper.clientHeight;
+            ctx.clearRect(0, 0, w, h);
+
+            // 1. 모눈종이 배경 및 좌표축
+            if (state.showGrid) {
+                drawGrid(w, h);
+            }
+
+            const cx = w * 0.52;
+            const cy = h * 0.52;
+            const gapY = Math.min(h * 0.22, 125); // 위아래 두 직선 사이 기본 간격
+
+            // 캔버스 좌표계는 y가 아래로 증가하므로 수학적 반시계 각도 θ는 화면상 -θ
+            const radL = (-state.angleL * Math.PI) / 180;
+            const radM = (-state.angleM * Math.PI) / 180;
+            const radN = (-state.angleN * Math.PI) / 180;
+
+            const dirL = { x: Math.cos(radL), y: Math.sin(radL) };
+            const dirM = { x: Math.cos(radM), y: Math.sin(radM) };
+            const dirN = { x: Math.cos(radN), y: Math.sin(radN) };
+
+            // 직선 l 기준점 (위쪽), 직선 m 기준점 (아래쪽), 횡단선 n 기준점 (중앙)
+            const baseL = { x: cx, y: cy - gapY };
+            const baseM = { x: cx, y: cy + gapY };
+            const baseN = { x: cx, y: cy };
+
+            // 교점 P (위쪽: l과 n), 교점 Q (아래쪽: m과 n)
+            const P = intersectLines(baseL, dirL, baseN, dirN) || baseL;
+            const Q = intersectLines(baseM, dirM, baseN, dirN) || baseM;
+
+            // 각 교점에서 4개의 반직선 방향(화면 좌표계 기준 라디안)
+            // 직선 l의 오른쪽 방향: radL, 왼쪽 방향: radL + π
+            // 직선 n의 위쪽 방향: radN, 아래쪽 방향: radN + π
+            const rayL_R = normRad(radL);
+            const rayL_L = normRad(radL + Math.PI);
+            const rayM_R = normRad(radM);
+            const rayM_L = normRad(radM + Math.PI);
+            const rayN_U = normRad(radN);
+            const rayN_D = normRad(radN + Math.PI);
+
+            // 8개 각의 부채꼴 정의 (화면 좌표계에서 시계/반시계 방향 주의)
+            // 화면 좌표계에서는 y가 아래쪽이므로, 수학적 위쪽(오른쪽 위)은 rayN_U에서 rayL_R 방향(시계방향)
+            const sectorsDef = [
+                // 위쪽 교점 P
+                { id: 'a', center: P, r1: rayN_U, r2: rayL_R }, // 오른쪽 위
+                { id: 'b', center: P, r1: rayL_L, r2: rayN_U }, // 왼쪽 위
+                { id: 'c', center: P, r1: rayN_D, r2: rayL_L }, // 왼쪽 아래
+                { id: 'd', center: P, r1: rayL_R, r2: rayN_D }, // 오른쪽 아래
+                // 아래쪽 교점 Q
+                { id: 'e', center: Q, r1: rayN_U, r2: rayM_R }, // 오른쪽 위
+                { id: 'f', center: Q, r1: rayM_L, r2: rayN_U }, // 왼쪽 위
+                { id: 'g', center: Q, r1: rayN_D, r2: rayM_L }, // 왼쪽 아래
+                { id: 'h', center: Q, r1: rayM_R, r2: rayN_D }  // 오른쪽 아래
+            ];
+
+            renderedSectors = sectorsDef.map(s => {
+                const sweep = ccwDiff(s.r1, s.r2);
+                const deg = Math.round((sweep * 180) / Math.PI);
+                const midAngle = normRad(s.r1 + sweep / 2);
+                return { ...s, sweep, deg, midAngle };
+            });
+
+            const partnerId = ANGLE_RELATIONS[state.selectedAngle][state.mode];
+            const arcRadius = Math.min(w, h) * 0.085;
+            const clampRadius = Math.max(46, Math.min(arcRadius, 68));
+
+            // 2. 부채꼴(각 영역) 채우기
+            renderedSectors.forEach(sec => {
+                const isSelected = sec.id === state.selectedAngle;
+                const isPartner = sec.id === partnerId;
+
+                ctx.beginPath();
+                ctx.moveTo(sec.center.x, sec.center.y);
+                ctx.arc(sec.center.x, sec.center.y, clampRadius, sec.r1, sec.r2, false);
+                ctx.closePath();
+
+                if (isSelected) {
+                    ctx.fillStyle = 'rgba(2, 132, 199, 0.25)'; // 선명한 파란색 강조
+                    ctx.fill();
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = '#0284c7';
+                    ctx.stroke();
+                } else if (isPartner) {
+                    ctx.fillStyle = 'rgba(217, 119, 6, 0.28)'; // 선명한 주황/황금색 강조
+                    ctx.fill();
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = '#d97706';
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.04)';
+                    ctx.fill();
+                    ctx.lineWidth = 1.2;
+                    ctx.strokeStyle = 'rgba(15, 23, 42, 0.2)';
+                    ctx.stroke();
+                }
+            });
+
+            // 3. F자 / Z자 시각 보조 가이드 그리기 (옵션 활성화 시)
+            if (state.showFZ && partnerId && (state.mode === 'corresponding' || state.mode === 'alternate')) {
+                drawFZGuide(P, Q, dirL, dirM, state.selectedAngle, partnerId);
+            }
+
+            // 4. 세 직선(l, m, n) 모두 깔끔한 검정색으로 그리기
+            const lineLen = Math.max(w, h) * 1.2;
+            drawInfiniteLine(P, dirL, lineLen, '#0f172a', 3.5, 'l');
+            drawInfiniteLine(Q, dirM, lineLen, '#0f172a', 3.5, 'm');
+            drawInfiniteLine(baseN, dirN, lineLen, '#0f172a', 3.5, 'n');
+
+            // 평행 표시 화살표(>>) 그리기
+            if (state.angleL === state.angleM) {
+                drawParallelArrows(P, dirL, '#059669');
+                drawParallelArrows(Q, dirM, '#059669');
+            }
+
+            // 교점 P, Q 점 찍기
+            drawIntersectionDot(P);
+            drawIntersectionDot(Q);
+
+            // 5. 각 이름(a~h) 및 각도(°) 라벨 그리기
+            renderedSectors.forEach(sec => {
+                const isSelected = sec.id === state.selectedAngle;
+                const isPartner = sec.id === partnerId;
+
+                const labelDist = clampRadius + 26;
+                const lx = sec.center.x + Math.cos(sec.midAngle) * labelDist;
+                const ly = sec.center.y + Math.sin(sec.midAngle) * labelDist;
+
+                // 각 알파벳 배지
+                ctx.font = (isSelected || isPartner)
+                    ? "900 22px 'Inter', 'Noto Sans KR', sans-serif"
+                    : "700 19px 'Inter', 'Noto Sans KR', sans-serif";
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                const text = state.showDeg ? `${sec.id} (${sec.deg}°)` : `∠${sec.id}`;
+
+                // 하얀 배경 위 가독성을 위한 흰색 외곽선
+                ctx.lineWidth = 6;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+                ctx.strokeText(text, lx, ly);
+
+                if (isSelected) {
+                    ctx.fillStyle = '#0369a1';
+                } else if (isPartner) {
+                    ctx.fillStyle = '#b45309';
+                } else {
+                    ctx.fillStyle = '#0f172a';
+                }
+                ctx.fillText(text, lx, ly);
+            });
+
+            // 우측 패널 정보 동기화
+            updateInfoPanel(partnerId);
+        }
+
+        // 연한 모눈종이 배경 그리기
+        function drawGrid(w, h) {
+            const step = 40;
+            ctx.strokeStyle = 'rgba(203, 213, 225, 0.45)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let x = (w / 2) % step; x < w; x += step) {
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h);
+            }
+            for (let y = (h / 2) % step; y < h; y += step) {
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+            }
+            ctx.stroke();
+        }
+
+        // 무한 직선 및 직선 이름 표시
+        function drawInfiniteLine(pt, dir, length, color, width, label) {
+            const pStart = { x: pt.x - dir.x * length, y: pt.y - dir.y * length };
+            const pEnd = { x: pt.x + dir.x * length, y: pt.y + dir.y * length };
+
+            ctx.beginPath();
+            ctx.moveTo(pStart.x, pStart.y);
+            ctx.lineTo(pEnd.x, pEnd.y);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.stroke();
+
+            // 화면 안쪽 적절한 위치에 직선 이름 표기 (교과서처럼 깔끔한 이탤릭체 느낌)
+            const w = wrapper.clientWidth;
+            const h = wrapper.clientHeight;
+            let labelPos;
+            if (label === 'n') {
+                labelPos = { x: pt.x + dir.x * (h * 0.36), y: pt.y + dir.y * (h * 0.36) };
+                labelPos.x += 28;
+            } else {
+                const offset = Math.min(w * 0.35, 300);
+                labelPos = { x: pt.x + dir.x * offset, y: pt.y + dir.y * offset - 22 };
+            }
+
+            ctx.font = "italic 900 24px 'Inter', serif";
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.strokeText(label, labelPos.x, labelPos.y);
+            ctx.fillStyle = '#0f172a';
+            ctx.fillText(label, labelPos.x, labelPos.y);
+        }
+
+        // 평행 기호(>>) 그리기
+        function drawParallelArrows(pt, dir, color) {
+            const pos = { x: pt.x - dir.x * 130, y: pt.y - dir.y * 130 };
+            const angle = Math.atan2(dir.y, dir.x);
+            ctx.save();
+            ctx.translate(pos.x, pos.y);
+            ctx.rotate(angle);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3.5;
+            [-6, 6].forEach(offsetX => {
+                ctx.beginPath();
+                ctx.moveTo(offsetX - 8, -9);
+                ctx.lineTo(offsetX + 4, 0);
+                ctx.lineTo(offsetX - 8, 9);
+                ctx.stroke();
+            });
+            ctx.restore();
+        }
+
+        // 교점 강조 점
+        function drawIntersectionDot(pt) {
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#0f172a';
+            ctx.fill();
+        }
+
+        // 동위각(F자) / 엇각(Z자) 가이드 선 그리기
+        function drawFZGuide(P, Q, dirL, dirM, selId, partnerId) {
+            const pair = [selId, partnerId].sort().join('');
+            const armLen = 145;
+            let p1, p2, p3, p4;
+
+            if (state.mode === 'corresponding') {
+                // F자 모양 (두 팔이 같은 쪽으로 뻗음)
+                if (pair === 'ae' || pair === 'dh') {
+                    // 오른쪽 방향 F
+                    p1 = { x: P.x + dirL.x * armLen, y: P.y + dirL.y * armLen };
+                    p2 = P;
+                    p3 = Q;
+                    p4 = { x: Q.x + dirM.x * armLen, y: Q.y + dirM.y * armLen };
+                } else {
+                    // 왼쪽 방향 F (bf, cg)
+                    p1 = { x: P.x - dirL.x * armLen, y: P.y - dirL.y * armLen };
+                    p2 = P;
+                    p3 = Q;
+                    p4 = { x: Q.x - dirM.x * armLen, y: Q.y - dirM.y * armLen };
+                }
+            } else if (state.mode === 'alternate') {
+                // Z자 모양 (두 팔이 서로 반대쪽으로 뻗음)
+                if (pair === 'ce') {
+                    // 정방향 Z (위 왼쪽 -> 아래 오른쪽)
+                    p1 = { x: P.x - dirL.x * armLen, y: P.y - dirL.y * armLen };
+                    p2 = P;
+                    p3 = Q;
+                    p4 = { x: Q.x + dirM.x * armLen, y: Q.y + dirM.y * armLen };
+                } else if (pair === 'df') {
+                    // 역방향 Z (위 오른쪽 -> 아래 왼쪽)
+                    p1 = { x: P.x + dirL.x * armLen, y: P.y + dirL.y * armLen };
+                    p2 = P;
+                    p3 = Q;
+                    p4 = { x: Q.x - dirM.x * armLen, y: Q.y - dirM.y * armLen };
+                }
+            }
+
+            if (p1 && p2 && p3 && p4) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.lineTo(p3.x, p3.y);
+                ctx.lineTo(p4.x, p4.y);
+                ctx.strokeStyle = 'rgba(245, 158, 11, 0.5)';
+                ctx.lineWidth = 9;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.setLineDash([12, 10]);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        // 좌측 설명 패널 실시간 업데이트
+        function updateInfoPanel(partnerId) {
+            const selSec = renderedSectors.find(s => s.id === state.selectedAngle);
+            const partSec = renderedSectors.find(s => s.id === partnerId);
+            const isParallel = state.angleL === state.angleM;
+
+            document.getElementById('selected-angle-name').textContent = `∠${state.selectedAngle}`;
+            document.getElementById('selected-angle-deg').textContent = selSec ? `${selSec.deg}°` : '-';
+
+            const partnerNameEl = document.getElementById('partner-angle-name');
+            const partnerDegEl = document.getElementById('partner-angle-deg');
+
+            if (partnerId && partSec) {
+                partnerNameEl.textContent = `∠${partnerId}`;
+                partnerNameEl.className = 'text-2xl font-extrabold text-amber-400';
+                partnerDegEl.textContent = `${partSec.deg}°`;
+            } else {
+                partnerNameEl.textContent = '없음 (바깥쪽 각)';
+                partnerNameEl.className = 'text-lg font-extrabold text-slate-400 pt-1';
+                partnerDegEl.textContent = '-';
+            }
+
+            // 평행 상태 표시 업데이트
+            const statusPill = document.getElementById('parallel-status-pill');
+            const topBanner = document.getElementById('top-parallel-banner');
+            if (isParallel) {
+                statusPill.textContent = '🟰 평행함 (l ∥ m)';
+                statusPill.className = 'px-3 py-1 text-xs font-bold rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+                topBanner.classList.remove('hidden');
+            } else {
+                statusPill.textContent = '일반 두 직선';
+                statusPill.className = 'px-3 py-1 text-xs font-bold rounded-lg bg-slate-700 text-slate-300';
+                topBanner.classList.add('hidden');
+            }
+
+            // 좌상단 빠른 각 버튼 활성화 동기화
+            document.querySelectorAll('.quick-angle-btn').forEach(btn => {
+                const id = btn.dataset.angle;
+                if (id === state.selectedAngle) {
+                    btn.className = 'quick-angle-btn px-3 py-2 rounded-xl font-extrabold text-sm bg-sky-600 text-white shadow';
+                } else if (id === partnerId) {
+                    btn.className = 'quick-angle-btn px-3 py-2 rounded-xl font-extrabold text-sm bg-amber-500 text-slate-950 shadow';
+                } else {
+                    btn.className = 'quick-angle-btn px-3 py-2 rounded-xl font-bold text-sm bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-300 transition';
+                }
+            });
+        }
+
+        // 모드(맞꼭지각 / 동위각 / 엇각) 변경
+        function setMode(newMode) {
+            state.mode = newMode;
+
+            // 엇각 모드 선택 시 바깥쪽 각이 선택되어 있으면 자동으로 안쪽 각(∠c)으로 전환해 짝꿍을 바로 보여줌
+            if (newMode === 'alternate' && !ANGLE_RELATIONS[state.selectedAngle].alternate) {
+                state.selectedAngle = 'c';
+            }
+
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                if (btn.dataset.mode === newMode) {
+                    btn.className = 'mode-btn py-3.5 px-2 rounded-xl bg-amber-500 text-slate-950 shadow-md transition';
+                } else {
+                    btn.className = 'mode-btn py-3.5 px-2 rounded-xl text-slate-300 hover:bg-slate-800 transition';
+                }
+            });
+
+            const info = MODE_INFO[newMode];
+            const badge = document.getElementById('mode-badge');
+            badge.textContent = info.badge;
+            badge.className = `px-3 py-1 text-xs font-bold rounded-lg border ${info.badgeClass}`;
+            document.getElementById('partner-label-title').textContent = info.partnerTitle;
+            document.getElementById('mode-desc').innerHTML = info.desc;
+            document.getElementById('mode-tip').textContent = info.tip;
+
+            draw();
+        }
+
+        // 캔버스 클릭/터치 시 어떤 각(부채꼴)을 눌렀는지 판별
+        function handleCanvasClick(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            let bestId = null;
+            let minDist = Infinity;
+
+            renderedSectors.forEach(sec => {
+                const dx = x - sec.center.x;
+                const dy = y - sec.center.y;
+                const dist = Math.hypot(dx, dy);
+                if (dist > 160) return; // 교점에서 너무 먼 곳 클릭 무시
+
+                const clickAngle = normRad(Math.atan2(dy, dx));
+                const diffFromStart = ccwDiff(sec.r1, clickAngle);
+
+                if (diffFromStart <= sec.sweep + 0.05) {
+                    if (dist < minDist) {
+                        minDist = dist;
+                        bestId = sec.id;
+                    }
+                }
+            });
+
+            if (bestId) {
+                state.selectedAngle = bestId;
+                draw();
+            }
+        }
+
+        // 이벤트 리스너 초기화
+        function setupEvents() {
+            // 캔버스 터치 & 클릭
+            canvas.addEventListener('pointerdown', handleCanvasClick);
+
+            // 모드 탭 버튼
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => setMode(btn.dataset.mode));
+            });
+
+            // 빠른 각 선택 버튼(∠a ~ ∠h) 생성
+            const quickContainer = document.getElementById('quick-angle-btns');
+            ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].forEach(id => {
+                const btn = document.createElement('button');
+                btn.dataset.angle = id;
+                btn.textContent = `∠${id}`;
+                btn.className = 'quick-angle-btn px-3 py-2 rounded-xl font-bold text-sm bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+                btn.addEventListener('click', () => {
+                    state.selectedAngle = id;
+                    draw();
+                });
+                quickContainer.appendChild(btn);
+            });
+
+            // 슬라이더 연동
+            const sliderL = document.getElementById('slider-l');
+            const sliderM = document.getElementById('slider-m');
+            const sliderN = document.getElementById('slider-n');
+
+            function syncSliders() {
+                sliderL.value = state.angleL;
+                sliderM.value = state.angleM;
+                sliderN.value = state.angleN;
+                document.getElementById('slope-l-val').textContent = `${state.angleL}°`;
+                document.getElementById('slope-m-val').textContent = `${state.angleM}°`;
+                document.getElementById('slope-n-val').textContent = `${state.angleN}°`;
+            }
+
+            sliderL.addEventListener('input', (e) => {
+                state.angleL = parseInt(e.target.value, 10);
+                syncSliders();
+                draw();
+            });
+            sliderM.addEventListener('input', (e) => {
+                state.angleM = parseInt(e.target.value, 10);
+                syncSliders();
+                draw();
+            });
+            sliderN.addEventListener('input', (e) => {
+                state.angleN = parseInt(e.target.value, 10);
+                syncSliders();
+                draw();
+            });
+
+            // 평행하게 만들기 버튼
+            document.getElementById('btn-make-parallel').addEventListener('click', () => {
+                state.angleL = 0;
+                state.angleM = 0;
+                syncSliders();
+                draw();
+            });
+
+            // 초기화 버튼
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                state.angleL = 8;
+                state.angleM = -7;
+                state.angleN = 65;
+                state.selectedAngle = 'a';
+                syncSliders();
+                setMode('vertical');
+            });
+
+            // 체크박스 옵션
+            document.getElementById('chk-show-deg').addEventListener('change', (e) => {
+                state.showDeg = e.target.checked;
+                draw();
+            });
+            document.getElementById('chk-show-fz').addEventListener('change', (e) => {
+                state.showFZ = e.target.checked;
+                draw();
+            });
+            document.getElementById('chk-show-grid').addEventListener('change', (e) => {
+                state.showGrid = e.target.checked;
+                draw();
+            });
+
+            syncSliders();
+            window.addEventListener('resize', resizeCanvas);
+        }
+
+        window.onload = function () {
+            setupEvents();
+            setMode('vertical');
+            resizeCanvas();
+        };
+    </script>
+</body>
+</html>
