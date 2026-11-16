@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 공간도형 위치관계 시뮬레이터</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js (r128) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Google Fonts: Noto Sans KR & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            touch-action: none; /* 모바일 터치 회전 지원 */
+        }
+        /* 스크롤바 커스텀 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.5);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.8);
+        }
+        input[type=range] {
+            accent-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-screen w-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- 좌측(모바일에서는 하단) 컨트롤 패널 : 전자칠판 가독성을 위해 너비 확장 -->
+    <aside class="w-full md:w-[460px] lg:w-[500px] h-1/2 md:h-full bg-slate-900/95 border-t md:border-t-0 md:border-r border-slate-800 flex flex-col z-10 shadow-2xl order-2 md:order-1">
+        <!-- 헤더 -->
+        <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900">
+            <div>
+                <h1 class="text-2xl font-bold text-white flex items-center gap-2.5">
+                    <span class="w-4 h-4 rounded-full bg-blue-500 inline-block animate-pulse"></span>
+                    중1 수학: 점·선·면 3D 탐험
+                </h1>
+                <p class="text-sm text-slate-300 mt-1">화면 터치로 빙글빙글 돌려보며 확인해요!</p>
+            </div>
+            <button id="btn-reset-cam" class="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-sm font-bold text-slate-100 rounded-xl border border-slate-600 transition shrink-0">
+                🔄 처음 시점
+            </button>
+        </div>
+
+        <!-- 카테고리 탭 (큰 글씨) -->
+        <div class="grid grid-cols-4 gap-1.5 p-2.5 bg-slate-950/60 border-b border-slate-800 text-sm md:text-base font-bold">
+            <button data-cat="point-line" class="cat-btn py-3 px-1 rounded-xl bg-blue-600 text-white transition">점과 선/면</button>
+            <button data-cat="line-line" class="cat-btn py-3 px-1 rounded-xl text-slate-400 hover:bg-slate-800 transition">두 직선</button>
+            <button data-cat="line-plane" class="cat-btn py-3 px-1 rounded-xl text-slate-400 hover:bg-slate-800 transition">직선과 면</button>
+            <button data-cat="plane-plane" class="cat-btn py-3 px-1 rounded-xl text-slate-400 hover:bg-slate-800 transition">두 평면</button>
+        </div>
+
+        <!-- 세부 위치관계 선택 & 설명 영역 -->
+        <div class="flex-1 overflow-y-auto p-5 space-y-5">
+            
+            <!-- 세부 프리셋 버튼 목록 -->
+            <div>
+                <label class="block text-sm font-bold text-slate-300 mb-2.5">👇 어떤 모양을 볼까요?</label>
+                <div id="preset-buttons" class="grid grid-cols-1 gap-2.5">
+                    <!-- JS로 동적 생성 -->
+                </div>
+            </div>
+
+            <!-- 실시간 미세 조정 슬라이더 (동적 변환) -->
+            <div class="bg-slate-800/70 p-4 rounded-2xl border border-slate-700/80 space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-base font-bold text-blue-400 flex items-center gap-2">
+                        🎛️ 직접 움직여 보기!
+                    </span>
+                    <span id="slider-val-display" class="text-sm font-mono font-bold text-slate-200 bg-slate-950 px-3 py-1 rounded-lg">0.0</span>
+                </div>
+                <p id="slider-desc" class="text-sm text-slate-300">막대를 좌우로 밀어서 도형이 어떻게 변하는지 보세요.</p>
+                <input type="range" id="interactive-slider" min="-100" max="100" value="0" class="w-full h-3 cursor-pointer">
+            </div>
+
+            <!-- 개념 설명 카드 (중1 눈높이 큰 글씨) -->
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-5 rounded-2xl border border-slate-700 shadow-inner">
+                <div class="flex items-center gap-2.5 mb-2">
+                    <span id="info-badge" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">핵심 콕콕!</span>
+                    <h2 id="info-title" class="text-lg font-bold text-white">제목</h2>
+                </div>
+                <p id="info-desc" class="text-base text-slate-200 leading-relaxed mb-3.5">설명 내용</p>
+                <div id="info-math" class="text-base font-mono font-bold bg-slate-950/90 p-3.5 rounded-xl text-amber-300 border border-slate-700">
+                    기호 표기
+                </div>
+
+                <!-- 직선과 평면의 수직 정의 확인 버튼 (lp-intersect 선택 시에만 표시) -->
+                <div id="perp-definition-box" class="hidden mt-4 pt-4 border-t border-slate-700/80 space-y-3">
+                    <button id="btn-toggle-perp-def" class="w-full py-3.5 px-4 bg-amber-500 hover:bg-amber-400 active:scale-[0.99] text-slate-950 font-bold text-base rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                        <span>📐 직선과 평면의 수직(l ⊥ α) 정의 보기</span>
+                    </button>
+                    <div id="perp-def-detail" class="hidden bg-amber-500/15 border border-amber-400/50 rounded-xl p-4 text-sm md:text-base text-amber-100 leading-relaxed space-y-2">
+                        <p class="font-bold text-amber-300 text-base">💡 왜 수직이라고 할까요?</p>
+                        <p>직선 <span class="font-bold text-sky-300">l</span>이 평면 <span class="font-bold text-indigo-300">α</span>와 만나는 점 <span class="font-bold text-amber-300">P</span>를 지나는 <strong>평면 위의 모든 직선(m, n, k...)과 각각 수직(90°)</strong>일 때, 직선 l과 평면 α는 서로 수직이라고 정의해요!</p>
+                        <p class="text-xs md:text-sm text-amber-200/80">※ 화면을 빙글빙글 돌려보며 모든 직선과 90° 직각 기호(ㄱ)가 생기는지 확인해 보세요!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 보조 요소 토글 (전자칠판 터치용 큰 체크박스) -->
+            <div class="pt-3 border-t border-slate-800 flex flex-wrap gap-4 text-sm font-medium">
+                <label class="flex items-center gap-2.5 cursor-pointer text-slate-200 hover:text-white py-1">
+                    <input type="checkbox" id="chk-axes" checked class="w-5 h-5 rounded bg-slate-800 border-slate-600 text-blue-500 focus:ring-0">
+                    <span>좌표축 보기</span>
+                </label>
+                <label class="flex items-center gap-2.5 cursor-pointer text-slate-200 hover:text-white py-1">
+                    <input type="checkbox" id="chk-grid" checked class="w-5 h-5 rounded bg-slate-800 border-slate-600 text-blue-500 focus:ring-0">
+                    <span>바닥 눈금</span>
+                </label>
+                <label class="flex items-center gap-2.5 cursor-pointer text-amber-300 hover:text-amber-200 font-bold py-1">
+                    <input type="checkbox" id="chk-cube" class="w-5 h-5 rounded bg-slate-800 border-slate-600 text-amber-500 focus:ring-0">
+                    <span>📦 직육면체 상자 씌우기</span>
+                </label>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 우측(모바일에서는 상단) 3D 뷰포트 -->
+    <main class="relative flex-1 h-1/2 md:h-full bg-slate-950 order-1 md:order-2 overflow-hidden">
+        <div id="canvas-container"></div>
+
+        <!-- 좌상단 3D 객체 범례 (Legend - 전자칠판용 확대) -->
+        <div id="legend-box" class="absolute top-4 left-4 bg-slate-900/85 backdrop-blur-md p-4 rounded-2xl border border-slate-700 text-base space-y-2 pointer-events-none shadow-xl">
+            <!-- JS로 동적 업데이트 -->
+        </div>
+
+        <!-- 우상단 시점 프리셋 (전자칠판 터치용 큰 버튼) -->
+        <div class="absolute top-4 right-4 flex flex-col sm:flex-row gap-2 bg-slate-900/85 backdrop-blur-md p-2 rounded-2xl border border-slate-700 shadow-xl">
+            <button onclick="setCameraPreset('iso')" class="px-3.5 py-2 text-sm font-bold rounded-xl hover:bg-slate-700 text-white transition">🧊 입체로 보기</button>
+            <button onclick="setCameraPreset('top')" class="px-3.5 py-2 text-sm font-bold rounded-xl hover:bg-slate-700 text-slate-200 transition">⬇️ 위에서 보기</button>
+            <button onclick="setCameraPreset('front')" class="px-3.5 py-2 text-sm font-bold rounded-xl hover:bg-slate-700 text-slate-200 transition">👀 앞에서 보기</button>
+            <button onclick="setCameraPreset('side')" class="px-3.5 py-2 text-sm font-bold rounded-xl hover:bg-slate-700 text-slate-200 transition">➡️ 옆에서 보기</button>
+        </div>
+
+        <!-- 하단 축 안내 배지 -->
+        <div class="absolute bottom-4 right-4 flex items-center gap-4 text-sm font-mono font-bold bg-slate-900/85 px-4 py-2 rounded-full border border-slate-700 pointer-events-none">
+            <span class="flex items-center gap-1.5 text-rose-400"><span class="w-3 h-3 rounded-full bg-rose-500"></span>X축</span>
+            <span class="flex items-center gap-1.5 text-emerald-400"><span class="w-3 h-3 rounded-full bg-emerald-500"></span>Y축</span>
+            <span class="flex items-center gap-1.5 text-sky-400"><span class="w-3 h-3 rounded-full bg-sky-500"></span>Z축(높이)</span>
+        </div>
+    </main>
+
+    <script>
+        /**
+         * 중학교 1학년 수학 - 3D 점, 선, 면 공간 위치관계 시뮬레이터
+         * 전자칠판 수업용 큰 글씨 및 친근한 설명 적용
+         */
+
+        // --- 전역 변수 설정 ---
+        let scene, camera, renderer;
+        let dynamicGroup; // 현재 선택된 위치관계 도형들을 담는 그룹
+        let axesGroup, gridHelper, referenceCubeGroup;
+        
+        // 구면 좌표계 기반 커스텀 오빗 컨트롤 변수 (Z축이 위쪽인 수학 좌표계 기준)
+        let spherical = { radius: 13, theta: Math.PI / 4, phi: Math.PI / 3 };
+        let targetCenter = new THREE.Vector3(0, 0, 0);
+        let isDragging = false;
+        let prevMouse = { x: 0, y: 0 };
+
+        // 현재 상태
+        let currentCategory = 'point-line';
+        let currentPresetId = 'pt-on-line';
+        let sliderValue = 0; // -100 ~ 100
+        let showPerpDef = false; // 직선과 평면의 수직 정의 시각화 토글
+
+        // --- 위치관계 데이터 정의 (중학교 1학년 눈높이 맞춤형 설명) ---
+        const RELATIONS_DATA = {
+            'point-line': [
+                {
+                    id: 'pt-on-line',
+                    name: '점이 직선 위에 있어요',
+                    badge: '점과 직선',
+                    desc: '점 P가 직선 l을 콕 밟고 서 있는 모습이에요! 다르게 말하면 "직선 l이 점 P를 지난다"고도 해요. 아래 막대를 움직여서 직선 위를 걷는 점 P를 확인해 보세요.',
+                    math: '점 P는 직선 l 위에 있다',
+                    sliderDesc: '직선 l 위에서 점 P를 좌우로 움직여 보세요.',
+                    legend: [
+                        { color: 'bg-amber-400', label: '점 P' },
+                        { color: 'bg-sky-400', label: '직선 l' }
+                    ]
+                },
+                {
+                    id: 'pt-off-line',
+                    name: '점이 직선 밖에 있어요',
+                    badge: '점과 직선',
+                    desc: '점 P가 직선 l에서 뚝 떨어져 있는 상태예요. 빨간 점선은 점 P에서 직선 l까지 가장 가깝게 내린 수선(거리)을 보여줘요!',
+                    math: '점 P는 직선 l 위에 있지 않다',
+                    sliderDesc: '직선 l과 점 P 사이의 거리를 멀리하거나 가깝게 해보세요.',
+                    legend: [
+                        { color: 'bg-amber-400', label: '점 P' },
+                        { color: 'bg-sky-400', label: '직선 l' },
+                        { color: 'bg-rose-400', label: '가장 가까운 거리(수선)' }
+                    ]
+                },
+                {
+                    id: 'pt-on-plane',
+                    name: '점이 평면 위에 있어요',
+                    badge: '점과 평면',
+                    desc: '평평한 운동장(평면 α) 위에 공(점 P)이 딱 놓여 있는 모습이에요. 화면을 옆으로 돌려서 공이 바닥에 딱 붙어 있는지 확인해 보세요!',
+                    math: '점 P는 평면 α 위에 있다',
+                    sliderDesc: '평면 α 위에서 점 P를 이리저리 굴려 보세요.',
+                    legend: [
+                        { color: 'bg-amber-400', label: '점 P' },
+                        { color: 'bg-indigo-400', label: '평면 α' }
+                    ]
+                },
+                {
+                    id: 'pt-off-plane',
+                    name: '점이 평면 위에 떠 있어요',
+                    badge: '점과 평면',
+                    desc: '평면 α 위로 점 P가 둥실 떠 있는 상태예요. 빨간 점선은 점 P에서 평면 α에 똑바로 내린 수선으로, 점과 평면 사이의 거리를 뜻해요.',
+                    math: '점 P는 평면 α 위에 있지 않다',
+                    sliderDesc: '점 P가 평면에서 얼마나 높이 떠 있는지 조절해 보세요.',
+                    legend: [
+                        { color: 'bg-amber-400', label: '점 P' },
+                        { color: 'bg-indigo-400', label: '평면 α' },
+                        { color: 'bg-rose-400', label: '높이(점과 평면 거리)' }
+                    ]
+                }
+            ],
+            'line-line': [
+                {
+                    id: 'line-intersect',
+                    name: '한 점에서 만나요 (교차)',
+                    badge: '한 평면 위',
+                    desc: '두 직선 l과 m이 가위처럼 딱 한 점(교점 P)에서 만나는 모습이에요. 이렇게 한 점에서 만나는 두 직선은 항상 같은 평면 위에 놓이게 된답니다!',
+                    math: '한 평면 위에서 만남 (교점 1개)',
+                    sliderDesc: '두 직선이 만나는 각도를 벌리거나 좁혀 보세요.',
+                    legend: [
+                        { color: 'bg-sky-400', label: '직선 l' },
+                        { color: 'bg-emerald-400', label: '직선 m' },
+                        { color: 'bg-amber-400', label: '만나는 점(교점 P)' }
+                    ]
+                },
+                {
+                    id: 'line-parallel',
+                    name: '나란히 평행해요 (l ∥ m)',
+                    badge: '한 평면 위',
+                    desc: '기찻길처럼 두 직선 l과 m이 같은 평면 위에서 끝까지 나란히 뻗어 나가요. 아무리 길게 늘려도 절대 만나지 않아요!',
+                    math: '기호: l ∥ m (한 평면 위에서 안 만남)',
+                    sliderDesc: '나란한 두 직선 사이의 간격을 넓혀 보세요.',
+                    legend: [
+                        { color: 'bg-sky-400', label: '직선 l' },
+                        { color: 'bg-emerald-400', label: '직선 m' }
+                    ]
+                },
+                {
+                    id: 'line-skew',
+                    name: '꼬인 위치에 있어요! ★중요',
+                    badge: '공간에서만 볼 수 있어요!',
+                    desc: '입체 공간에서만 나타나는 아주 중요한 관계예요! 1층 도로(직선 l)와 2층 고가도로(직선 m)처럼 서로 만나지도 않고, 평행하지도 않아요. [위에서 보기]를 누르면 만나는 것처럼 보이지만 입체로 돌리면 떨어져 있답니다!',
+                    math: '만나지도 않고, 평행하지도 않음!',
+                    sliderDesc: '위쪽 직선의 높이와 방향을 바꾸며 꼬인 모양을 살펴보세요.',
+                    legend: [
+                        { color: 'bg-sky-400', label: '직선 l (아래층)' },
+                        { color: 'bg-emerald-400', label: '직선 m (위층)' },
+                        { color: 'bg-rose-400', label: '가장 짧은 거리' }
+                    ]
+                },
+                {
+                    id: 'line-coincide',
+                    name: '완전히 겹쳐져요 (일치)',
+                    badge: '한 평면 위',
+                    desc: '두 직선 l과 m이 모든 점을 똑같이 공유해서 마치 하나의 직선처럼 완전히 겹쳐진 상태예요.',
+                    math: '기호: l = m (두 직선이 일치함)',
+                    sliderDesc: '막대를 움직여 두 직선을 살짝 떼었다가 겹쳐 보세요.',
+                    legend: [
+                        { color: 'bg-sky-400', label: '직선 l' },
+                        { color: 'bg-emerald-400', label: '직선 m (겹쳐짐)' }
+                    ]
+                }
+            ],
+            'line-plane': [
+                {
+                    id: 'lp-contained',
+                    name: '직선이 평면에 쏙 포함돼요',
+                    badge: '직선과 평면',
+                    desc: '책상(평면 α) 위에 연필(직선 l)이 반듯하게 놓여 있는 모습이에요. 직선 위의 모든 점이 평면 안에 쏙 들어가 있어요.',
+                    math: '직선 l이 평면 α에 포함된다',
+                    sliderDesc: '평면 위에서 직선 l을 빙글빙글 돌려 보세요.',
+                    legend: [
+                        { color: 'bg-sky-400', label: '직선 l' },
+                        { color: 'bg-indigo-400', label: '평면 α' }
+                    ]
+                },
+                {
+                    id: 'lp-intersect',
+                    name: '한 점에서 만나요 (뚫고 지나감)',
+                    badge: '직선과 평면',
+                    desc: '꼬치(직선 l)가 종이(평면 α)를 푹 뚫고 지나가는 모습이에요! 특히 막대가 0일 때처럼 똑바로 수직으로 뚫고 지나가면 "직선과 평면이 수직(l ⊥ α)"이라고 불러요.',
+                    math: '한 점 P에서 만남 (0일 때 수직: l ⊥ α)',
+                    sliderDesc: '직선이 평면을 뚫고 지나가는 기울기를 바꿔 보세요.',
+                    legend: [
+                        { color: 'bg-sky-400', label: '직선 l' },
+                        { color: 'bg-indigo-400', label: '평면 α' },
+                        { color: 'bg-amber-400', label: '뚫고 지나가는 교점 P' }
+                    ]
+                },
+                {
+                    id: 'lp-parallel',
+                    name: '나란히 평행해요 (l ∥ α)',
+                    badge: '직선과 평면',
+                    desc: '바닥(평면 α)과 천장의 형광등(직선 l)처럼 서로 만나지 않고 나란히 떠 있는 상태예요.',
+                    math: '기호: l ∥ α (만나지 않음)',
+                    sliderDesc: '평면에서 직선이 떠 있는 높이를 조절해 보세요.',
+                    legend: [
+                        { color: 'bg-sky-400', label: '직선 l' },
+                        { color: 'bg-indigo-400', label: '평면 α' },
+                        { color: 'bg-rose-400', label: '떨어진 거리' }
+                    ]
+                }
+            ],
+            'plane-plane': [
+                {
+                    id: 'pp-intersect',
+                    name: '한 직선에서 만나요 (교선)',
+                    badge: '두 평면',
+                    desc: '책을 펼쳤을 때 두 페이지(평면 α, β)가 만나는 가운데 접힌 선이 바로 "교선 l"이에요! 두 평면이 만나면 점이 아니라 항상 직선(교선)이 생긴답니다.',
+                    math: '두 평면이 만나면 교선 l이 생김 (0일 때 수직: α ⊥ β)',
+                    sliderDesc: '책을 펴고 접듯이 두 평면 사이의 각도를 조절해 보세요.',
+                    legend: [
+                        { color: 'bg-indigo-400', label: '평면 α' },
+                        { color: 'bg-fuchsia-400', label: '평면 β' },
+                        { color: 'bg-amber-400', label: '만나는 선(교선 l)' }
+                    ]
+                },
+                {
+                    id: 'pp-parallel',
+                    name: '나란히 평행해요 (α ∥ β)',
+                    badge: '두 평면',
+                    desc: '교실의 천장(평면 β)과 바닥(평면 α)처럼 두 평면이 아무리 넓어져도 절대 만나지 않는 상태예요.',
+                    math: '기호: α ∥ β (서로 평행함)',
+                    sliderDesc: '위아래 두 평면 사이의 거리를 조절해 보세요.',
+                    legend: [
+                        { color: 'bg-indigo-400', label: '평면 α (아래)' },
+                        { color: 'bg-fuchsia-400', label: '평면 β (위)' },
+                        { color: 'bg-rose-400', label: '두 평면 사이의 거리' }
+                    ]
+                },
+                {
+                    id: 'pp-coincide',
+                    name: '완전히 겹쳐져요 (일치)',
+                    badge: '두 평면',
+                    desc: '두 장의 색종이(평면 α, β)가 빈틈없이 하나로 겹쳐진 상태예요.',
+                    math: '기호: α = β (두 평면이 일치함)',
+                    sliderDesc: '두 평면을 살짝 떼었다가 완전히 겹쳐 보세요.',
+                    legend: [
+                        { color: 'bg-indigo-400', label: '평면 α' },
+                        { color: 'bg-fuchsia-400', label: '평면 β (겹쳐짐)' }
+                    ]
+                }
+            ]
+        };
+
+        // --- 초기화 및 씬 구성 ---
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            // 1. Scene 생성
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x090d16);
+            scene.fog = new THREE.FogExp2(0x090d16, 0.025);
+
+            // 2. Camera 생성 (Z-up 수학 좌표계 적용)
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+            camera.up.set(0, 0, 1); // Z축을 위쪽 방향으로 설정
+
+            // 3. Renderer 생성
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            // 4. 조명 설정
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight1.position.set(10, 12, 15);
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0x93c5fd, 0.4);
+            dirLight2.position.set(-10, -8, -10);
+            scene.add(dirLight2);
+
+            // 5. 기본 좌표계 가이드 (바닥 그리드, X/Y/Z 축, 직육면체 가이드)
+            setupBaseGuides();
+
+            // 6. 동적 기하 객체 그룹
+            dynamicGroup = new THREE.Group();
+            scene.add(dynamicGroup);
+
+            // 7. 이벤트 리스너 및 UI 초기화
+            setupControls(container);
+            setupUI();
+            updateCameraPosition();
+            selectCategory('point-line');
+
+            // 8. 리사이즈 대응
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // 3D 공간 텍스트 라벨 스프라이트 생성 (전자칠판 가독성을 위해 글씨 크기 확대)
+        function createTextSprite(text, position, color = "#ffffff", scale = 1.05) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 360;
+            canvas.height = 140;
+
+            context.font = "bold 64px 'Noto Sans KR', 'Inter', sans-serif";
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+            
+            // 외곽선(가독성)
+            context.strokeStyle = "rgba(9, 13, 22, 0.95)";
+            context.lineWidth = 12;
+            context.strokeText(text, canvas.width / 2, canvas.height / 2);
+
+            context.fillStyle = color;
+            context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.position.copy(position);
+            sprite.scale.set(scale * 2.5, scale, 1);
+            return sprite;
+        }
+
+        // --- 기본 기하 도형(점, 직선, 평면, 점선) 빌더 함수들 ---
+
+        // 1. 점(Point) 생성
+        function buildPoint(pos, colorHex = 0xfbbf24, label = "P", radius = 0.24) {
+            const group = new THREE.Group();
+            const geo = new THREE.SphereGeometry(radius, 24, 24);
+            const mat = new THREE.MeshStandardMaterial({
+                color: colorHex,
+                emissive: colorHex,
+                emissiveIntensity: 0.4,
+                roughness: 0.2
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.copy(pos);
+            group.add(mesh);
+
+            // 외곽 글로우 링 효과
+            const ringGeo = new THREE.SphereGeometry(radius * 1.4, 16, 16);
+            const ringMat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.25 });
+            const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+            ringMesh.position.copy(pos);
+            group.add(ringMesh);
+
+            if (label) {
+                const spritePos = pos.clone().add(new THREE.Vector3(0, 0, 0.52));
+                const hexStr = '#' + new THREE.Color(colorHex).getHexString();
+                group.add(createTextSprite(label, spritePos, hexStr, 1.0));
+            }
+            return group;
+        }
+
+        // 2. 직선(Line - 두 점을 지나는 무한 직선 느낌의 원기둥) 생성
+        function buildLine(p1, p2, colorHex = 0x38bdf8, label = "l", thickness = 0.08) {
+            const group = new THREE.Group();
+            const dir = new THREE.Vector3().subVectors(p2, p1);
+            const len = dir.length();
+            const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+
+            const geo = new THREE.CylinderGeometry(thickness, thickness, len, 16);
+            const mat = new THREE.MeshStandardMaterial({
+                color: colorHex,
+                emissive: colorHex,
+                emissiveIntensity: 0.3,
+                roughness: 0.3
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.copy(mid);
+            mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+            group.add(mesh);
+
+            // 직선 끝 화살표(무한 연장 표시용 원뿔)
+            const coneGeo = new THREE.ConeGeometry(thickness * 2.2, thickness * 5, 16);
+            const cone1 = new THREE.Mesh(coneGeo, mat);
+            cone1.position.copy(p2);
+            cone1.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+            group.add(cone1);
+
+            const cone2 = new THREE.Mesh(coneGeo, mat);
+            cone2.position.copy(p1);
+            cone2.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize().negate());
+            group.add(cone2);
+
+            if (label) {
+                const labelPos = p2.clone().add(dir.clone().normalize().multiplyScalar(0.55));
+                const hexStr = '#' + new THREE.Color(colorHex).getHexString();
+                group.add(createTextSprite(label, labelPos, hexStr, 1.0));
+            }
+            return group;
+        }
+
+        // 3. 평면(Plane - 반투명 사각형 판 + 테두리 선) 생성
+        function buildPlane(center, normal, width = 6.5, height = 6.5, colorHex = 0x6366f1, label = "α") {
+            const group = new THREE.Group();
+            const geo = new THREE.PlaneGeometry(width, height);
+            const mat = new THREE.MeshPhysicalMaterial({
+                color: colorHex,
+                transparent: true,
+                opacity: 0.32,
+                side: THREE.DoubleSide,
+                roughness: 0.2,
+                metalness: 0.1,
+                depthWrite: false
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.copy(center);
+            mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal.clone().normalize());
+            group.add(mesh);
+
+            // 평면 테두리 강조
+            const edges = new THREE.EdgesGeometry(geo);
+            const lineMat = new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity: 0.85 });
+            const wireframe = new THREE.LineSegments(edges, lineMat);
+            wireframe.position.copy(center);
+            wireframe.quaternion.copy(mesh.quaternion);
+            group.add(wireframe);
+
+            if (label) {
+                // 평면의 한쪽 모서리 근처에 라벨 배치
+                const localCorner = new THREE.Vector3(width / 2 - 0.6, -height / 2 + 0.6, 0.3);
+                localCorner.applyQuaternion(mesh.quaternion).add(center);
+                const hexStr = '#' + new THREE.Color(colorHex).getHexString();
+                group.add(createTextSprite(label, localCorner, hexStr, 1.1));
+            }
+            return group;
+        }
+
+        // 4. 점선(수선 또는 거리 표시용) 생성
+        function buildDashedLine(p1, p2, colorHex = 0xf43f5e) {
+            const points = [p1, p2];
+            const geo = new THREE.BufferGeometry().setFromPoints(points);
+            const mat = new THREE.LineDashedMaterial({
+                color: colorHex,
+                dashSize: 0.25,
+                gapSize: 0.15,
+                linewidth: 2
+            });
+            const line = new THREE.Line(geo, mat);
+            line.computeLineDistances();
+            return line;
+        }
+
+        // 5. 3D 직각 기호(ㄱ자 표시) 생성
+        function buildRightAngleMark(origin, dir1, dir2, size = 0.48, colorHex = 0xfef08a) {
+            const u1 = dir1.clone().normalize().multiplyScalar(size);
+            const u2 = dir2.clone().normalize().multiplyScalar(size);
+            const p1 = origin.clone().add(u1);
+            const p2 = origin.clone().add(u1).add(u2);
+            const p3 = origin.clone().add(u2);
+
+            const geo = new THREE.BufferGeometry().setFromPoints([p1, p2, p3]);
+            const mat = new THREE.LineBasicMaterial({ color: colorHex, linewidth: 3 });
+            return new THREE.Line(geo, mat);
+        }
+
+        // --- 기본 좌표축, 그리드, 직육면체 가이드 설정 ---
+        function setupBaseGuides() {
+            // 1. XY 평면(z=0) 그리드
+            gridHelper = new THREE.GridHelper(12, 12, 0x334155, 0x1e293b);
+            gridHelper.rotation.x = Math.PI / 2; // Z-up 평면에 맞게 회전
+            scene.add(gridHelper);
+
+            // 2. X, Y, Z 축 그룹
+            axesGroup = new THREE.Group();
+            const axisLen = 6.2;
+            // X축 (빨강)
+            axesGroup.add(createAxisArrow(new THREE.Vector3(1, 0, 0), axisLen, 0xf43f5e, "X"));
+            // Y축 (초록)
+            axesGroup.add(createAxisArrow(new THREE.Vector3(0, 1, 0), axisLen, 0x10b981, "Y"));
+            // Z축 (파랑)
+            axesGroup.add(createAxisArrow(new THREE.Vector3(0, 0, 1), axisLen, 0x38bdf8, "Z"));
+            scene.add(axesGroup);
+
+            // 3. 직육면체 공간 가이드 (초기 숨김)
+            referenceCubeGroup = new THREE.Group();
+            const boxGeo = new THREE.BoxGeometry(4, 4, 4);
+            const boxEdges = new THREE.EdgesGeometry(boxGeo);
+            const boxMat = new THREE.LineDashedMaterial({
+                color: 0xfbbf24,
+                dashSize: 0.2,
+                gapSize: 0.15,
+                transparent: true,
+                opacity: 0.55
+            });
+            const boxLines = new THREE.LineSegments(boxEdges, boxMat);
+            boxLines.computeLineDistances();
+            referenceCubeGroup.add(boxLines);
+            referenceCubeGroup.visible = false;
+            scene.add(referenceCubeGroup);
+        }
+
+        function createAxisArrow(dir, length, colorHex, label) {
+            const group = new THREE.Group();
+            const origin = dir.clone().multiplyScalar(-length);
+            const fullDir = dir.clone();
+            const arrowHelper = new THREE.ArrowHelper(fullDir, origin, length * 2, colorHex, 0.35, 0.2);
+            group.add(arrowHelper);
+
+            const labelPos = dir.clone().multiplyScalar(length + 0.45);
+            const hexStr = '#' + new THREE.Color(colorHex).getHexString();
+            group.add(createTextSprite(label, labelPos, hexStr, 0.7));
+            return group;
+        }
+
+        // --- 선택된 위치관계에 따른 3D 도형 렌더링 업데이트 ---
+        function update3DScene() {
+            // 기존 동적 객체 모두 제거
+            while (dynamicGroup.children.length > 0) {
+                dynamicGroup.remove(dynamicGroup.children[0]);
+            }
+
+            const t = sliderValue / 100; // -1.0 ~ 1.0 정규화된 슬라이더 값
+
+            switch (currentPresetId) {
+                // [1] 점과 직선 / 평면
+                case 'pt-on-line': {
+                    const p1 = new THREE.Vector3(-4, -2, 1.5);
+                    const p2 = new THREE.Vector3(4, 2, 1.5);
+                    dynamicGroup.add(buildLine(p1, p2, 0x38bdf8, "l"));
+
+                    // 슬라이더에 따라 직선 위를 이동하는 점 P
+                    const ptPos = new THREE.Vector3().lerpVectors(p1, p2, 0.5 + t * 0.35);
+                    dynamicGroup.add(buildPoint(ptPos, 0xfbbf24, "P"));
+                    break;
+                }
+                case 'pt-off-line': {
+                    const p1 = new THREE.Vector3(-4, 0, 1);
+                    const p2 = new THREE.Vector3(4, 0, 1);
+                    dynamicGroup.add(buildLine(p1, p2, 0x38bdf8, "l"));
+
+                    const dist = 2.0 + t * 1.3; // 0.7 ~ 3.3
+                    const ptPos = new THREE.Vector3(0.5, dist, 2.2);
+                    const footPos = new THREE.Vector3(0.5, 0, 1); // 수선의 발
+                    dynamicGroup.add(buildPoint(ptPos, 0xfbbf24, "P"));
+                    dynamicGroup.add(buildPoint(footPos, 0x94a3b8, "H", 0.13));
+                    dynamicGroup.add(buildDashedLine(ptPos, footPos, 0xf43f5e));
+                    break;
+                }
+                case 'pt-on-plane': {
+                    const center = new THREE.Vector3(0, 0, 1);
+                    const normal = new THREE.Vector3(0, 0, 1);
+                    dynamicGroup.add(buildPlane(center, normal, 6.5, 6.5, 0x6366f1, "α"));
+
+                    const angle = t * Math.PI;
+                    const ptPos = new THREE.Vector3(Math.cos(angle) * 1.8, Math.sin(angle) * 1.8, 1);
+                    dynamicGroup.add(buildPoint(ptPos, 0xfbbf24, "P"));
+                    break;
+                }
+                case 'pt-off-plane': {
+                    const center = new THREE.Vector3(0, 0, 0.5);
+                    const normal = new THREE.Vector3(0, 0, 1);
+                    dynamicGroup.add(buildPlane(center, normal, 6.5, 6.5, 0x6366f1, "α"));
+
+                    const height = 2.2 + t * 1.5; // 0.7 ~ 3.7
+                    const ptPos = new THREE.Vector3(0.8, 0.8, 0.5 + height);
+                    const footPos = new THREE.Vector3(0.8, 0.8, 0.5);
+                    dynamicGroup.add(buildPoint(ptPos, 0xfbbf24, "P"));
+                    dynamicGroup.add(buildPoint(footPos, 0x94a3b8, "H", 0.13));
+                    dynamicGroup.add(buildDashedLine(ptPos, footPos, 0xf43f5e));
+                    break;
+                }
+
+                // [2] 두 직선의 위치관계
+                case 'line-intersect': {
+                    const z = 1.5;
+                    dynamicGroup.add(buildLine(new THREE.Vector3(-4, 0, z), new THREE.Vector3(4, 0, z), 0x38bdf8, "l"));
+
+                    const angle = (Math.PI / 4) + t * (Math.PI / 6);
+                    const dx = Math.cos(angle) * 4;
+                    const dy = Math.sin(angle) * 4;
+                    dynamicGroup.add(buildLine(new THREE.Vector3(-dx, -dy, z), new THREE.Vector3(dx, dy, z), 0x10b981, "m"));
+
+                    dynamicGroup.add(buildPoint(new THREE.Vector3(0, 0, z), 0xfbbf24, "P"));
+                    break;
+                }
+                case 'line-parallel': {
+                    const z = 1.5;
+                    const gap = 1.6 + t * 1.0; // 0.6 ~ 2.6
+                    dynamicGroup.add(buildLine(new THREE.Vector3(-4, -gap / 2, z), new THREE.Vector3(4, -gap / 2, z), 0x38bdf8, "l"));
+                    dynamicGroup.add(buildLine(new THREE.Vector3(-4, gap / 2, z), new THREE.Vector3(4, gap / 2, z), 0x10b981, "m"));
+                    break;
+                }
+                case 'line-skew': {
+                    // 꼬인 위치: 아래 직선 l (z = 0.5, X축 방향), 위 직선 m (z = 2.8, Y축 방향 회전)
+                    const zLow = 0.5;
+                    const zHigh = 2.6 + t * 0.8;
+                    dynamicGroup.add(buildLine(new THREE.Vector3(-4, 0, zLow), new THREE.Vector3(4, 0, zLow), 0x38bdf8, "l"));
+
+                    const rot = (Math.PI / 2) + t * 0.4;
+                    const dx = Math.cos(rot) * 4;
+                    const dy = Math.sin(rot) * 4;
+                    dynamicGroup.add(buildLine(new THREE.Vector3(-dx, -dy, zHigh), new THREE.Vector3(dx, dy, zHigh), 0x10b981, "m"));
+
+                    // 최단거리 공통수선 표시
+                    dynamicGroup.add(buildDashedLine(new THREE.Vector3(0, 0, zLow), new THREE.Vector3(0, 0, zHigh), 0xf43f5e));
+                    break;
+                }
+                case 'line-coincide': {
+                    const offset = Math.abs(t) * 0.4; // t=0 일 때 완전 일치
+                    dynamicGroup.add(buildLine(new THREE.Vector3(-4, 0, 1.5), new THREE.Vector3(4, 0, 1.5), 0x38bdf8, "l", 0.08));
+                    dynamicGroup.add(buildLine(new THREE.Vector3(-4, offset, 1.5 + offset), new THREE.Vector3(4, offset, 1.5 + offset), 0x10b981, "m", 0.06));
+                    break;
+                }
+
+                // [3] 직선과 평면의 위치관계
+                case 'lp-contained': {
+                    const z = 1.0;
+                    dynamicGroup.add(buildPlane(new THREE.Vector3(0, 0, z), new THREE.Vector3(0, 0, 1), 6.5, 6.5, 0x6366f1, "α"));
+
+                    const angle = t * (Math.PI / 2);
+                    const dx = Math.cos(angle) * 3.2;
+                    const dy = Math.sin(angle) * 3.2;
+                    dynamicGroup.add(buildLine(new THREE.Vector3(-dx, -dy, z), new THREE.Vector3(dx, dy, z), 0x38bdf8, "l"));
+                    break;
+                }
+                case 'lp-intersect': {
+                    const z = 1.0;
+                    dynamicGroup.add(buildPlane(new THREE.Vector3(0, 0, z), new THREE.Vector3(0, 0, 1), 6.5, 6.5, 0x6366f1, "α"));
+
+                    // 수직 정의 모드일 때는 직선을 수직(tilt = 0)으로 고정하고 평면 위 여러 직선과 직각 기호를 표시
+                    const tilt = showPerpDef ? 0 : t * 0.65;
+                    const pTop = new THREE.Vector3(Math.sin(tilt) * 3.2, 0, z + Math.cos(tilt) * 3.2);
+                    const pBot = new THREE.Vector3(-Math.sin(tilt) * 2.5, 0, z - Math.cos(tilt) * 2.5);
+                    dynamicGroup.add(buildLine(pBot, pTop, 0x38bdf8, "l"));
+                    const originP = new THREE.Vector3(0, 0, z);
+                    dynamicGroup.add(buildPoint(originP, 0xfbbf24, "P"));
+
+                    if (showPerpDef) {
+                        // 교점 P를 지나는 평면 α 위의 여러 직선(m, n, k)과 각각 수직(90°)임을 시각화
+                        const planeLines = [
+                            { angle: 0, label: "m" },
+                            { angle: Math.PI / 3, label: "n" },
+                            { angle: (2 * Math.PI) / 3, label: "k" }
+                        ];
+                        const upDir = new THREE.Vector3(0, 0, 1);
+
+                        planeLines.forEach(item => {
+                            const dir = new THREE.Vector3(Math.cos(item.angle), Math.sin(item.angle), 0);
+                            const lp1 = dir.clone().multiplyScalar(-2.9).add(originP);
+                            const lp2 = dir.clone().multiplyScalar(2.9).add(originP);
+                            dynamicGroup.add(buildLine(lp1, lp2, 0x10b981, item.label, 0.055));
+                            dynamicGroup.add(buildRightAngleMark(originP, dir, upDir, 0.5, 0xfef08a));
+                        });
+                    }
+                    break;
+                }
+                case 'lp-parallel': {
+                    const zPlane = 0.5;
+                    const zLine = 2.6 + t * 1.1;
+                    dynamicGroup.add(buildPlane(new THREE.Vector3(0, 0, zPlane), new THREE.Vector3(0, 0, 1), 6.5, 6.5, 0x6366f1, "α"));
+                    dynamicGroup.add(buildLine(new THREE.Vector3(-3.8, 0, zLine), new THREE.Vector3(3.8, 0, zLine), 0x38bdf8, "l"));
+                    dynamicGroup.add(buildDashedLine(new THREE.Vector3(0, 0, zPlane), new THREE.Vector3(0, 0, zLine), 0xf43f5e));
+                    break;
+                }
+
+                // [4] 두 평면의 위치관계
+                case 'pp-intersect': {
+                    const z = 1.5;
+                    // 기준 평면 α (수평)
+                    dynamicGroup.add(buildPlane(new THREE.Vector3(0, 0, z), new THREE.Vector3(0, 0, 1), 6.5, 6.5, 0x6366f1, "α"));
+
+                    // 회전하는 평면 β (t=0일 때 90도 수직 교차)
+                    const angle = (Math.PI / 2) + t * (Math.PI / 3);
+                    const normalBeta = new THREE.Vector3(0, Math.sin(angle), Math.cos(angle));
+                    dynamicGroup.add(buildPlane(new THREE.Vector3(0, 0, z), normalBeta, 6.5, 6.5, 0xd946ef, "β"));
+
+                    // 교선 l (X축 방향)
+                    dynamicGroup.add(buildLine(new THREE.Vector3(-3.8, 0, z), new THREE.Vector3(3.8, 0, z), 0xfbbf24, "교선 l", 0.09));
+                    break;
+                }
+                case 'pp-parallel': {
+                    const gap = 2.2 + t * 1.1;
+                    dynamicGroup.add(buildPlane(new THREE.Vector3(0, 0, 0.5), new THREE.Vector3(0, 0, 1), 6.0, 6.0, 0x6366f1, "α"));
+                    dynamicGroup.add(buildPlane(new THREE.Vector3(0, 0, 0.5 + gap), new THREE.Vector3(0, 0, 1), 6.0, 6.0, 0xd946ef, "β"));
+                    dynamicGroup.add(buildDashedLine(new THREE.Vector3(0, 0, 0.5), new THREE.Vector3(0, 0, 0.5 + gap), 0xf43f5e));
+                    break;
+                }
+                case 'pp-coincide': {
+                    const offset = Math.abs(t) * 0.45;
+                    dynamicGroup.add(buildPlane(new THREE.Vector3(0, 0, 1.5), new THREE.Vector3(0, 0, 1), 6.2, 6.2, 0x6366f1, "α"));
+                    dynamicGroup.add(buildPlane(new THREE.Vector3(0, 0, 1.5 + offset), new THREE.Vector3(0, 0, 1), 6.2, 6.2, 0xd946ef, "β"));
+                    break;
+                }
+            }
+        }
+
+        // --- 카메라 제어 (마우스/터치 오빗 & 시점 프리셋) ---
+        function updateCameraPosition() {
+            // 구면 좌표계 -> 직교 좌표계 (Z-up)
+            const sinPhi = Math.sin(spherical.phi);
+            camera.position.x = targetCenter.x + spherical.radius * sinPhi * Math.cos(spherical.theta);
+            camera.position.y = targetCenter.y + spherical.radius * sinPhi * Math.sin(spherical.theta);
+            camera.position.z = targetCenter.z + spherical.radius * Math.cos(spherical.phi);
+            camera.lookAt(targetCenter);
+        }
+
+        function setCameraPreset(type) {
+            spherical.radius = 13;
+            switch (type) {
+                case 'iso':
+                    spherical.theta = Math.PI / 4;
+                    spherical.phi = Math.PI / 3;
+                    break;
+                case 'top': // XY 평면 위에서 내려다보기 (꼬인 위치가 교차처럼 보이는 현상 확인에 최적)
+                    spherical.theta = -Math.PI / 2;
+                    spherical.phi = 0.03;
+                    break;
+                case 'front': // Y축 음의 방향에서 정면 보기
+                    spherical.theta = -Math.PI / 2;
+                    spherical.phi = Math.PI / 2;
+                    break;
+                case 'side': // X축 양의 방향에서 측면 보기
+                    spherical.theta = 0;
+                    spherical.phi = Math.PI / 2;
+                    break;
+            }
+            updateCameraPosition();
+        }
+
+        function setupControls(domElement) {
+            // 마우스 드래그 회전
+            domElement.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                prevMouse = { x: e.clientX, y: e.clientY };
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - prevMouse.x;
+                const dy = e.clientY - prevMouse.y;
+
+                spherical.theta -= dx * 0.008;
+                spherical.phi = Math.max(0.05, Math.min(Math.PI - 0.05, spherical.phi - dy * 0.008));
+
+                prevMouse = { x: e.clientX, y: e.clientY };
+                updateCameraPosition();
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            // 마우스 휠 줌
+            domElement.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                spherical.radius = Math.max(5, Math.min(28, spherical.radius + e.deltaY * 0.01));
+                updateCameraPosition();
+            }, { passive: false });
+
+            // 모바일 터치 회전 및 핀치 줌
+            let initialPinchDist = null;
+            domElement.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                } else if (e.touches.length === 2) {
+                    isDragging = false;
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    initialPinchDist = Math.hypot(dx, dy);
+                }
+            }, { passive: false });
+
+            domElement.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (e.touches.length === 1 && isDragging) {
+                    const dx = e.touches[0].clientX - prevMouse.x;
+                    const dy = e.touches[0].clientY - prevMouse.y;
+
+                    spherical.theta -= dx * 0.009;
+                    spherical.phi = Math.max(0.05, Math.min(Math.PI - 0.05, spherical.phi - dy * 0.009));
+
+                    prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                    updateCameraPosition();
+                } else if (e.touches.length === 2 && initialPinchDist) {
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    const dist = Math.hypot(dx, dy);
+                    const delta = initialPinchDist - dist;
+                    spherical.radius = Math.max(5, Math.min(28, spherical.radius + delta * 0.03));
+                    initialPinchDist = dist;
+                    updateCameraPosition();
+                }
+            }, { passive: false });
+
+            domElement.addEventListener('touchend', () => {
+                isDragging = false;
+                initialPinchDist = null;
+            });
+        }
+
+        // --- UI 이벤트 바인딩 및 상태 전환 ---
+        function setupUI() {
+            // 카테고리 버튼 클릭
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    selectCategory(btn.dataset.cat);
+                });
+            });
+
+            // 슬라이더 조작
+            const slider = document.getElementById('interactive-slider');
+            const sliderDisplay = document.getElementById('slider-val-display');
+            slider.addEventListener('input', (e) => {
+                sliderValue = parseInt(e.target.value, 10);
+                sliderDisplay.textContent = (sliderValue / 50).toFixed(1);
+                update3DScene();
+            });
+
+            // 시점 초기화 버튼
+            document.getElementById('btn-reset-cam').addEventListener('click', () => {
+                setCameraPreset('iso');
+            });
+
+            // 체크박스 토글 (좌표축, 그리드, 직육면체 가이드)
+            document.getElementById('chk-axes').addEventListener('change', (e) => {
+                axesGroup.visible = e.target.checked;
+            });
+            document.getElementById('chk-grid').addEventListener('change', (e) => {
+                gridHelper.visible = e.target.checked;
+            });
+            document.getElementById('chk-cube').addEventListener('change', (e) => {
+                referenceCubeGroup.visible = e.target.checked;
+            });
+
+            // 직선과 평면의 수직 정의 보기 버튼 토글
+            document.getElementById('btn-toggle-perp-def').addEventListener('click', () => {
+                showPerpDef = !showPerpDef;
+                updatePerpDefUI();
+                update3DScene();
+            });
+        }
+
+        function updatePerpDefUI() {
+            const btn = document.getElementById('btn-toggle-perp-def');
+            const detail = document.getElementById('perp-def-detail');
+            const slider = document.getElementById('interactive-slider');
+            const sliderDisplay = document.getElementById('slider-val-display');
+
+            if (showPerpDef) {
+                sliderValue = 0;
+                slider.value = 0;
+                sliderDisplay.textContent = "0.0 (수직)";
+                btn.innerHTML = `<span>🔄 일반 각도 조절로 돌아가기</span>`;
+                btn.className = "w-full py-3.5 px-4 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.99] text-slate-950 font-bold text-base rounded-xl shadow-lg transition flex items-center justify-center gap-2";
+                detail.classList.remove('hidden');
+            } else {
+                btn.innerHTML = `<span>📐 직선과 평면의 수직(l ⊥ α) 정의 보기</span>`;
+                btn.className = "w-full py-3.5 px-4 bg-amber-500 hover:bg-amber-400 active:scale-[0.99] text-slate-950 font-bold text-base rounded-xl shadow-lg transition flex items-center justify-center gap-2";
+                detail.classList.add('hidden');
+            }
+        }
+
+        function selectCategory(catKey) {
+            currentCategory = catKey;
+
+            // 탭 버튼 활성화 스타일 업데이트
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === catKey) {
+                    btn.className = "cat-btn py-3 px-1 rounded-xl bg-blue-600 text-white shadow-md transition";
+                } else {
+                    btn.className = "cat-btn py-3 px-1 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition";
+                }
+            });
+
+            // 프리셋 버튼 목록 생성 (전자칠판 터치 및 가독성을 위해 글씨/여백 확대)
+            const listContainer = document.getElementById('preset-buttons');
+            listContainer.innerHTML = '';
+
+            const presets = RELATIONS_DATA[catKey];
+            presets.forEach((item, index) => {
+                const btn = document.createElement('button');
+                btn.dataset.id = item.id;
+                btn.className = `preset-btn text-left px-4 py-3.5 rounded-xl border text-base font-bold transition flex items-center justify-between ${
+                    index === 0 
+                    ? 'bg-blue-600/25 border-blue-500 text-white' 
+                    : 'bg-slate-800/50 border-slate-700/70 text-slate-300 hover:bg-slate-800'
+                }`;
+                btn.innerHTML = `
+                    <span>${item.name}</span>
+                    <span class="text-sm opacity-80">보기 →</span>
+                `;
+                btn.onclick = () => selectPreset(item.id);
+                listContainer.appendChild(btn);
+            });
+
+            // 첫 번째 항목 자동 선택
+            selectPreset(presets[0].id);
+        }
+
+        function selectPreset(presetId) {
+            currentPresetId = presetId;
+            sliderValue = 0;
+            showPerpDef = false;
+            const slider = document.getElementById('interactive-slider');
+            slider.value = 0;
+            document.getElementById('slider-val-display').textContent = "0.0";
+
+            // '직선과 평면이 한 점에서 만날 때'에만 수직 정의 버튼 박스 표시
+            const perpBox = document.getElementById('perp-definition-box');
+            if (presetId === 'lp-intersect') {
+                perpBox.classList.remove('hidden');
+                updatePerpDefUI();
+            } else {
+                perpBox.classList.add('hidden');
+            }
+
+            // 버튼 스타일 업데이트
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                if (btn.dataset.id === presetId) {
+                    btn.className = "preset-btn text-left px-4 py-3.5 rounded-xl border text-base font-bold transition flex items-center justify-between bg-blue-600/30 border-blue-400 text-white shadow-md";
+                } else {
+                    btn.className = "preset-btn text-left px-4 py-3.5 rounded-xl border text-base font-bold transition flex items-center justify-between bg-slate-800/50 border-slate-700/60 text-slate-300 hover:bg-slate-800 hover:text-white";
+                }
+            });
+
+            // 데이터 찾기 및 설명 카드 업데이트
+            const data = RELATIONS_DATA[currentCategory].find(d => d.id === presetId);
+            if (data) {
+                document.getElementById('info-badge').textContent = data.badge;
+                document.getElementById('info-title').textContent = data.name;
+                document.getElementById('info-desc').textContent = data.desc;
+                document.getElementById('info-math').textContent = data.math;
+                document.getElementById('slider-desc').textContent = data.sliderDesc;
+
+                // 범례(Legend) 업데이트 (큰 점과 큰 글씨)
+                const legendBox = document.getElementById('legend-box');
+                legendBox.innerHTML = data.legend.map(l => `
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-3.5 h-3.5 rounded-full ${l.color} inline-block shadow"></span>
+                        <span class="text-slate-100 font-bold">${l.label}</span>
+                    </div>
+                `).join('');
+            }
+
+            update3DScene();
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            if (!container) return;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        // 윈도우 로드 후 초기화 및 애니메이션 루프 시작
+        window.onload = function () {
+            init();
+            animate();
+        };
+    </script>
+</body>
+</html>
